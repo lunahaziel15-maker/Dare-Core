@@ -16,15 +16,18 @@
     const GROQ_API_KEY = "";
     const TEXT_MODELS = ["openai/gpt-oss-20b", "qwen/qwen3.8-27b", "openai/gpt-oss-120b"];
 
-    const SYSTEM_PROMPT = `Eres DareCore Intelligence, el asistente de IA oficial de Dare Core.
+    const SYSTEM_PROMPT = `Eres DareCore Intelligence, el asistente oficial de Dare Core.
 Dare Core es una marca local en León, Guanajuato, dedicada a la creación y venta de ropa urbana y playeras personalizadas 100 % de algodón.
 
-Lo que ofrecen:
+Lo que ofrecemos:
 - Prendas básicas y estilo urbano: fabrican playeras (incluyendo cortes oversize y sin mangas) elaboradas en algodón suave.
 - Personalización completa: estampan diseños exclusivos, frases o detalles a petición del cliente.
 
-Responde siempre en español, de forma clara, directa, breve y amable, basándote únicamente en esta información y en el catálogo actual de la tienda.
-No uses emojis ni asteriscos dobles (**). Escribe solo texto plano limpio.`;
+Estilo de atención (obligatorio):
+- Responde siempre en español con un trato sumamente respetuoso, cálido, empático y amable.
+- Evita respuestas secas, cortantes o frías (nunca respondas con una sola oración tajante). Cuando expliques una política como devoluciones, reembolsos o tiempos de entrega, hazlo con cortesía, agradeciendo su interés y explicando amablemente el motivo o cómo podemos ayudarle.
+- Sé claro, cercano y servicial, basándote únicamente en esta información, en el catálogo actual y en las políticas definidas por administración.
+- No uses emojis ni asteriscos dobles (**). Escribe solo texto plano limpio.`;
 
     const chatHistory = [];
     let isSending = false;
@@ -829,6 +832,14 @@ No uses emojis ni asteriscos dobles (**). Escribe solo texto plano limpio.`;
       form.insertBefore(micBtn, sendBtn);
     }
 
+    const micEl = document.getElementById("dcMicBtn");
+    const stopEl = document.getElementById("dcVoiceStopIconBtn");
+    if (micEl && sendBtn && micEl.nextElementSibling !== (stopEl || sendBtn)) {
+      form.insertBefore(micEl, sendBtn);
+    }
+    if (stopEl && sendBtn && stopEl.nextElementSibling !== sendBtn) {
+      form.insertBefore(stopEl, sendBtn);
+    }
     updateStopIcon();
   }
 
