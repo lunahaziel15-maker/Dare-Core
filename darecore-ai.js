@@ -1,4 +1,18 @@
 (function () {
+  const origFetch = window.fetch.bind(window);
+  window.fetch = async function (input, init) {
+    const url = typeof input === "string" ? input : (input && input.url) || "";
+    if (url.includes("api.groq.com/openai/v1/chat/completions")) {
+      return origFetch("/api/groq", {
+        method: (init && init.method) || "POST",
+        headers: { "Content-Type": "application/json" },
+        body: init && init.body
+      });
+    }
+    return origFetch(input, init);
+  };
+})();
+(function () {
     const GROQ_API_KEY = "";
     const TEXT_MODELS = ["openai/gpt-oss-20b", "qwen/qwen3.8-27b", "openai/gpt-oss-120b"];
 
