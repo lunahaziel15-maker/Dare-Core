@@ -1,47 +1,11 @@
-/* DC_SYNC_MIC_VOICE_AND_STOP_START */
+/* DC_CLEAN_MIC_AND_VOICE_START */
 (function () {
   window.DC_CUSTOM_TTS = null;
   let lastInputWasVoice = false;
-  let clearLockUntil = 0;
-  let activeRecognizer = null;
+  let autoSendTimer = null;
   let speakingToken = 0;
   let speechExpectedEndTime = 0;
   let keepAliveTimer = null;
-
-  const nativeInputDesc = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value");
-  const nativeTextareaDesc = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, "value");
-
-  function setRawInputValue(el, val) {
-    if (!el) return;
-    if (el.tagName === "TEXTAREA" && nativeTextareaDesc && nativeTextareaDesc.set) {
-      nativeTextareaDesc.set.call(el, val);
-    } else if (nativeInputDesc && nativeInputDesc.set) {
-      nativeInputDesc.set.call(el, val);
-    } else {
-      el.value = val;
-    }
-  }
-
-  function getChatInput(panel) {
-    const root = panel || document;
-    return root.querySelector("input[type='text'], input:not([type]), textarea");
-  }
-
-  function forceClearInput(panel) {
-    const input = getChatInput(panel);
-    if (!input) return;
-    setRawInputValue(input, "");
-    input.dispatchEvent(new Event("input", { bubbles: true }));
-    input.dispatchEvent(new Event("change", { bubbles: true }));
-  }
-
-  function activateClearGuard(panel) {
-    clearLockUntil = Date.now() + 2500;
-    forceClearInput(panel);
-    [20, 80, 180, 350, 650, 1100, 1800].forEach(ms => {
-      setTimeout(() => forceClearInput(panel), ms);
-    });
-  }
 
   function isVoiceActuallyPlaying() {
     if ("speechSynthesis" in window) {
@@ -134,15 +98,79 @@
     }, 200);
   }
 
-  function ensureStopLogoButton() {
+  function getPanelAndInput() {
     const panel = Array.from(document.querySelectorAll("div, section, aside")).find(el => {
       const t = el.innerText || "";
       return t.includes("DareCore Intelligence") && t.includes("Enviar");
     });
+    const input = panel ? panel.querySelector("input[type='text'], input:not([type]), textarea") : null;
+    const sendBtn = panel
+      ? Array.from(panel.querySelectorAll("button")).find(b => (b.textContent || "").trim().toLowerCase() === "enviar")
+      : null;
+    return { panel, input, sendBtn };
+  }
+
+  function sendCurrentInput(asVoice) {
+    if (autoSendTimer) {
+      clearTimeout(autoSendTimer);
+      autoSendTimer = null;
+    }
+    const { input, sendBtn } = getPanelAndInput();
+    if (!input) return;
+    const val = (input.value || "").trim();
+    if (!val) return;
+
+    lastInputWasVoice = Boolean(asVoice);
+    if (sendBtn) {
+      sendBtn.disabled = false;
+      sendBtn.click();
+    } else {
+      input.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", code: "Enter", keyCode: 13, which: 13, bubbles: true }));
+    }
+  }
+
+  // Observa cuando el microfono llena el input y lo envia automaticamente tras pausar
+  function hookSpeechEventsOnInstance(rec) {
+    if (!rec || rec.__dcHooked) return;
+    rec.__dcHooked = true;
+    rec.addEventListener("start", () => {
+      lastInputWasVoice = true;
+      stopAllSpeech();
+    });
+    rec.addEventListener("result", () => {
+      lastInputWasVoice = true;
+      if (autoSendTimer) clearTimeout(autoSendTimer);
+      autoSendTimer = setTimeout(() => {
+        sendCurrentInput(true);
+      }, 650);
+    });
+    rec.addEventListener("end", () => {
+      if (autoSendTimer) clearTimeout(autoSendTimer);
+      autoSendTimer = setTimeout(() => {
+        sendCurrentInput(true);
+      }, 150);
+    });
+  }
+
+  ["SpeechRecognition", "webkitSpeechRecognition"].forEach(name => {
+    const Ctor = window[name];
+    if (typeof Ctor === "function" && !Ctor.__dcWrapped) {
+      const Wrapped = new Proxy(Ctor, {
+        construct(target, args) {
+          const instance = new target(...args);
+          hookSpeechEventsOnInstance(instance);
+          return instance;
+        }
+      });
+      Wrapped.__dcWrapped = true;
+      window[name] = Wrapped;
+    }
+  });
+
+  function ensureStopLogoButton() {
+    const { panel, sendBtn } = getPanelAndInput();
     if (!panel) return;
 
-    const buttons = Array.from(panel.querySelectorAll("button"));
-    const sendBtn = buttons.find(b => (b.textContent || "").trim().toLowerCase() === "enviar");
     if (sendBtn) {
       sendBtn.style.setProperty("display", "inline-flex", "important");
       sendBtn.style.setProperty("align-items", "center", "important");
@@ -189,119 +217,6 @@
     updateStopLogoVisibility();
   }
 
-  function triggerSendInPanel() {
-    const panel = Array.from(document.querySelectorAll("div, section, aside")).find(el => {
-      const t = el.innerText || "";
-      return t.includes("DareCore Intelligence") && t.includes("Enviar");
-    });
-    if (!panel) return;
-    const input = getChatInput(panel);
-    if (!input || !(input.value || "").trim()) return;
-
-    try {
-      if (activeRecognizer && typeof activeRecognizer.abort === "function") {
-        activeRecognizer.abort();
-      }
-    } catch (_) {}
-
-    const form = input.closest("form");
-    const sendBtn = Array.from(panel.querySelectorAll("button")).find(b => (b.textContent || "").trim().toLowerCase() === "enviar");
-
-    lastInputWasVoice = true;
-    activateClearGuard(panel);
-
-    if (sendBtn) {
-      sendBtn.disabled = false;
-      sendBtn.click();
-    } else if (form) {
-      form.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
-    } else {
-      input.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", code: "Enter", keyCode: 13, which: 13, bubbles: true }));
-    }
-
-    activateClearGuard(panel);
-  }
-
-  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (SR && !SR.__dcSyncVoicePatched) {
-    const OrigSR = SR;
-    function SyncVoiceSR() {
-      const rec = new OrigSR();
-      activeRecognizer = rec;
-      rec.lang = "es-MX";
-      rec.interimResults = true;
-      let latestTranscript = "";
-      let sentForSession = false;
-
-      rec.addEventListener("start", () => {
-        activeRecognizer = rec;
-        lastInputWasVoice = true;
-        clearLockUntil = 0;
-        latestTranscript = "";
-        sentForSession = false;
-        stopAllSpeech();
-      });
-
-      rec.addEventListener("result", (e) => {
-        if (sentForSession || Date.now() < clearLockUntil) {
-          forceClearInput();
-          return;
-        }
-        lastInputWasVoice = true;
-        let combined = "";
-        let hasFinal = false;
-        for (let i = 0; i < e.results.length; i++) {
-          combined += e.results[i][0].transcript + " ";
-          if (e.results[i].isFinal) hasFinal = true;
-        }
-        latestTranscript = combined.trim();
-
-        const panel = Array.from(document.querySelectorAll("div, section, aside")).find(el => {
-          const t = el.innerText || "";
-          return t.includes("DareCore Intelligence") && t.includes("Enviar");
-        });
-        const input = getChatInput(panel);
-        if (input && latestTranscript && !sentForSession) {
-          setRawInputValue(input, latestTranscript);
-          input.dispatchEvent(new Event("input", { bubbles: true }));
-        }
-
-        if (hasFinal && latestTranscript && !sentForSession) {
-          sentForSession = true;
-          setTimeout(() => {
-            triggerSendInPanel();
-          }, 80);
-        }
-      });
-
-      rec.addEventListener("end", () => {
-        if (latestTranscript && !sentForSession) {
-          sentForSession = true;
-          setTimeout(() => {
-            triggerSendInPanel();
-          }, 80);
-        } else if (sentForSession) {
-          activateClearGuard();
-        }
-      });
-
-      return rec;
-    }
-    SyncVoiceSR.prototype = OrigSR.prototype;
-    SyncVoiceSR.__dcSyncVoicePatched = true;
-    window.SpeechRecognition = SyncVoiceSR;
-    window.webkitSpeechRecognition = SyncVoiceSR;
-  }
-
-  document.addEventListener("input", () => {
-    if (Date.now() < clearLockUntil) {
-      const inp = getChatInput();
-      if (inp && inp.value) {
-        setRawInputValue(inp, "");
-      }
-    }
-  }, true);
-
   document.addEventListener("click", (e) => {
     const btn = e.target && e.target.closest ? e.target.closest("button") : null;
     if (!btn) return;
@@ -334,9 +249,7 @@
     if (url.includes("api.groq.com/openai/v1/chat/completions")) {
       const speakThisTurn = lastInputWasVoice;
       lastInputWasVoice = false;
-      if (speakThisTurn) {
-        activateClearGuard();
-      } else {
+      if (!speakThisTurn) {
         stopAllSpeech();
       }
 
@@ -351,11 +264,8 @@
           const txt = data && data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
           if (txt) {
             speakSimultaneously(txt);
-            activateClearGuard();
           }
         }).catch(() => {});
-      } else if (!speakThisTurn) {
-        setTimeout(() => forceClearInput(), 60);
       }
 
       return res;
@@ -373,15 +283,7 @@
     return origFetch(input, init);
   };
 
-  setInterval(() => {
-    updateStopLogoVisibility();
-    if (Date.now() < clearLockUntil) {
-      const inp = getChatInput();
-      if (inp && inp.value) {
-        setRawInputValue(inp, "");
-      }
-    }
-  }, 150);
+  setInterval(updateStopLogoVisibility, 250);
 
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", ensureStopLogoButton);
@@ -390,7 +292,7 @@
   }
   new MutationObserver(ensureStopLogoButton).observe(document.body || document.documentElement, { childList: true, subtree: true });
 })();
-/* DC_SYNC_MIC_VOICE_AND_STOP_END */
+/* DC_CLEAN_MIC_AND_VOICE_END */
 (function () {
   const origFetch = window.fetch.bind(window);
   window.fetch = async function (input, init) {
