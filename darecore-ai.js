@@ -1,4 +1,4 @@
-/* DC_CLEAN_PROXY_START */
+/* DC_VERCEL_GROQ_PROXY_START */
 (function () {
   window.DC_CUSTOM_TTS = null;
   const origFetch = window.fetch.bind(window);
@@ -11,10 +11,19 @@
         body: init && init.body
       });
     }
+    if (url.includes("api.groq.com/openai/v1/models")) {
+      return new Response(JSON.stringify({
+        data: [
+          { id: "openai/gpt-oss-20b" },
+          { id: "qwen/qwen3.8-27b" },
+          { id: "openai/gpt-oss-120b" }
+        ]
+      }), { status: 200, headers: { "Content-Type": "application/json" } });
+    }
     return origFetch(input, init);
   };
 })();
-/* DC_CLEAN_PROXY_END */
+/* DC_VERCEL_GROQ_PROXY_END */
 (function () {
   const origFetch = window.fetch.bind(window);
   window.fetch = async function (input, init) {
@@ -301,7 +310,7 @@ No uses emojis ni asteriscos dobles (**). Escribe solo texto plano limpio.`;
         const cleanText = (userText || "").trim();
         if (!cleanText) return;
 
-        if (!GROQ_API_KEY || GROQ_API_KEY === "gsk_tu_llave_aqui") {
+        if (false && (!GROQ_API_KEY || GROQ_API_KEY === "gsk_tu_llave_aqui")) {
             appendMessage("bot", "Configura primero tu GROQ_API_KEY (gsk_...) dentro de darecore-ai.js para activar el chat.");
             return;
         }
