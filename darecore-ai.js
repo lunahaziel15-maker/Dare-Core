@@ -1,209 +1,3 @@
-/* DC_CLEAN_CORE_START */
-(function () {
-  window.DC_CUSTOM_TTS = null;
-  let fromVoice = false;
-  let voiceTimer = null;
-  let busy = false;
-  let lastSent = "";
-  let lastSentTs = 0;
-  let speakId = 0;
-  let speakUntil = 0;
-
-  function stopVoice() {
-    speakId++;
-    speakUntil = 0;
-    try { if (window.speechSynthesis) window.speechSynthesis.cancel(); } catch (_) {}
-    try {
-      document.querySelectorAll("audio").forEach(a => { a.pause(); a.currentTime = 0; });
-    } catch (_) {}
-    updateStopBtn();
-  }
-
-  function isSpeaking() {
-    if (window.speechSynthesis && (window.speechSynthesis.speaking || window.speechSynthesis.pending)) return true;
-    return Date.now() < speakUntil;
-  }
-
-  function updateStopBtn() {
-    const btn = document.getElementById("dcStopLogo");
-    if (btn) btn.style.display = isSpeaking() ? "inline-flex" : "none";
-  }
-
-  function speakNow(text) {
-    if (!window.speechSynthesis || !text) return;
-    const clean = String(text).replace(/[*#`]/g, "").trim();
-    if (!clean) return;
-    stopVoice();
-    const id = speakId;
-    speakUntil = Date.now() + Math.min(40000, Math.max(2500, clean.length * 75));
-    const u = new SpeechSynthesisUtterance(clean);
-    u.lang = "es-MX";
-    u.rate = 1.02;
-    u.onstart = () => { if (id === speakId) updateStopBtn(); };
-    u.onend = u.onerror = () => { if (id === speakId) { speakUntil = 0; updateStopBtn(); } };
-    try { window.speechSynthesis.speak(u); } catch (_) {}
-    updateStopBtn();
-  }
-
-  function getUI() {
-    const panel = Array.from(document.querySelectorAll("div, section, aside")).find(el => {
-      const t = el.innerText || "";
-      return t.includes("DareCore Intelligence") && t.includes("Enviar");
-    });
-    const input = panel ? panel.querySelector("input[type='text'], input:not([type]), textarea") : null;
-    const sendBtn = panel ? Array.from(panel.querySelectorAll("button")).find(b => (b.textContent || "").trim().toLowerCase() === "enviar") : null;
-    return { panel, input, sendBtn };
-  }
-
-  function ensureStopBtn() {
-    const { panel, sendBtn } = getUI();
-    if (!panel || !sendBtn) return;
-    if (!document.getElementById("dcStopLogo")) {
-      const b = document.createElement("button");
-      b.id = "dcStopLogo";
-      b.type = "button";
-      b.title = "Detener voz";
-      b.setAttribute("aria-label", "Detener voz");
-      b.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="5" y="5" width="14" height="14" rx="2.5"></rect></svg>';
-      b.style.cssText = "display:none;align-items:center;justify-content:center;width:34px;height:34px;border-radius:50%;border:1px solid rgba(255,255,255,0.22);background:#ea580c;color:#fff;cursor:pointer;flex-shrink:0;margin-right:6px;";
-      b.addEventListener("click", e => { e.preventDefault(); e.stopPropagation(); stopVoice(); }, true);
-      sendBtn.parentElement.insertBefore(b, sendBtn);
-    }
-    updateStopBtn();
-  }
-
-  function flushVoiceSend() {
-    if (voiceTimer) { clearTimeout(voiceTimer); voiceTimer = null; }
-    if (busy) return;
-    const { input, sendBtn } = getUI();
-    if (!input || !sendBtn || sendBtn.disabled) return;
-    const txt = (input.value || "").trim();
-    if (!txt) return;
-    if (txt === lastSent && (Date.now() - lastSentTs) < 3000) return;
-    fromVoice = true;
-    sendBtn.click();
-  }
-
-  function bindRec(rec) {
-    if (!rec || rec.__dcBound) return;
-    rec.__dcBound = true;
-    rec.addEventListener("start", () => { fromVoice = true; stopVoice(); });
-    rec.addEventListener("result", () => {
-      fromVoice = true;
-      if (voiceTimer) clearTimeout(voiceTimer);
-      voiceTimer = setTimeout(flushVoiceSend, 700);
-    });
-    rec.addEventListener("end", () => {
-      if (voiceTimer) clearTimeout(voiceTimer);
-      voiceTimer = setTimeout(flushVoiceSend, 150);
-    });
-  }
-
-  ["SpeechRecognition", "webkitSpeechRecognition"].forEach(k => {
-    const Orig = window[k];
-    if (typeof Orig === "function" && !Orig.__dcProxy) {
-      window[k] = new Proxy(Orig, {
-        construct(t, args) {
-          const r = new t(...args);
-          bindRec(r);
-          return r;
-        }
-      });
-      window[k].__dcProxy = true;
-    }
-  });
-
-  document.addEventListener("click", e => {
-    const b = e.target && e.target.closest ? e.target.closest("button") : null;
-    if (!b) return;
-    if (b.id === "dcStopLogo") { e.preventDefault(); e.stopPropagation(); stopVoice(); return; }
-    const lbl = ((b.textContent || "") + " " + (b.title || "")).toLowerCase();
-    if (lbl.includes("enviar") || b.type === "submit") {
-      if (voiceTimer) { clearTimeout(voiceTimer); voiceTimer = null; }
-      fromVoice = false;
-      stopVoice();
-    }
-  }, true);
-
-  document.addEventListener("keydown", e => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      const el = document.activeElement;
-      if (el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA")) {
-        if (voiceTimer) { clearTimeout(voiceTimer); voiceTimer = null; }
-        fromVoice = false;
-        stopVoice();
-      }
-    }
-  }, true);
-
-  const origFetch = window.fetch.bind(window);
-  window.fetch = async function (input, init) {
-    const url = typeof input === "string" ? input : (input && input.url) || "";
-    if (url.includes("api.groq.com/openai/v1/chat/completions")) {
-      let msg = "";
-      try {
-        const bodyObj = init && init.body ? JSON.parse(init.body) : null;
-        const arr = bodyObj && Array.isArray(bodyObj.messages) ? bodyObj.messages : [];
-        for (let i = arr.length - 1; i >= 0; i--) {
-          if (arr[i] && arr[i].role === "user") { msg = String(arr[i].content || "").trim(); break; }
-        }
-      } catch (_) {}
-
-      const now = Date.now();
-      if (busy || (msg && msg === lastSent && (now - lastSentTs) < 3000)) {
-        return new Response(JSON.stringify({ choices: [{ message: { content: "" } }] }), {
-          status: 200,
-          headers: { "Content-Type": "application/json" }
-        });
-      }
-
-      busy = true;
-      lastSent = msg;
-      lastSentTs = now;
-      const speakTurn = fromVoice;
-      fromVoice = false;
-      if (!speakTurn) stopVoice();
-
-      try {
-        const res = await origFetch("/api/groq", {
-          method: (init && init.method) || "POST",
-          headers: { "Content-Type": "application/json" },
-          body: init && init.body
-        });
-        if (speakTurn && res.ok) {
-          res.clone().json().then(d => {
-            const out = d && d.choices && d.choices[0] && d.choices[0].message && d.choices[0].message.content;
-            if (out) speakNow(out);
-          }).catch(() => {});
-        }
-        return res;
-      } finally {
-        setTimeout(() => { busy = false; }, 350);
-      }
-    }
-
-    if (url.includes("api.groq.com/openai/v1/models")) {
-      return new Response(JSON.stringify({
-        data: [
-          { id: "openai/gpt-oss-20b" },
-          { id: "qwen/qwen3.8-27b" },
-          { id: "openai/gpt-oss-120b" }
-        ]
-      }), { status: 200, headers: { "Content-Type": "application/json" } });
-    }
-
-    return origFetch(input, init);
-  };
-
-  setInterval(updateStopBtn, 250);
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", ensureStopBtn);
-  } else {
-    ensureStopBtn();
-  }
-  new MutationObserver(ensureStopBtn).observe(document.body || document.documentElement, { childList: true, subtree: true });
-})();
-/* DC_CLEAN_CORE_END */
 (function () {
   const origFetch = window.fetch.bind(window);
   window.fetch = async function (input, init) {
@@ -293,26 +87,6 @@ No uses emojis ni asteriscos dobles (**). Escribe solo texto plano limpio.`;
         for (const m of TEXT_MODELS) {
             if (!candidates.includes(m)) candidates.push(m);
         }
-
-        try {
-            const res = await fetch("https://api.groq.com/openai/v1/models", {
-                headers: { "Authorization": "Bearer " + GROQ_API_KEY }
-            });
-            const data = await res.json();
-            if (Array.isArray(data?.data)) {
-                for (const item of data.data) {
-                    const id = item?.id;
-                    if (!id) continue;
-                    const isAudioOrSpeechOrGuard = /whisper|tts|orpheus|audio|guard|embed|safeguard|prompt/i.test(id);
-                    if (!isAudioOrSpeechOrGuard && !candidates.includes(id)) {
-                        candidates.push(id);
-                    }
-                }
-            }
-        } catch (e) {
-            // Continúa con los modelos de texto predefinidos
-        }
-
         return candidates;
     }
 
@@ -637,388 +411,6 @@ No uses emojis ni asteriscos dobles (**). Escribe solo texto plano limpio.`;
 
 
 
-// === DC_VOICE_CHAT_START ===
-(function () {
-  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-  const synth = window.speechSynthesis || null;
-  let activeAudioEl = null;
-
-  const MIC_SVG = `
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-      <rect x="9" y="2" width="6" height="12" rx="3"></rect>
-      <path d="M5 10v1a7 7 0 0 0 14 0v-1"></path>
-      <line x1="12" y1="18" x2="12" y2="22"></line>
-    </svg>
-  `;
-
-  let awaitingBotReplyForVoice = false;
-  let lastUserPromptSent = "";
-  let spokenTextsHistory = new Set();
-
-  function stopSpeakingNow() {
-    if (synth) {
-      try { synth.cancel(); } catch (e) {}
-    }
-    if (activeAudioEl) {
-      try {
-        activeAudioEl.pause();
-        activeAudioEl.currentTime = 0;
-      } catch (e) {}
-      activeAudioEl = null;
-    }
-  }
-
-  function normalizeText(str) {
-    return String(str || "")
-      .replace(/\*\*/g, "")
-      .replace(/[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu, "")
-      .replace(/\uFE0F/g, "")
-      .replace(/\s+/g, " ")
-      .trim();
-  }
-
-  function isIgnoredText(str) {
-    const clean = normalizeText(str);
-    const low = clean.toLowerCase();
-    if (!clean || clean.length < 2) return true;
-    if (
-      low.includes("generando respuesta") ||
-      low.includes("generando...") ||
-      low.includes("pensando") ||
-      low.includes("escribiendo") ||
-      clean === "..." ||
-      clean === "•••"
-    ) {
-      return true;
-    }
-    if (
-      clean === "Enviar" ||
-      clean === "DareCore Intelligence" ||
-      clean === "AI ASSISTANT • GROQ" ||
-      low.startsWith("hola. soy darecore intelligence")
-    ) {
-      return true;
-    }
-    if (lastUserPromptSent && low === normalizeText(lastUserPromptSent).toLowerCase()) {
-      return true;
-    }
-    return false;
-  }
-
-  function pickNaturalSpanishVoice() {
-    if (!synth || !synth.getVoices) return null;
-    const voices = synth.getVoices() || [];
-    const esVoices = voices.filter(v => /^es([-_]|$)/i.test(v.lang || ""));
-    if (!esVoices.length) return null;
-
-    const scored = esVoices.map(v => {
-      const n = (v.name || "").toLowerCase();
-      const l = (v.lang || "").toLowerCase();
-      let score = 0;
-      if (n.includes("natural") || n.includes("neural") || n.includes("online")) score += 100;
-      if (n.includes("google español")) score += 75;
-      if (n.includes("dalia") || n.includes("jorge") || n.includes("paulina") || n.includes("alonso")) score += 50;
-      if (l.includes("es-mx") || l.includes("es-419") || l.includes("es-us")) score += 25;
-      return { voice: v, score };
-    });
-
-    scored.sort((a, b) => b.score - a.score);
-    return scored[0] ? scored[0].voice : esVoices[0];
-  }
-
-  async function speakGeneratedReply(rawText) {
-    const clean = normalizeText(rawText);
-    if (!clean || isIgnoredText(clean)) return;
-
-    stopSpeakingNow();
-
-    if (typeof window.DC_CUSTOM_TTS === "function") {
-      try {
-        const audioOut = await window.DC_CUSTOM_TTS(clean);
-        if (audioOut) {
-          const url = typeof audioOut === "string" ? audioOut : URL.createObjectURL(audioOut);
-          activeAudioEl = new Audio(url); activeAudioEl.preservesPitch = true; activeAudioEl.playbackRate = 1.04; await activeAudioEl.play();
-          return;
-        }
-      } catch (e) {}
-    }
-
-    if (!synth) return;
-
-    try {
-      const voice = pickNaturalSpanishVoice();
-      const utter = new SpeechSynthesisUtterance(clean);
-      utter.lang = voice ? voice.lang : "es-MX";
-      if (voice) utter.voice = voice;
-      utter.rate = 1.0;
-      utter.pitch = 1.0;
-      utter.volume = 1.0;
-      synth.speak(utter);
-    } catch (e) {}
-  }
-
-  function findChatMessagesContainer(inputEl) {
-    if (!inputEl) return document.body;
-    let cur = inputEl.parentElement;
-    for (let i = 0; i < 6 && cur; i++) {
-      const scrollCandidate = cur.previousElementSibling || cur.parentElement;
-      if (scrollCandidate && scrollCandidate.scrollHeight >= 0) {
-        const hasMessages = scrollCandidate.querySelectorAll("div, p").length >= 2;
-        if (hasMessages) return scrollCandidate;
-      }
-      cur = cur.parentElement;
-    }
-    return document.body;
-  }
-
-  function extractLatestAssistantBubbleText(chatRoot) {
-    if (!chatRoot) return "";
-    // Busca bloques/burbujas directas o de nivel superior dentro del contenedor del chat
-    const bubbles = Array.from(chatRoot.children).filter(el => {
-      if (!el || el.id === "dcChatGeminiMicBtn") return false;
-      const txt = normalizeText(el.innerText || el.textContent || "");
-      return txt.length > 0;
-    });
-
-    const pool = bubbles.length ? bubbles : Array.from(chatRoot.querySelectorAll("div, p"));
-    for (let i = pool.length - 1; i >= 0; i--) {
-      const b = pool[i];
-      const fullTxt = normalizeText(b.innerText || b.textContent || "");
-      if (!fullTxt || isIgnoredText(fullTxt)) continue;
-      // Evita tomar un contenedor padre gigante que abarque todo el historial
-      if (fullTxt.length > 1800) continue;
-      return fullTxt;
-    }
-    return "";
-  }
-
-  function observeBotReplies(inputEl) {
-    if (window.__dcVoiceReplyObserverAttached) return;
-    window.__dcVoiceReplyObserverAttached = true;
-
-    let speakTimer = null;
-
-    const observer = new MutationObserver(() => {
-      const micBtn = document.getElementById("dcChatGeminiMicBtn");
-      const userStillSpeaking = micBtn && micBtn.dataset.userSpeaking === "1";
-      if (userStillSpeaking || !awaitingBotReplyForVoice) return;
-
-      const chatRoot = findChatMessagesContainer(inputEl);
-      const latestText = extractLatestAssistantBubbleText(chatRoot);
-      if (!latestText || isIgnoredText(latestText)) return;
-
-      const key = latestText.toLowerCase();
-      if (spokenTextsHistory.has(key)) return;
-
-      clearTimeout(speakTimer);
-      speakTimer = setTimeout(() => {
-        const currentBtn = document.getElementById("dcChatGeminiMicBtn");
-        if (currentBtn && currentBtn.dataset.userSpeaking === "1") return;
-        const settledText = extractLatestAssistantBubbleText(findChatMessagesContainer(inputEl));
-        const settledClean = normalizeText(settledText);
-        if (!settledClean || isIgnoredText(settledClean)) return;
-        const settledKey = settledClean.toLowerCase();
-        if (spokenTextsHistory.has(settledKey)) return;
-
-        spokenTextsHistory.add(settledKey);
-        awaitingBotReplyForVoice = false;
-        speakGeneratedReply(settledClean);
-      }, 500);
-    });
-
-    observer.observe(document.body, { childList: true, subtree: true, characterData: true });
-  }
-
-  function findChatInputAndSend() {
-    const inputs = Array.from(document.querySelectorAll("input, textarea")).filter(el => {
-      if (el.type === "hidden" || el.type === "checkbox" || el.type === "radio") return false;
-      const ph = (el.getAttribute("placeholder") || "").toLowerCase();
-      return ph.includes("prendas") || ph.includes("tallas") || ph.includes("envíos") || ph.includes("envios") || ph.includes("pregunta");
-    });
-    const input = inputs[inputs.length - 1] || null;
-    if (!input) return null;
-
-    const container = input.parentElement;
-    if (!container) return null;
-
-    const sendBtn = Array.from(container.querySelectorAll("button")).find(b => b.id !== "dcChatGeminiMicBtn");
-    return { input, container, sendBtn };
-  }
-
-  function mountChatMic() {
-    const found = findChatInputAndSend();
-    if (!found || !found.container) return;
-    observeBotReplies(found.input);
-    if (document.getElementById("dcChatGeminiMicBtn")) return;
-
-    const micBtn = document.createElement("button");
-    micBtn.type = "button";
-    micBtn.id = "dcChatGeminiMicBtn";
-    micBtn.setAttribute("aria-label", "Hablar con DareCore Intelligence");
-    micBtn.title = "Hablar con voz";
-    micBtn.innerHTML = MIC_SVG;
-    micBtn.dataset.userSpeaking = "0";
-
-    const styleIdle = () => {
-      micBtn.style.setProperty("width", "38px", "important");
-      micBtn.style.setProperty("height", "38px", "important");
-      micBtn.style.setProperty("min-width", "38px", "important");
-      micBtn.style.setProperty("padding", "0", "important");
-      micBtn.style.setProperty("margin-right", "6px", "important");
-      micBtn.style.setProperty("border-radius", "999px", "important");
-      micBtn.style.setProperty("background", "#ffffff", "important");
-      micBtn.style.setProperty("background-color", "#ffffff", "important");
-      micBtn.style.setProperty("color", "#111115", "important");
-      micBtn.style.setProperty("border", "1.5px solid #ff2a00", "important");
-      micBtn.style.setProperty("box-shadow", "0 0 10px rgba(255,42,0,0.35)", "important");
-      micBtn.style.setProperty("display", "inline-flex", "important");
-      micBtn.style.setProperty("align-items", "center", "important");
-      micBtn.style.setProperty("justify-content", "center", "important");
-      micBtn.style.setProperty("cursor", "pointer", "important");
-    };
-
-    const styleListening = () => {
-      micBtn.style.setProperty("width", "38px", "important");
-      micBtn.style.setProperty("height", "38px", "important");
-      micBtn.style.setProperty("min-width", "38px", "important");
-      micBtn.style.setProperty("padding", "0", "important");
-      micBtn.style.setProperty("margin-right", "6px", "important");
-      micBtn.style.setProperty("border-radius", "999px", "important");
-      micBtn.style.setProperty("background", "#ff2a00", "important");
-      micBtn.style.setProperty("background-color", "#ff2a00", "important");
-      micBtn.style.setProperty("color", "#ffffff", "important");
-      micBtn.style.setProperty("border", "1.5px solid #ff2a00", "important");
-      micBtn.style.setProperty("box-shadow", "0 0 0 4px rgba(255,42,0,0.25), 0 0 18px rgba(255,42,0,0.8)", "important");
-      micBtn.style.setProperty("display", "inline-flex", "important");
-      micBtn.style.setProperty("align-items", "center", "important");
-      micBtn.style.setProperty("justify-content", "center", "important");
-      micBtn.style.setProperty("cursor", "pointer", "important");
-    };
-
-    styleIdle();
-
-    if (found.sendBtn) {
-      found.container.insertBefore(micBtn, found.sendBtn);
-    } else {
-      found.container.appendChild(micBtn);
-    }
-
-    if (!SpeechRecognition) {
-      micBtn.disabled = true;
-      micBtn.style.setProperty("opacity", "0.45", "important");
-      return;
-    }
-
-    const recognition = new SpeechRecognition();
-    recognition.lang = "es-MX";
-    recognition.continuous = true;
-    recognition.interimResults = true;
-
-    let listening = false;
-    let committedText = "";
-    let finishSpeechTimer = null;
-
-    function flushAndSend() {
-      clearTimeout(finishSpeechTimer);
-      const finalPayload = (found.input.value || committedText || "").trim();
-      listening = false;
-      micBtn.dataset.userSpeaking = "0";
-      styleIdle();
-      try { recognition.stop(); } catch (e) {}
-
-      if (finalPayload && found.sendBtn) {
-        lastUserPromptSent = finalPayload;
-        awaitingBotReplyForVoice = true;
-        found.input.value = finalPayload;
-        found.input.dispatchEvent(new Event("input", { bubbles: true }));
-        found.sendBtn.click();
-      }
-    }
-
-    recognition.onspeechstart = function () {
-      stopSpeakingNow();
-      clearTimeout(finishSpeechTimer);
-    };
-
-    recognition.onresult = function (event) {
-      stopSpeakingNow();
-      clearTimeout(finishSpeechTimer);
-
-      let finalChunk = "";
-      let interimChunk = "";
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        const tr = event.results[i][0].transcript || "";
-        if (event.results[i].isFinal) {
-          finalChunk += tr;
-        } else {
-          interimChunk += tr;
-        }
-      }
-
-      if (finalChunk.trim()) {
-        committedText = (committedText ? committedText + " " : "") + finalChunk.trim();
-      }
-
-      const liveText = (committedText + (interimChunk.trim() ? " " + interimChunk.trim() : "")).trim();
-      found.input.value = liveText;
-      found.input.dispatchEvent(new Event("input", { bubbles: true }));
-
-      if (liveText) {
-        finishSpeechTimer = setTimeout(() => {
-          flushAndSend();
-        }, 1700);
-      }
-    };
-
-    recognition.onerror = function () {
-      clearTimeout(finishSpeechTimer);
-      listening = false;
-      micBtn.dataset.userSpeaking = "0";
-      styleIdle();
-    };
-
-    recognition.onend = function () {
-      if (listening) {
-        flushAndSend();
-      } else {
-        micBtn.dataset.userSpeaking = "0";
-        styleIdle();
-      }
-    };
-
-    micBtn.addEventListener("click", function (e) {
-      e.preventDefault();
-      e.stopPropagation();
-      stopSpeakingNow();
-
-      if (!listening) {
-        committedText = "";
-        found.input.value = "";
-        found.input.dispatchEvent(new Event("input", { bubbles: true }));
-        listening = true;
-        micBtn.dataset.userSpeaking = "1";
-        styleListening();
-        try {
-          recognition.start();
-        } catch (err) {
-          listening = false;
-          micBtn.dataset.userSpeaking = "0";
-          styleIdle();
-        }
-      } else {
-        flushAndSend();
-      }
-    });
-  }
-
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", mountChatMic);
-  } else {
-    mountChatMic();
-  }
-  setInterval(mountChatMic, 500);
-})();
-// === DC_VOICE_CHAT_END ===
 (function () {
   const oldStyle = document.getElementById("dcOrbStyle");
   if (oldStyle) oldStyle.remove();
@@ -1208,3 +600,314 @@ No uses emojis ni asteriscos dobles (**). Escribe solo texto plano limpio.`;
   }
   new MutationObserver(applyOrb).observe(document.body || document.documentElement, { childList: true, subtree: true });
 })();
+
+/* DC_UNIFIED_CHAT_MIC_TTS_START */
+(function () {
+  window.DC_CUSTOM_TTS = null;
+  const synth = window.speechSynthesis || null;
+  const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition || null;
+
+  let nextTurnIsVoice = false;
+  let speakingActive = false;
+  let speakWatchdog = null;
+  let activeFetchPromise = null;
+  let activeFetchKey = "";
+  let lastDoneKey = "";
+  let lastDoneTime = 0;
+
+  function stopVoiceNow() {
+    speakingActive = false;
+    if (speakWatchdog) {
+      clearInterval(speakWatchdog);
+      speakWatchdog = null;
+    }
+    try {
+      if (synth) synth.cancel();
+    } catch (_) {}
+    updateStopIcon();
+  }
+
+  function updateStopIcon() {
+    const stopBtn = document.getElementById("dcVoiceStopIconBtn");
+    if (!stopBtn) return;
+    const isPlaying = speakingActive || Boolean(synth && (synth.speaking || synth.pending));
+    stopBtn.style.display = isPlaying ? "inline-flex" : "none";
+  }
+
+  function speakTextSimultaneously(text) {
+    if (!synth || !text) return;
+    const clean = String(text)
+      .replace(/\*\*/g, "")
+      .replace(/[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu, "")
+      .replace(/\uFE0F/g, "")
+      .replace(/\s+/g, " ")
+      .trim();
+    if (!clean) return;
+
+    stopVoiceNow();
+    speakingActive = true;
+    updateStopIcon();
+
+    try {
+      const utter = new SpeechSynthesisUtterance(clean);
+      utter.lang = "es-MX";
+      utter.rate = 1.0;
+      utter.pitch = 1.0;
+
+      const voices = synth.getVoices ? synth.getVoices() : [];
+      const esVoice = voices.find(v => /es-MX/i.test(v.lang)) || voices.find(v => /^es/i.test(v.lang));
+      if (esVoice) utter.voice = esVoice;
+
+      utter.onend = utter.onerror = () => {
+        speakingActive = false;
+        if (speakWatchdog) {
+          clearInterval(speakWatchdog);
+          speakWatchdog = null;
+        }
+        updateStopIcon();
+      };
+
+      synth.speak(utter);
+      if (synth.paused) synth.resume();
+    } catch (_) {
+      speakingActive = false;
+      updateStopIcon();
+      return;
+    }
+
+    const maxEnd = Date.now() + Math.min(45000, Math.max(2500, clean.length * 80));
+    speakWatchdog = setInterval(() => {
+      if (synth && synth.paused) {
+        try { synth.resume(); } catch (_) {}
+      }
+      const stillSpeaking = synth && (synth.speaking || synth.pending);
+      if (!stillSpeaking && Date.now() > maxEnd) {
+        speakingActive = false;
+        clearInterval(speakWatchdog);
+        speakWatchdog = null;
+      } else if (!stillSpeaking && Date.now() > maxEnd - 1500 && !speakingActive) {
+        clearInterval(speakWatchdog);
+        speakWatchdog = null;
+      }
+      updateStopIcon();
+    }, 200);
+  }
+
+  function mountControls() {
+    const form = document.getElementById("darecoreAiForm");
+    const input = document.getElementById("darecoreAiInput");
+    const sendBtn = document.getElementById("darecoreAiSend");
+    if (!form || !input || !sendBtn) return;
+
+    if (!document.getElementById("dcVoiceStopIconBtn")) {
+      const stopBtn = document.createElement("button");
+      stopBtn.id = "dcVoiceStopIconBtn";
+      stopBtn.type = "button";
+      stopBtn.setAttribute("aria-label", "Detener voz");
+      stopBtn.title = "Detener voz";
+      stopBtn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="5" y="5" width="14" height="14" rx="2.5"></rect></svg>';
+      stopBtn.style.cssText = "display:none;align-items:center;justify-content:center;width:34px;height:34px;min-width:34px;border-radius:50%;border:1px solid rgba(255,255,255,0.22);background:#ff2a00;color:#ffffff;cursor:pointer;flex-shrink:0;";
+      stopBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        stopVoiceNow();
+      });
+      form.insertBefore(stopBtn, sendBtn);
+    }
+
+    if (SpeechRec && !document.getElementById("dcMicBtn")) {
+      const micBtn = document.createElement("button");
+      micBtn.id = "dcMicBtn";
+      micBtn.type = "button";
+      micBtn.setAttribute("aria-label", "Dictar por micrófono");
+      micBtn.title = "Dictar por micrófono";
+      micBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3"></rect><path d="M5 10v1a7 7 0 0 0 14 0v-1"></path><line x1="12" y1="18" x2="12" y2="22"></line></svg>';
+      micBtn.style.cssText = "display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;min-width:36px;border-radius:50%;border:1.5px solid #ff2a00;background:#ffffff;color:#111115;cursor:pointer;flex-shrink:0;";
+
+      const rec = new SpeechRec();
+      rec.lang = "es-MX";
+      rec.continuous = false;
+      rec.interimResults = true;
+
+      let listening = false;
+      let transcriptText = "";
+      let silenceTimer = null;
+      let alreadySubmitted = false;
+
+      function setMicVisual(isRec) {
+        micBtn.style.background = isRec ? "#ff2a00" : "#ffffff";
+        micBtn.style.color = isRec ? "#ffffff" : "#111115";
+      }
+
+      function submitVoicePromptOnce() {
+        if (silenceTimer) {
+          clearTimeout(silenceTimer);
+          silenceTimer = null;
+        }
+        if (alreadySubmitted) return;
+        const textToSend = (transcriptText || input.value || "").trim();
+        listening = false;
+        setMicVisual(false);
+        if (!textToSend) return;
+
+        alreadySubmitted = true;
+        nextTurnIsVoice = true;
+        try { rec.stop(); } catch (_) {}
+
+        input.value = textToSend;
+        if (typeof form.requestSubmit === "function") {
+          form.requestSubmit();
+        } else {
+          sendBtn.click();
+        }
+        setTimeout(() => {
+          if (input.value === textToSend) input.value = "";
+        }, 0);
+      }
+
+      rec.onstart = () => {
+        stopVoiceNow();
+        listening = true;
+        alreadySubmitted = false;
+        transcriptText = "";
+        setMicVisual(true);
+      };
+
+      rec.onresult = (event) => {
+        let combined = "";
+        let hasFinal = false;
+        for (let i = 0; i < event.results.length; i++) {
+          combined += (event.results[i][0] && event.results[i][0].transcript) ? event.results[i][0].transcript + " " : "";
+          if (event.results[i].isFinal) hasFinal = true;
+        }
+        transcriptText = combined.trim();
+        input.value = transcriptText;
+        input.dispatchEvent(new Event("input", { bubbles: true }));
+
+        if (silenceTimer) clearTimeout(silenceTimer);
+        if (transcriptText) {
+          silenceTimer = setTimeout(() => {
+            submitVoicePromptOnce();
+          }, hasFinal ? 550 : 1200);
+        }
+      };
+
+      rec.onerror = () => {
+        if (silenceTimer) { clearTimeout(silenceTimer); silenceTimer = null; }
+        listening = false;
+        setMicVisual(false);
+      };
+
+      rec.onend = () => {
+        if (listening && transcriptText && !alreadySubmitted) {
+          submitVoicePromptOnce();
+        } else {
+          listening = false;
+          setMicVisual(false);
+        }
+      };
+
+      micBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        stopVoiceNow();
+        if (!listening) {
+          alreadySubmitted = false;
+          transcriptText = "";
+          input.value = "";
+          try {
+            rec.start();
+          } catch (_) {
+            listening = false;
+            setMicVisual(false);
+          }
+        } else {
+          submitVoicePromptOnce();
+        }
+      });
+
+      form.insertBefore(micBtn, sendBtn);
+    }
+
+    updateStopIcon();
+  }
+
+  document.addEventListener("submit", (e) => {
+    if (e.target && e.target.id === "darecoreAiForm") {
+      if (!nextTurnIsVoice) {
+        stopVoiceNow();
+      }
+    }
+  }, true);
+
+  const origFetch = window.fetch.bind(window);
+  window.fetch = async function (input, init) {
+    const url = typeof input === "string" ? input : (input && input.url) || "";
+    if (url.includes("api.groq.com/openai/v1/chat/completions")) {
+      const shouldSpeak = nextTurnIsVoice;
+      nextTurnIsVoice = false;
+      if (!shouldSpeak) {
+        stopVoiceNow();
+      }
+
+      let payloadKey = "";
+      try {
+        const parsed = init && init.body ? JSON.parse(init.body) : null;
+        payloadKey = JSON.stringify(parsed && parsed.messages ? parsed.messages : []);
+      } catch (_) {
+        payloadKey = String((init && init.body) || "");
+      }
+
+      const now = Date.now();
+      if (activeFetchPromise && payloadKey === activeFetchKey) {
+        return activeFetchPromise.then(r => r.clone());
+      }
+      if (payloadKey && payloadKey === lastDoneKey && (now - lastDoneTime) < 2500) {
+        return new Response(JSON.stringify({ choices: [{ message: { content: "" } }] }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+
+      activeFetchKey = payloadKey;
+      activeFetchPromise = origFetch("/api/groq", {
+        method: (init && init.method) || "POST",
+        headers: { "Content-Type": "application/json" },
+        body: init && init.body
+      });
+
+      try {
+        const res = await activeFetchPromise;
+        lastDoneKey = payloadKey;
+        lastDoneTime = Date.now();
+
+        if (shouldSpeak && res.ok) {
+          res.clone().json().then(data => {
+            const replyText = data && data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
+            if (replyText) {
+              speakTextSimultaneously(replyText);
+            }
+          }).catch(() => {});
+        }
+        return res;
+      } finally {
+        setTimeout(() => {
+          activeFetchPromise = null;
+        }, 300);
+      }
+    }
+
+    return origFetch(input, init);
+  };
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", mountControls);
+  } else {
+    mountControls();
+  }
+  setInterval(() => {
+    mountControls();
+    updateStopIcon();
+  }, 400);
+})();
+/* DC_UNIFIED_CHAT_MIC_TTS_END */
