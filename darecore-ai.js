@@ -1,4 +1,4 @@
-/* DC_CLEAN_CHAT_MALE_VOICE_START */
+/* DC_CLOSE_X_AND_CHAT_FIX_START */
 (function () {
   const DEFAULT_GREETING = "Hola. Soy DareCore Intelligence. Pregúntame por nuestras prendas, cortes, tallas o personalización en Dare Lab.";
   const conversation = [
@@ -57,26 +57,110 @@
     return origFetch(input, init);
   };
 
-  function getMessagesBox() {
-    const greetNodes = Array.from(document.querySelectorAll("div, p")).filter(el =>
-      (el.textContent || "").trim().startsWith("Hola. Soy DareCore Intelligence.")
-    );
-    if (greetNodes.length) {
-      const g = greetNodes[0];
-      if (g.parentElement && g.parentElement.parentElement) {
-        return g.parentElement;
+  function findPanel() {
+    const candidates = Array.from(document.querySelectorAll("div, section, aside"));
+    for (const el of candidates) {
+      const txt = el.innerText || "";
+      if (txt.includes("DareCore Intelligence") && txt.includes("Enviar")) {
+        const rect = el.getBoundingClientRect();
+        if (rect.width >= 260 && rect.height >= 260) {
+          return el;
+        }
       }
     }
-    const panel = Array.from(document.querySelectorAll("div, section")).find(el => {
-      const t = el.innerText || "";
-      return t.includes("DareCore Intelligence") && t.includes("Enviar");
-    });
-    return panel || document.body;
+    return null;
   }
 
-  function addMessage(text, isUser) {
+  function closePanel() {
+    if ("speechSynthesis" in window) {
+      try { window.speechSynthesis.cancel(); } catch (_) {}
+    }
+    const panel = findPanel();
+    if (!panel) return;
+
+    const closeBtn = Array.from(panel.querySelectorAll("button")).find(b => {
+      const t = (b.textContent || "").trim();
+      const aria = (b.getAttribute("aria-label") || "").toLowerCase();
+      return t === "×" || t === "x" || t === "X" || aria.includes("close") || aria.includes("cerrar");
+    });
+
+    if (closeBtn && !closeBtn.dataset.dcForceClose) {
+      closeBtn.dataset.dcForceClose = "1";
+      closeBtn.click();
+    }
+
+    const r = panel.getBoundingClientRect();
+    if (r.width > 0 && r.height > 0 && getComputedStyle(panel).display !== "none") {
+      panel.style.setProperty("display", "none", "important");
+      panel.classList.remove("is-open", "open", "active");
+    }
+  }
+
+  function ensureCloseButton(panel) {
+    if (!panel) return;
+    if (getComputedStyle(panel).position === "static") {
+      panel.style.position = "relative";
+    }
+    let xBtn = panel.querySelector("button[data-dc-x-btn='1']");
+    if (!xBtn) {
+      const existing = Array.from(panel.querySelectorAll("button")).find(b => {
+        const t = (b.textContent || "").trim();
+        return t === "×" || t === "x" || t === "X";
+      });
+      if (existing) {
+        xBtn = existing;
+      } else {
+        xBtn = document.createElement("button");
+        xBtn.type = "button";
+        xBtn.textContent = "×";
+        panel.appendChild(xBtn);
+      }
+      xBtn.setAttribute("data-dc-x-btn", "1");
+      xBtn.setAttribute("aria-label", "Cerrar DareCore Intelligence");
+      xBtn.title = "Cerrar";
+      xBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        closePanel();
+      }, true);
+    }
+
+    xBtn.style.cssText = [
+      "position:absolute !important",
+      "top:14px !important",
+      "right:14px !important",
+      "width:32px !important",
+      "height:32px !important",
+      "border-radius:50% !important",
+      "border:1px solid rgba(255,255,255,0.16) !important",
+      "background:#27272a !important",
+      "color:#ffffff !important",
+      "font-size:20px !important",
+      "line-height:1 !important",
+      "display:flex !important",
+      "align-items:center !important",
+      "justify-content:center !important",
+      "cursor:pointer !important",
+      "z-index:100000 !important",
+      "opacity:1 !important",
+      "visibility:visible !important"
+    ].join(";");
+  }
+
+  function getMessagesBox(panel) {
+    if (!panel) return document.body;
+    const greetNodes = Array.from(panel.querySelectorAll("div, p")).filter(el =>
+      (el.textContent || "").trim().startsWith("Hola. Soy DareCore Intelligence.")
+    );
+    if (greetNodes.length && greetNodes[0].parentElement) {
+      return greetNodes[0].parentElement;
+    }
+    return panel;
+  }
+
+  function addMessage(panel, text, isUser) {
     if (!text) return;
-    const box = getMessagesBox();
+    const box = getMessagesBox(panel);
     const row = document.createElement("div");
     row.setAttribute("data-dc-clean-msg", isUser ? "user" : "bot");
     row.style.cssText = isUser
@@ -85,8 +169,8 @@
 
     const bubble = document.createElement("div");
     bubble.style.cssText = isUser
-      ? "background:#ea580c;color:#fff;padding:10px 14px;border-radius:14px;max-width:82%;font-size:14px;line-height:1.45;word-break:break-word;"
-      : "background:#27272a;color:#f4f4f5;padding:10px 14px;border-radius:14px;max-width:82%;font-size:14px;line-height:1.45;word-break:break-word;";
+      ? "background:#ea580c;color:#fff;padding:10px 14px;border-radius:14px;max-width:85%;font-size:14px;line-height:1.45;white-space:pre-line;word-break:break-word;"
+      : "background:#27272a;color:#f4f4f5;padding:10px 14px;border-radius:14px;max-width:85%;font-size:14px;line-height:1.45;white-space:pre-line;word-break:break-word;";
     bubble.textContent = text;
     row.appendChild(bubble);
 
@@ -96,11 +180,11 @@
     }
   }
 
-  async function handleUserMessage(rawText) {
+  async function handleUserMessage(panel, rawText) {
     const clean = (rawText || "").trim();
     if (!clean || clean === DEFAULT_GREETING) return;
 
-    addMessage(clean, true);
+    addMessage(panel, clean, true);
     conversation.push({ role: "user", content: clean });
 
     const models = ["openai/gpt-oss-20b", "qwen/qwen3.8-27b", "openai/gpt-oss-120b"];
@@ -132,11 +216,15 @@
     }
 
     conversation.push({ role: "assistant", content: reply });
-    addMessage(reply, false);
+    addMessage(panel, reply, false);
     speakMale(reply);
   }
 
-  function wireChat() {
+  function wireUI() {
+    const panel = findPanel();
+    if (!panel) return;
+    ensureCloseButton(panel);
+
     document.querySelectorAll("div, p, span").forEach(el => {
       if (el.children.length === 0 && (el.textContent || "").includes("Configura primero tu GROQ_API_KEY")) {
         const parent = el.parentElement;
@@ -144,18 +232,15 @@
       }
     });
 
-    const inputs = Array.from(document.querySelectorAll("input[type='text'], input:not([type]), textarea"));
-    const input = inputs.find(el => {
-      const ph = (el.getAttribute("placeholder") || "").toLowerCase();
-      return ph.includes("prendas") || ph.includes("tallas") || ph.includes("escribe") || ph.includes("pregunta");
-    });
+    const inputs = Array.from(panel.querySelectorAll("input[type='text'], input:not([type]), textarea"));
+    const input = inputs[0];
 
     if (input && !input.dataset.dcCleanWired) {
       input.dataset.dcCleanWired = "1";
       const form = input.closest("form");
       const btn = form
         ? form.querySelector("button[type='submit'], button")
-        : Array.from(document.querySelectorAll("button")).find(b => (b.textContent || "").trim().toLowerCase() === "enviar");
+        : Array.from(panel.querySelectorAll("button")).find(b => (b.textContent || "").trim().toLowerCase() === "enviar");
 
       const submitNow = (e) => {
         if (e) {
@@ -166,7 +251,7 @@
         const val = input.value;
         input.value = "";
         if (val && val.trim()) {
-          handleUserMessage(val.trim());
+          handleUserMessage(panel, val.trim());
         }
       };
 
@@ -183,6 +268,10 @@
     }
   }
 
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") closePanel();
+  });
+
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (SR && !SR.__dcCleanPatched) {
     const OrigSR = SR;
@@ -194,7 +283,10 @@
         if (last && last.isFinal && last[0] && last[0].transcript) {
           const spoken = last[0].transcript.trim();
           if (spoken) {
-            setTimeout(() => handleUserMessage(spoken), 120);
+            setTimeout(() => {
+              const p = findPanel() || document.body;
+              handleUserMessage(p, spoken);
+            }, 120);
           }
         }
       });
@@ -207,13 +299,13 @@
   }
 
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", wireChat);
+    document.addEventListener("DOMContentLoaded", wireUI);
   } else {
-    wireChat();
+    wireUI();
   }
-  new MutationObserver(wireChat).observe(document.body || document.documentElement, { childList: true, subtree: true });
+  new MutationObserver(wireUI).observe(document.body || document.documentElement, { childList: true, subtree: true });
 })();
-/* DC_CLEAN_CHAT_MALE_VOICE_END */
+/* DC_CLOSE_X_AND_CHAT_FIX_END */
 /* DC_GROQ_PROXY_START */
 (function () {
   const origFetch = window.fetch.bind(window);
