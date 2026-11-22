@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DARECORE | Colección Hombre · Streetwear & Gymwear</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Grotesk:wght@400;500;600;700&display=block" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header>
+        <div class="nav-container">
+            <a href="index.html" class="logo">DARE<span>CORE</span></a>
+
+            <ul class="nav-links">
+                <li><a href="index.html">INICIO</a></li>
+                <li><a href="hombre.html" class="active">HOMBRE</a></li>
+                <li><a href="mujer.html">MUJER</a></li>
+                <li><a href="oversize.html">OVERSIZE</a></li>
+                <li><a href="personalizar.html">PERSONALIZAR</a></li>
+            </ul>
+
+            <div class="nav-actions">
+                <input type="text" id="searchInput" class="search-box" placeholder="Buscar en hombre...">
+                <button class="cart-btn" type="button" aria-label="Carrito de compras">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <circle cx="9" cy="21" r="1"></circle>
+                        <circle cx="20" cy="21" r="1"></circle>
+                        <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                    </svg>
+                    <span class="cart-badge">0</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <section class="hero">
+        <div class="hero-content">
+            <h1>COLECCIÓN HOMBRE // HEAVY DUTY</h1>
+            <p>Playeras de alto gramaje, cortes estructurados y piezas diseñadas para el entrenamiento intenso y la calle.</p>
+        </div>
+    </section>
+
+    <main class="container">
+        <div id="productGrid" class="product-grid"></div>
+    </main>
+
+    <footer>
+        <div class="footer-container">
+            <div class="footer-col">
+                <h4>DARE<span style="color:#ff4d1a;">CORE</span></h4>
+                <p>Streetwear & Gymwear de alto impacto diseñado en León, Guanajuato. Cortes oversize, telas de alto gramaje y drops limitados.</p>
+            </div>
+            <div class="footer-col">
+                <h4>ATENCIÓN DIRECTA</h4>
+                <p>Pedidos personalizados en Dare Lab, entregas locales en León y envíos a todo México.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyAVNhtTFpbnbhL9RpQ5rGoK_ZgYTKg74xY",
+            authDomain: "dare-core-store.firebaseapp.com",
+            projectId: "dare-core-store",
+            storageBucket: "dare-core-store.firebasestorage.app",
+            messagingSenderId: "104855215716",
+            appId: "1:104855215716:web:e6ef3fba67a906bf904971",
+            measurementId: "G-Q641EBS6LM"
+        };
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        window.db = firebase.firestore();
+        window.auth = firebase.auth();
+    </script>
+    <script src="script.js"></script>
+    <script src="smooth-nav.js"></script>
+    <script type="module" src="tts-config.js"></script>
+<script src="darecore-ai.js"></script>
+</body>
+</html>

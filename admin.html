@@ -1,0 +1,1282 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DARECORE // Panel de Administración</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .admin-container {
+            max-width: 1100px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+        .login-box {
+            max-width: 400px;
+            margin: 80px auto;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            padding: 30px;
+        }
+        .admin-grid {
+            display: grid;
+            grid-template-columns: 1fr 1.5fr;
+            gap: 30px;
+        }
+        .panel-box {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            padding: 25px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            font-weight: 700;
+        }
+        .form-control {
+            width: 100%;
+            background: #0b0b0b;
+            border: 1px solid var(--border-color);
+            color: white;
+            padding: 10px;
+            font-size: 13px;
+        }
+        .form-control:focus {
+            outline: none;
+            border-color: var(--accent-color);
+        }
+        .product-item-admin {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #0b0b0b;
+            border: 1px solid var(--border-color);
+            padding: 12px;
+            margin-bottom: 12px;
+            gap: 15px;
+        }
+        .product-item-admin img {
+            width: 60px;
+            height: 60px;
+            object-fit: cover;
+            background: #202020;
+        }
+        .btn-delete {
+            background: #2a1212;
+            color: #ff4d4d;
+            border: 1px solid #5c1a1a;
+            padding: 6px 12px;
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer;
+            text-transform: uppercase;
+        }
+        .btn-delete:hover {
+            background: #ff3b1b;
+            color: white;
+        }
+        .hidden { display: none; }
+        @media(max-width: 850px) { .admin-grid { grid-template-columns: 1fr; } }
+    </style>
+<style id="dcCleanAiAdminStyle">
+  #openAiModSectionBtn,
+  button#openAiModSectionBtn {
+    background: transparent !important;
+    background-color: transparent !important;
+    color: #111115 !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    padding: 4px 6px !important;
+    margin-right: 28px !important;
+    font-family: inherit !important;
+    font-size: 12px !important;
+    font-weight: 800 !important;
+    letter-spacing: 0.7px !important;
+    line-height: normal !important;
+    text-transform: uppercase !important;
+    text-decoration: none !important;
+    cursor: pointer !important;
+    display: inline-flex !important;
+    align-items: center !important;
+  }
+  #openAiModSectionBtn:hover,
+  button#openAiModSectionBtn:hover {
+    color: #ff2a00 !important;
+  }
+  header nav,
+  header .nav,
+  header .actions,
+  .admin-header nav,
+  .dc-top-nav {
+    display: flex !important;
+    align-items: center !important;
+    gap: 28px !important;
+    flex-wrap: wrap !important;
+  }
+  body.dc-ai-mode #darecoreAiKnowledgeAdmin {
+    display: block !important;
+  }
+  body.dc-ai-mode .dc-admin-hidden-section {
+    display: none !important;
+  }
+</style>
+<style id="dcSafeHeaderStyle">
+  #openAiModSectionBtn,
+  button#openAiModSectionBtn {
+    background: transparent !important;
+    background-color: transparent !important;
+    color: #111115;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    margin-right: 28px !important;
+    font-family: inherit !important;
+    font-size: 12px !important;
+    font-weight: 800 !important;
+    letter-spacing: 0.7px !important;
+    line-height: 1.2 !important;
+    text-transform: uppercase !important;
+    text-decoration: none !important;
+    cursor: pointer !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    position: relative !important;
+    z-index: 20 !important;
+    pointer-events: auto !important;
+    transition: color 0.15s ease !important;
+  }
+  #openAiModSectionBtn:hover,
+  button#openAiModSectionBtn:hover {
+    color: #ff2a00 !important;
+  }
+</style>
+</head>
+<body>
+
+    <header>
+        <div class="nav-container">
+            <a href="index.html" class="logo">DARE<span>CORE</span> <small style="font-size: 11px; color: var(--text-secondary);">ADMIN</small></a>
+            <ul class="nav-links">
+                <li>
+      <button type="button" id="openAiModSectionBtn">MODIFICACION DE IA</button><a href="index.html">VER TIENDA PÚBLICA ↗</a></li>
+                <li><a href="#" id="logoutBtn" class="hidden" style="color: var(--accent-color);">CERRAR SESIÓN</a></li>
+            </ul>
+        </div>
+    </header>
+
+    <!-- PANTALLA DE LOGIN (SOLO DUEÑO) -->
+    <div id="loginSection" class="login-box">
+        <h2 style="font-size: 20px; margin-bottom: 5px;">ACCESO RESTRINGIDO</h2>
+        <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 20px;">Ingresa las credenciales de administrador de Dare Core.</p>
+
+        <form id="loginForm">
+            <div class="form-group">
+                <label>Usuario / Correo</label>
+                <input type="text" id="adminUser" class="form-control" placeholder="admin" required>
+            </div>
+            <div class="form-group">
+                <label>Contraseña</label>
+                <input type="password" id="adminPass" class="form-control" placeholder="••••••••" required>
+            </div>
+            <p id="loginError" style="color: #ff3b1b; font-size: 12px; margin-bottom: 12px; display: none;">Credenciales incorrectas.</p>
+            <button type="submit" class="btn-primary" style="width: 100%;">ENTRAR AL PANEL</button>
+        </form>
+        <p style="font-size: 11px; color: #666; margin-top: 15px; text-align: center;">
+            Usuario: <strong>admin</strong> • Contraseña: <strong>darecore2026</strong>
+        </p>
+    </div>
+
+    <!-- PANEL DE CONTROL (OCULTO HASTA INICIAR SESIÓN) -->
+    <main id="dashboardSection" class="admin-container hidden">
+        <h1 style="font-size: 26px; margin-bottom: 5px;">GESTOR DE CATÁLOGO // DARE CORE</h1>
+        <h1 style="font-size: 26px; margin-bottom: 5px;">PANEL DE ADMINISTRACIÓN</h1>
+        <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 30px;">Los productos que agregues o elimines aquí se actualizarán automáticamente en la tienda pública.</p>
+
+        <div class="admin-grid">
+           <!-- FORMULARIO PARA AGREGAR / EDITAR PRENDA -->
+            <div class="panel-box">
+                <h3 id="formTitle" style="font-size: 15px; color: var(--accent-color); margin-bottom: 20px;">+ NUEVA PRENDA</h3>
+                <form id="addProductForm">
+                    <!-- Campo oculto para guardar el ID cuando se esté editando -->
+                    <input type="hidden" id="editingProductId" value="">
+
+                    <div class="form-group">
+                        <label>Sección donde aparecerá</label>
+                        <select id="prodCategory" class="form-control" required>
+                            <option value="inicio">Inicio (Drop Activo)</option>
+                            <option value="hombre">Hombre // Track & Core</option>
+                            <option value="mujer">Mujer // Active & Street</option>
+                            <option value="oversize">Oversize Drop // 240G & 400G</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Foto de la prenda (Desde PC o Celular)</label>
+                        <input type="file" id="prodImageFile" class="form-control" accept="image/*">
+                        <small style="font-size: 11px; color: var(--text-secondary); display: block; margin-top: 4px;">* Déjalo vacío si deseas conservar la foto actual al editar.</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Etiqueta Superior (Ej: BEST SELLER, 400G, NUEVO)</label>
+                        <input type="text" id="prodTag" class="form-control" placeholder="NUEVO DROP" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Nombre del Producto</label>
+                        <input type="text" id="prodName" class="form-control" placeholder="Ej: MONTE CARLO RACING #04" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Descripción corta</label>
+                        <textarea id="prodDesc" class="form-control" rows="2" placeholder="Ej: Corte boxy fit, algodón peinado 240g..." required></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Precio (MXN)</label>
+                        <input type="number" id="prodPrice" class="form-control" placeholder="599" required>
+                    </div>
+
+                    <div style="display: flex; gap: 10px;">
+                        <button type="submit" id="submitBtn" class="btn-primary" style="width: 100%;">PUBLICAR EN TIENDA</button>
+                        <button type="button" id="cancelEditBtn" class="btn-delete hidden" style="width: 130px; text-align: center; display: flex; align-items: center; justify-content: center;">CANCELAR</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- LISTA DE PRODUCTOS PUBLICADOS -->
+            <div class="panel-box">
+                <h3 style="font-size: 15px; margin-bottom: 20px;">PRENDAS PUBLICADAS EN TIENDA (<span id="totalCount">0</span>)</h3>
+                <div id="adminProductList">
+                    <!-- Aquí se cargan dinámicamente los productos -->
+                </div>
+            </div>
+        </div>
+
+        <!-- SECCIÓN DE GESTIÓN DE BASES Y PRECIOS (DARE LAB - PERSONALIZAR) -->
+        <div class="panel-box" style="margin-top: 35px;">
+            <h3 style="font-size: 15px; color: var(--accent-color); margin-bottom: 8px; text-transform: uppercase;">⚙️ EDITAR BASES & GRAMAJES (DARE LAB PERSONALIZADO)</h3>
+            <h3 style="font-size: 15px; color: var(--accent-color); margin-bottom: 8px; text-transform: uppercase;">EDITAR BASES & GRAMAJES (DARE LAB PERSONALIZADO)</h3>
+            <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 20px;">Modifica aquí los nombres, descripciones y precios base que verán los clientes en la sección de Personalizar.</p>
+            <div id="adminCustomBasesList" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px;">
+                <!-- Se cargan dinámicamente las bases para editar -->
+            </div>
+        </div>
+
+        <!-- SECCIÓN: COMPRAS DESDE EL CARRITO -->
+        <div class="panel-box" style="margin-top: 35px;">
+            <h3 style="font-size: 15px; color: var(--accent-color); margin-bottom: 8px; text-transform: uppercase;">🛒 COMPRAS DEL CARRITO (<span id="ordersCount">0</span>)</h3>
+            <h3 style="font-size: 15px; color: var(--accent-color); margin-bottom: 8px; text-transform: uppercase;">COMPRAS DEL CARRITO (<span id="ordersCount">0</span>)</h3>
+            <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 20px;">Pedidos enviados a WhatsApp desde el carrito con su número de compra y desglose exacto de prendas.</p>
+            <div id="adminOrdersList" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px;">
+                <!-- Se cargan dinámicamente las compras del carrito -->
+            </div>
+        </div>
+
+        <!-- SECCIÓN: SOLICITUDES DARE LAB (FOTOS Y DISEÑOS) -->
+        <div class="panel-box" style="margin-top: 35px;">
+            <h3 style="font-size: 15px; color: var(--accent-color); margin-bottom: 8px; text-transform: uppercase;">🎨 SOLICITUDES DARE LAB // FOTOS Y DISEÑOS (<span id="dareLabCount">0</span>)</h3>
+            <h3 style="font-size: 15px; color: var(--accent-color); margin-bottom: 8px; text-transform: uppercase;">SOLICITUDES DARE LAB // FOTOS Y DISEÑOS (<span id="dareLabCount">0</span>)</h3>
+            <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 20px;">Haz clic en cualquier imagen subida por un cliente para descargarla en tu equipo.</p>
+            <div id="adminDareLabList" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 15px;">
+                <!-- Se cargan dinámicamente las solicitudes de Dare Lab -->
+            </div>
+        </div>
+
+        <!-- SECCIÓN: CLIENTES REGISTRADOS CON GOOGLE -->
+        <div class="panel-box" style="margin-top: 35px;">
+            <h3 style="font-size: 15px; color: var(--accent-color); margin-bottom: 8px; text-transform: uppercase;">👤 CLIENTES REGISTRADOS (<span id="usersCount">0</span>)</h3>
+            <h3 style="font-size: 15px; color: var(--accent-color); margin-bottom: 8px; text-transform: uppercase;">CLIENTES REGISTRADOS (<span id="usersCount">0</span>)</h3>
+            <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 20px;">Usuarios que han iniciado sesión con Google en la tienda.</p>
+            <div id="adminUsersList" style="display: flex; flex-direction: column; gap: 10px; max-height: 320px; overflow-y: auto;">
+                <!-- Se cargan dinámicamente los clientes registrados -->
+            </div>
+        </div>
+    </main>
+
+    <!-- Conexión a Firebase Firestore -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+    <script>
+      const firebaseConfig = {
+        apiKey: "AIzaSyAVNhtTFpbnbhL9RpQ5rGoK_ZgYTKg74xY",
+        authDomain: "dare-core-store.firebaseapp.com",
+        projectId: "dare-core-store",
+        storageBucket: "dare-core-store.firebasestorage.app",
+        messagingSenderId: "104855215716",
+        appId: "1:104855215716:web:e6ef3fba67a906bf904971"
+      };
+      if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+      }
+      window.db = firebase.firestore();
+    </script>
+    <script src="script.js"></script>
+<section id="darecoreAiKnowledgeAdmin" style="max-width:1100px;margin:32px auto;padding:24px;background:#141418;color:#ffffff;border:1.5px solid #ff2a00;border-radius:20px;font-family:system-ui,-apple-system,sans-serif;">
+  <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:14px;">
+    <div>
+      <h2 style="margin:0;font-size:20px;font-weight:800;letter-spacing:0.3px;">DareCore Intelligence • Información para la IA</h2>
+      <p style="margin:4px 0 0;font-size:13px;color:#b8b8c2;">Escribe aquí la descripción de Dare Core, tallas, envíos, tiempos, formas de pago y reglas de personalización. La IA usará este texto para responder.</p>
+    </div>
+    <span id="darecoreAiKbStatus" style="font-size:12px;font-weight:700;color:#ff6b52;">Listo</span>
+  </div>
+
+  <textarea id="darecoreAiKbTextarea" rows="10" style="width:100%;box-sizing:border-box;background:#0c0c0f;color:#ffffff;border:1px solid rgba(255,255,255,0.18);border-radius:14px;padding:14px;font-size:14px;line-height:1.5;resize:vertical;"></textarea>
+
+  <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:14px;">
+    <button type="button" id="saveDarecoreAiKbBtn" style="background:linear-gradient(135deg,#ff2a00 0%,#ff5500 100%);color:#ffffff;border:none;border-radius:999px;padding:11px 22px;font-size:13px;font-weight:800;cursor:pointer;">Guardar información de la IA</button>
+    <button type="button" id="resetDarecoreAiKbBtn" style="background:rgba(255,255,255,0.08);color:#ffffff;border:1px solid rgba(255,255,255,0.2);border-radius:999px;padding:11px 18px;font-size:13px;font-weight:700;cursor:pointer;">Restaurar texto base</button>
+  </div>
+</section>
+
+<script>
+(function() {
+  const STORAGE_KEY = "darecore_ai_knowledge";
+  const DEFAULT_TEXT = `Dare Core es una marca local en León, Guanajuato, dedicada a la creación y venta de ropa urbana y playeras personalizadas 100 % de algodón.\n\nLo que ofrecen:\n- Prendas básicas y estilo urbano: fabrican playeras (incluyendo cortes oversize y sin mangas) elaboradas en algodón suave.\n- Personalización completa: estampan diseños exclusivos, frases o detalles a petición del cliente.`;
+
+  const textarea = document.getElementById("darecoreAiKbTextarea");
+  const saveBtn = document.getElementById("saveDarecoreAiKbBtn");
+  const resetBtn = document.getElementById("resetDarecoreAiKbBtn");
+  const statusEl = document.getElementById("darecoreAiKbStatus");
+  if (!textarea || !saveBtn || !resetBtn) return;
+
+  const saved = localStorage.getItem(STORAGE_KEY);
+  textarea.value = (saved && saved.trim()) ? saved : DEFAULT_TEXT;
+
+  saveBtn.addEventListener("click", function() {
+    const val = textarea.value.trim();
+    if (!val) {
+      if (statusEl) statusEl.textContent = "Escribe al menos una descripción antes de guardar.";
+      return;
+    }
+    localStorage.setItem(STORAGE_KEY, val);
+    if (statusEl) statusEl.textContent = "Guardado (" + new Date().toLocaleTimeString() + ")";
+  });
+
+  resetBtn.addEventListener("click", function() {
+    textarea.value = DEFAULT_TEXT;
+    localStorage.setItem(STORAGE_KEY, DEFAULT_TEXT);
+    if (statusEl) statusEl.textContent = "Texto base restaurado";
+  });
+})();
+</script>
+<script id="dcCleanAiAdminScript">
+(function () {
+  const STORAGE_KEY = "darecore_ai_knowledge";
+  const DEFAULT_TEXT = "Dare Core es una marca local en León, Guanajuato, dedicada a la creación y venta de ropa urbana y playeras personalizadas 100 % de algodón.\n\nLo que ofrecen:\n- Prendas básicas y estilo urbano: fabrican playeras (incluyendo cortes oversize y sin mangas) elaboradas en algodón suave.\n- Personalización completa: estampan diseños exclusivos, frases o detalles a petición del cliente.";
+
+  function ensureAiPanel() {
+    let sec = document.getElementById("darecoreAiKnowledgeAdmin");
+    if (!sec) {
+      sec = document.createElement("section");
+      sec.id = "darecoreAiKnowledgeAdmin";
+      sec.style.cssText = "max-width:1180px;margin:28px auto;padding:26px 28px;background:#111115;color:#ffffff;border:1.5px solid #ff2a00;border-radius:24px;box-shadow:0 18px 42px rgba(0,0,0,0.16);display:none;";
+      sec.innerHTML = `
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:10px;">
+          <h2 style="margin:0;font-size:20px;font-weight:900;letter-spacing:0.3px;text-transform:uppercase;">DARECORE INTELLIGENCE • INFORMACIÓN PARA LA IA</h2>
+          <span id="darecoreAiKbStatus" style="font-size:13px;font-weight:700;color:#ff5500;">Listo</span>
+        </div>
+        <p style="margin:0 0 16px;font-size:14px;color:#c8c8d2;">Escribe aquí la descripción de Dare Core, tallas, envíos, tiempos, formas de pago y reglas de personalización. La IA usará este texto para responder.</p>
+        <textarea id="darecoreAiKbTextarea" rows="10" style="width:100%;box-sizing:border-box;background:#09090c;color:#ffffff;border:1.5px solid #ffffff;border-radius:16px;padding:16px 18px;font-size:14px;line-height:1.55;resize:vertical;font-family:inherit;"></textarea>
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:16px;">
+          <button type="button" id="saveDarecoreAiKbBtn" style="background:linear-gradient(135deg,#ff2a00 0%,#ff5500 100%);color:#ffffff;border:none;border-radius:999px;padding:12px 24px;font-size:13px;font-weight:800;cursor:pointer;">Guardar información de la IA</button>
+          <button type="button" id="resetDarecoreAiKbBtn" style="background:#232329;color:#ffffff;border:1px solid rgba(255,255,255,0.22);border-radius:999px;padding:12px 20px;font-size:13px;font-weight:700;cursor:pointer;">Restaurar texto base</button>
+        </div>
+      `;
+      const host = document.querySelector("main") || document.body;
+      host.appendChild(sec);
+    }
+
+    const ta = document.getElementById("darecoreAiKbTextarea");
+    const saveBtn = document.getElementById("saveDarecoreAiKbBtn");
+    const resetBtn = document.getElementById("resetDarecoreAiKbBtn");
+    const statusEl = document.getElementById("darecoreAiKbStatus");
+
+    if (ta && !ta.dataset.dcInitialized) {
+      ta.dataset.dcInitialized = "1";
+      const saved = localStorage.getItem(STORAGE_KEY);
+      ta.value = (saved && saved.trim()) ? saved : DEFAULT_TEXT;
+    }
+
+    if (saveBtn && !saveBtn.dataset.dcInitialized) {
+      saveBtn.dataset.dcInitialized = "1";
+      saveBtn.addEventListener("click", function () {
+        const val = (ta?.value || "").trim();
+        if (!val) {
+          if (statusEl) statusEl.textContent = "Escribe información antes de guardar.";
+          return;
+        }
+        localStorage.setItem(STORAGE_KEY, val);
+        if (statusEl) statusEl.textContent = "Guardado (" + new Date().toLocaleTimeString() + ")";
+      });
+    }
+
+    if (resetBtn && !resetBtn.dataset.dcInitialized) {
+      resetBtn.dataset.dcInitialized = "1";
+      resetBtn.addEventListener("click", function () {
+        if (ta) ta.value = DEFAULT_TEXT;
+        localStorage.setItem(STORAGE_KEY, DEFAULT_TEXT);
+        if (statusEl) statusEl.textContent = "Texto base restaurado";
+      });
+    }
+
+    return sec;
+  }
+
+  function setOtherSectionsHidden(hidden) {
+    const aiSec = document.getElementById("darecoreAiKnowledgeAdmin");
+    const topHeader = document.querySelector("header");
+    const children = Array.from(document.body.children);
+    for (const ch of children) {
+      if (ch === topHeader || ch.tagName === "SCRIPT" || ch.tagName === "STYLE") continue;
+      if (aiSec && (ch === aiSec || ch.contains(aiSec))) continue;
+      if (hidden) {
+        ch.classList.add("dc-admin-hidden-section");
+      } else {
+        ch.classList.remove("dc-admin-hidden-section");
+      }
+    }
+  }
+
+  function openAiPanelClean(e) {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      if (typeof e.stopImmediatePropagation === "function") e.stopImmediatePropagation();
+    }
+    const sec = ensureAiPanel();
+    document.body.classList.add("dc-ai-mode");
+    setOtherSectionsHidden(true);
+    sec.style.display = "block";
+    window.scrollTo(0, 0);
+    return false;
+  }
+
+  function closeAiPanelClean(e) {
+    if (document.body.classList.contains("dc-ai-mode")) {
+      if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+      document.body.classList.remove("dc-ai-mode");
+      setOtherSectionsHidden(false);
+      const sec = document.getElementById("darecoreAiKnowledgeAdmin");
+      if (sec) sec.style.display = "none";
+      window.scrollTo(0, 0);
+    }
+  }
+
+  function wireControls() {
+    const sec = ensureAiPanel();
+    sec.style.display = "none";
+    document.body.classList.remove("dc-ai-mode");
+    setOtherSectionsHidden(false);
+
+    const aiBtn = document.getElementById("openAiModSectionBtn");
+    if (aiBtn) {
+      aiBtn.removeAttribute("target");
+      const freshBtn = aiBtn.cloneNode(true);
+      aiBtn.parentNode.replaceChild(freshBtn, aiBtn);
+      freshBtn.addEventListener("click", openAiPanelClean, true);
+    }
+
+    const headerEls = Array.from(document.querySelectorAll("header a, header button, header div, header span"));
+    for (const el of headerEls) {
+      const txt = (el.textContent || "").replace(/\s+/g, " ").trim().toUpperCase();
+      if (txt === "DARECORE ADMIN" || txt === "DARE CORE ADMIN") {
+        const target = el.tagName === "A" ? el : (el.closest("a") || el);
+        if (target && target.tagName === "A") {
+          target.setAttribute("href", "admin.html");
+          target.removeAttribute("target");
+        }
+        if (target && !target.dataset.dcCleanHomeBound) {
+          target.dataset.dcCleanHomeBound = "1";
+          target.addEventListener("click", function (ev) {
+            if (document.body.classList.contains("dc-ai-mode")) {
+              closeAiPanelClean(ev);
+              return false;
+            }
+            if (target.tagName !== "A") {
+              ev.preventDefault();
+              window.location.href = "admin.html";
+            }
+          }, true);
+        }
+        break;
+      }
+    }
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", wireControls);
+  } else {
+    wireControls();
+  }
+})();
+</script>
+<script id="dcOnlyAiHeaderScript">
+(function () {
+  const AI_KEY = "darecore_ai_knowledge";
+  const DEFAULT_AI_TEXT = "Dare Core es una marca local en León, Guanajuato, dedicada a la creación y venta de ropa urbana y playeras personalizadas 100 % de algodón.\n\nLo que ofrecen:\n- Prendas básicas y estilo urbano: fabrican playeras (incluyendo cortes oversize y sin mangas) elaboradas en algodón suave.\n- Personalización completa: estampan diseños exclusivos, frases o detalles a petición del cliente.";
+
+  function ensureAiBox() {
+    let box = document.getElementById("darecoreAiKnowledgeAdmin");
+    if (!box) {
+      box = document.createElement("section");
+      box.id = "darecoreAiKnowledgeAdmin";
+      box.style.cssText = "display:none;max-width:1180px;margin:28px auto;padding:26px 28px;background:#111115;color:#ffffff;border:1.5px solid #ff2a00;border-radius:24px;box-shadow:0 18px 42px rgba(0,0,0,0.16);";
+      box.innerHTML = `
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:10px;">
+          <h2 style="margin:0;font-size:20px;font-weight:900;letter-spacing:0.3px;text-transform:uppercase;">DARECORE INTELLIGENCE • INFORMACIÓN PARA LA IA</h2>
+          <span id="darecoreAiKbStatus" style="font-size:13px;font-weight:700;color:#ff5500;">Listo</span>
+        </div>
+        <p style="margin:0 0 16px;font-size:14px;color:#c8c8d2;">Escribe aquí la descripción de Dare Core, tallas, envíos, tiempos, formas de pago y reglas de personalización. La IA usará este texto para responder.</p>
+        <textarea id="darecoreAiKbTextarea" rows="10" style="width:100%;box-sizing:border-box;background:#09090c;color:#ffffff;border:1.5px solid #ffffff;border-radius:16px;padding:16px 18px;font-size:14px;line-height:1.55;resize:vertical;font-family:inherit;"></textarea>
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:16px;">
+          <button type="button" id="saveDarecoreAiKbBtn" style="background:linear-gradient(135deg,#ff2a00 0%,#ff5500 100%);color:#ffffff;border:none;border-radius:999px;padding:12px 24px;font-size:13px;font-weight:800;cursor:pointer;">Guardar información de la IA</button>
+          <button type="button" id="resetDarecoreAiKbBtn" style="background:#232329;color:#ffffff;border:1px solid rgba(255,255,255,0.22);border-radius:999px;padding:12px 20px;font-size:13px;font-weight:700;cursor:pointer;">Restaurar texto base</button>
+        </div>
+      `;
+      (document.querySelector("main") || document.body).appendChild(box);
+    }
+
+    const ta = document.getElementById("darecoreAiKbTextarea");
+    const saveBtn = document.getElementById("saveDarecoreAiKbBtn");
+    const resetBtn = document.getElementById("resetDarecoreAiKbBtn");
+    const statusEl = document.getElementById("darecoreAiKbStatus");
+
+    if (ta && !ta.dataset.dcReady) {
+      ta.dataset.dcReady = "1";
+      const saved = localStorage.getItem(AI_KEY);
+      ta.value = (saved && saved.trim()) ? saved : DEFAULT_AI_TEXT;
+    }
+
+    if (saveBtn && !saveBtn.dataset.dcReady) {
+      saveBtn.dataset.dcReady = "1";
+      saveBtn.addEventListener("click", function () {
+        const val = (ta?.value || "").trim();
+        if (!val) {
+          if (statusEl) statusEl.textContent = "Escribe información antes de guardar.";
+          return;
+        }
+        localStorage.setItem(AI_KEY, val);
+        if (statusEl) statusEl.textContent = "Guardado (" + new Date().toLocaleTimeString() + ")";
+      });
+    }
+
+    if (resetBtn && !resetBtn.dataset.dcReady) {
+      resetBtn.dataset.dcReady = "1";
+      resetBtn.addEventListener("click", function () {
+        if (ta) ta.value = DEFAULT_AI_TEXT;
+        localStorage.setItem(AI_KEY, DEFAULT_AI_TEXT);
+        if (statusEl) statusEl.textContent = "Texto base restaurado";
+      });
+    }
+
+    return box;
+  }
+
+  function getMainChildren() {
+    const main = document.querySelector("main");
+    if (main) return Array.from(main.children);
+    const header = document.querySelector("header");
+    return Array.from(document.body.children).filter(
+      el => el !== header && el.tagName !== "SCRIPT" && el.tagName !== "STYLE"
+    );
+  }
+
+  function setAiView(active) {
+    const box = ensureAiBox();
+    const children = getMainChildren();
+    if (active) {
+      children.forEach(ch => {
+        if (ch !== box && !ch.contains(box)) {
+          ch.dataset.dcPrevDisplay = ch.style.display || "";
+          ch.style.display = "none";
+        }
+      });
+      box.style.display = "block";
+    } else {
+      children.forEach(ch => {
+        if (ch !== box && !ch.contains(box)) {
+          ch.style.display = ch.dataset.dcPrevDisplay || "";
+        }
+      });
+      box.style.display = "none";
+    }
+  }
+
+  function initHeader() {
+    const header = document.querySelector("header");
+    if (!header) return;
+
+    Array.from(header.querySelectorAll("button, a")).forEach(el => {
+      const txt = (el.textContent || "").replace(/\s+/g, " ").trim().toUpperCase();
+      if (txt.includes("BASES") && txt.includes("GRAMAJES")) el.remove();
+      if (txt.includes("PEDIDOS") && txt.includes("ENVIOS")) el.remove();
+      if ((txt === "MODIFICACION DE IA" || txt === "MODIFICACIÓN DE IA") && el.id !== "openAiModSectionBtn") {
+        el.remove();
+      }
+    });
+
+    const aiBtn = document.getElementById("openAiModSectionBtn");
+    const verTienda = Array.from(header.querySelectorAll("a, button")).find(el =>
+      (el.textContent || "").toUpperCase().includes("VER TIENDA")
+    );
+    if (aiBtn && verTienda && verTienda.parentElement) {
+      verTienda.parentElement.insertBefore(aiBtn, verTienda);
+    }
+
+    if (aiBtn && !aiBtn.dataset.dcBound) {
+      aiBtn.dataset.dcBound = "1";
+      aiBtn.addEventListener("click", function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        const isOpen = document.getElementById("darecoreAiKnowledgeAdmin")?.style.display === "block";
+        setAiView(!isOpen);
+      });
+    }
+
+    if (!header.dataset.dcBrandBound) {
+      header.dataset.dcBrandBound = "1";
+      header.addEventListener("click", function (e) {
+        const target = e.target.closest("a, button, div, span");
+        if (!target || target === aiBtn) return;
+        const txt = (target.textContent || "").replace(/\s+/g, " ").trim().toUpperCase();
+        if (txt.startsWith("DARECORE") && txt.includes("ADMIN")) {
+          if (target.tagName === "A") target.setAttribute("href", "admin.html");
+          setAiView(false);
+        }
+      });
+    }
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initHeader);
+  } else {
+    initHeader();
+  }
+})();
+</script>
+<script id="dcDeliveredMiniCalendarScript">
+(function () {
+  const MONTH_NAMES = [
+    "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+    "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
+  ];
+  const DAY_HEADERS = ["Lu", "Ma", "Mi", "Ju", "Vi", "Sa", "Do"];
+
+  function parseCardDate(text) {
+    // Busca preferentemente "Entregado el: DD/MM/YYYY" o cualquier DD/MM/YYYY dentro de la tarjeta
+    const deliveredMatch = (text || "").match(/Entregado el:\s*(\d{1,2})\/(\d{1,2})\/(\d{4})/i);
+    const m = deliveredMatch || (text || "").match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+    if (!m) return null;
+    const day = parseInt(m[1], 10);
+    const month = parseInt(m[2], 10);
+    const year = parseInt(m[3], 10);
+    if (month < 1 || month > 12 || day < 1 || day > 31) return null;
+    const iso = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+    return { year, month, day, iso };
+  }
+
+  function findDeliveredHeading() {
+    const nodes = Array.from(document.querySelectorAll("h1, h2, h3, h4, p, div, span"));
+    return nodes.find(el => {
+      if (el.closest("#dcMiniCalWidget")) return false;
+      const t = (el.textContent || "").replace(/\s+/g, " ").trim().toUpperCase();
+      return t.startsWith("PEDIDOS ENTREGADOS");
+    }) || null;
+  }
+
+  function findDeliveredCardsGrid(heading) {
+    if (!heading) return { cards: [], gridEl: null };
+
+    // Busca el contenedor más cercano que tenga múltiples tarjetas con "Entregado el:" o "Cobrado:"
+    let parent = heading.parentElement;
+    let bestCards = [];
+    let bestGrid = null;
+
+    while (parent && parent !== document.body) {
+      const allDescendants = Array.from(parent.querySelectorAll("div, article, li"));
+      const rawCards = allDescendants.filter(el => {
+        if (el.id === "dcMiniCalWidget" || el.closest("#dcMiniCalWidget")) return false;
+        const txt = el.textContent || "";
+        const hasDeliveredLine = /Entregado el:\s*\d{1,2}\/\d{1,2}\/\d{4}/i.test(txt);
+        const hasPriceOrClient = txt.includes("Cobrado:") || txt.includes("Cliente:");
+        return hasDeliveredLine && hasPriceOrClient;
+      });
+
+      // Quédate solo con las tarjetas hoja (las que no contienen otra tarjeta igual adentro)
+      const leafCards = rawCards.filter(card => !rawCards.some(other => other !== card && card.contains(other)));
+
+      if (leafCards.length >= 1) {
+        bestCards = leafCards;
+        bestGrid = leafCards[0].parentElement || parent;
+        // Si ya encontramos un grid con tarjetas de pedidos entregados, detenemos la subida
+        if (leafCards.length >= 2) break;
+      }
+      parent = parent.parentElement;
+    }
+
+    return { cards: bestCards, gridEl: bestGrid };
+  }
+
+  function renderGrid(year, month0, activeDatesSet, selectedIso, onSelectIso) {
+    const grid = document.getElementById("dcMiniCalDaysGrid");
+    const title = document.getElementById("dcMiniCalMonthTitle");
+    if (!grid || !title) return;
+
+    title.textContent = `${MONTH_NAMES[month0]} ${year}`;
+    grid.innerHTML = "";
+
+    DAY_HEADERS.forEach(d => {
+      const dh = document.createElement("div");
+      dh.textContent = d;
+      dh.style.cssText = "text-align:center;font-size:11px;font-weight:800;color:#71717a;padding:4px 0;";
+      grid.appendChild(dh);
+    });
+
+    const firstDay = new Date(year, month0, 1);
+    const startOffset = (firstDay.getDay() + 6) % 7;
+    const daysInMonth = new Date(year, month0 + 1, 0).getDate();
+
+    for (let i = 0; i < startOffset; i++) {
+      grid.appendChild(document.createElement("div"));
+    }
+
+    for (let day = 1; day <= daysInMonth; day++) {
+      const iso = `${year}-${String(month0 + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+      const hasOrders = activeDatesSet.has(iso);
+      const isSelected = selectedIso === iso;
+
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.textContent = String(day);
+      btn.style.cssText = [
+        "height:32px;width:32px;margin:0 auto;border-radius:999px;font-size:12px;font-weight:800;",
+        "display:flex;align-items:center;justify-content:center;cursor:pointer;",
+        isSelected
+          ? "background:#15803d;color:#ffffff;border:1.5px solid #15803d;"
+          : hasOrders
+            ? "background:#dcfce7;color:#166534;border:1.5px solid #22c55e;"
+            : "background:#ffffff;color:#3f3f46;border:1px solid #e4e4e7;"
+      ].join("");
+
+      btn.title = hasOrders ? `Ver entregas del ${day}/${month0 + 1}/${year}` : `${day}/${month0 + 1}/${year}`;
+      btn.addEventListener("click", function (ev) {
+        ev.preventDefault();
+        ev.stopPropagation();
+        onSelectIso(iso);
+      });
+
+      grid.appendChild(btn);
+    }
+  }
+
+  function applyFilter(cards, gridEl, selectedIso, isOpen) {
+    const label = document.getElementById("dcMiniCalSelectedLabel");
+    const emptyNotice = document.getElementById("dcMiniCalEmptyNotice");
+    let matched = 0;
+
+    cards.forEach(card => {
+      const parsed = parseCardDate(card.textContent || "");
+      const matches = Boolean(selectedIso && parsed && parsed.iso === selectedIso);
+      if (matches) {
+        card.style.removeProperty("display");
+        matched++;
+      } else {
+        card.style.setProperty("display", "none", "important");
+      }
+    });
+
+    if (gridEl) {
+      gridEl.style.display = matched > 0 ? "" : "none";
+    }
+
+    if (emptyNotice) {
+      emptyNotice.style.display = (selectedIso && matched === 0) ? "block" : "none";
+    }
+
+    if (label) {
+      if (!selectedIso) {
+        label.textContent = "Selecciona una fecha en el mini calendario";
+      } else {
+        const [y, m, d] = selectedIso.split("-");
+        label.textContent = `${matched} pedido${matched === 1 ? "" : "s"} entregado${matched === 1 ? "" : "s"} el ${d}/${m}/${y}`;
+      }
+    }
+
+    const popover = document.getElementById("dcMiniCalPopover");
+    if (popover) {
+      popover.style.display = isOpen ? "block" : "none";
+    }
+  }
+
+  function syncDeliveredCalendar() {
+    const heading = findDeliveredHeading();
+    if (!heading) return;
+
+    const { cards, gridEl } = findDeliveredCardsGrid(heading);
+    if (!cards.length) return;
+
+    const activeDates = new Set();
+    cards.forEach(c => {
+      const p = parseCardDate(c.textContent || "");
+      if (p) activeDates.add(p.iso);
+    });
+
+    const sortedIso = Array.from(activeDates).sort().reverse();
+    const latestIso = sortedIso[0] || "";
+
+    let widget = document.getElementById("dcMiniCalWidget");
+    if (!widget) {
+      widget = document.createElement("div");
+      widget.id = "dcMiniCalWidget";
+      widget.style.cssText = "position:relative;margin:12px 0 18px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;";
+      widget.innerHTML = `
+        <div style="position:relative;display:inline-flex;align-items:center;gap:10px;flex-wrap:wrap;">
+          <button type="button" id="dcMiniCalToggleBtn" style="background:#15803d;color:#ffffff;border:none;border-radius:999px;padding:9px 18px;font-size:12px;font-weight:800;letter-spacing:0.4px;text-transform:uppercase;cursor:pointer;display:inline-flex;align-items:center;gap:8px;box-shadow:0 4px 12px rgba(21,128,61,0.22);">
+            <span>🗓️ CALENDARIO DE ENTREGAS</span>
+            <span id="dcMiniCalChevron">▾</span>
+          </button>
+          <span id="dcMiniCalSelectedLabel" style="font-size:13px;font-weight:800;color:#111115;"></span>
+
+          <div id="dcMiniCalPopover" style="display:none;position:absolute;top:46px;left:0;z-index:50;width:276px;background:#ffffff;border:1.5px solid #15803d;border-radius:18px;padding:14px;box-shadow:0 16px 36px rgba(0,0,0,0.16);">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+              <button type="button" id="dcMiniCalPrevBtn" style="background:#f4f4f5;color:#111115;border:1px solid #d4d4d8;border-radius:8px;width:28px;height:28px;font-weight:900;cursor:pointer;">‹</button>
+              <strong id="dcMiniCalMonthTitle" style="font-size:13px;font-weight:900;color:#111115;"></strong>
+              <button type="button" id="dcMiniCalNextBtn" style="background:#f4f4f5;color:#111115;border:1px solid #d4d4d8;border-radius:8px;width:28px;height:28px;font-weight:900;cursor:pointer;">›</button>
+            </div>
+            <div id="dcMiniCalDaysGrid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;"></div>
+            <div style="margin-top:10px;padding-top:8px;border-top:1px solid #e4e4e7;display:flex;align-items:center;justify-content:space-between;font-size:11px;color:#52525b;">
+              <span>● Verde = con entregas</span>
+              <button type="button" id="dcMiniCalCloseBtn" style="background:none;border:none;color:#15803d;font-weight:800;cursor:pointer;">Cerrar</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="dcMiniCalEmptyNotice" style="display:none;width:100%;background:#f9fafb;border:1px dashed #cbd5e1;border-radius:14px;padding:14px 16px;font-size:13px;font-weight:700;color:#475569;">
+          No hay pedidos entregados registrados en esta fecha.
+        </div>
+      `;
+      heading.insertAdjacentElement("afterend", widget);
+    }
+
+    if (!widget.dataset.selectedIso && latestIso) {
+      widget.dataset.selectedIso = latestIso;
+    }
+
+    const baseParts = (widget.dataset.selectedIso || latestIso || "2026-11-22").split("-");
+    if (!widget.dataset.viewYear) widget.dataset.viewYear = baseParts[0];
+    if (!widget.dataset.viewMonth0) widget.dataset.viewMonth0 = String(parseInt(baseParts[1], 10) - 1);
+
+    const toggleBtn = document.getElementById("dcMiniCalToggleBtn");
+    const closeBtn = document.getElementById("dcMiniCalCloseBtn");
+    const prevBtn = document.getElementById("dcMiniCalPrevBtn");
+    const nextBtn = document.getElementById("dcMiniCalNextBtn");
+    const chevron = document.getElementById("dcMiniCalChevron");
+
+    const drawCal = () => {
+      const y = parseInt(widget.dataset.viewYear, 10);
+      const m0 = parseInt(widget.dataset.viewMonth0, 10);
+      renderGrid(y, m0, activeDates, widget.dataset.selectedIso || "", function (pickedIso) {
+        widget.dataset.selectedIso = pickedIso;
+        widget.dataset.open = "0";
+        if (chevron) chevron.textContent = "▾";
+        applyFilter(cards, gridEl, pickedIso, false);
+        drawCal();
+      });
+    };
+
+    if (toggleBtn && !toggleBtn.dataset.dcBound) {
+      toggleBtn.dataset.dcBound = "1";
+      toggleBtn.addEventListener("click", function (ev) {
+        ev.preventDefault();
+        ev.stopPropagation();
+        const nextOpen = widget.dataset.open === "1" ? "0" : "1";
+        widget.dataset.open = nextOpen;
+        if (chevron) chevron.textContent = nextOpen === "1" ? "▴" : "▾";
+        drawCal();
+        applyFilter(cards, gridEl, widget.dataset.selectedIso || "", nextOpen === "1");
+      });
+    }
+
+    if (closeBtn && !closeBtn.dataset.dcBound) {
+      closeBtn.dataset.dcBound = "1";
+      closeBtn.addEventListener("click", function (ev) {
+        ev.preventDefault();
+        ev.stopPropagation();
+        widget.dataset.open = "0";
+        if (chevron) chevron.textContent = "▾";
+        applyFilter(cards, gridEl, widget.dataset.selectedIso || "", false);
+      });
+    }
+
+    if (prevBtn && !prevBtn.dataset.dcBound) {
+      prevBtn.dataset.dcBound = "1";
+      prevBtn.addEventListener("click", function (ev) {
+        ev.preventDefault();
+        ev.stopPropagation();
+        let y = parseInt(widget.dataset.viewYear, 10);
+        let m0 = parseInt(widget.dataset.viewMonth0, 10) - 1;
+        if (m0 < 0) { m0 = 11; y--; }
+        widget.dataset.viewYear = String(y);
+        widget.dataset.viewMonth0 = String(m0);
+        drawCal();
+      });
+    }
+
+    if (nextBtn && !nextBtn.dataset.dcBound) {
+      nextBtn.dataset.dcBound = "1";
+      nextBtn.addEventListener("click", function (ev) {
+        ev.preventDefault();
+        ev.stopPropagation();
+        let y = parseInt(widget.dataset.viewYear, 10);
+        let m0 = parseInt(widget.dataset.viewMonth0, 10) + 1;
+        if (m0 > 11) { m0 = 0; y++; }
+        widget.dataset.viewYear = String(y);
+        widget.dataset.viewMonth0 = String(m0);
+        drawCal();
+      });
+    }
+
+    drawCal();
+    applyFilter(cards, gridEl, widget.dataset.selectedIso || "", widget.dataset.open === "1");
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", syncDeliveredCalendar);
+  } else {
+    syncDeliveredCalendar();
+  }
+  setTimeout(syncDeliveredCalendar, 300);
+  setTimeout(syncDeliveredCalendar, 900);
+})();
+</script>
+<script id="dcDeliveredHideBtnScript">
+(function () {
+  function getDeliveredCards() {
+    const all = Array.from(document.querySelectorAll("div, article, li"));
+    const cards = all.filter(el => {
+      if (el.id === "dcDeliveredHideToggleBtn" || el.closest("#dcDeliveredHideToggleBtn")) return false;
+      const txt = el.textContent || "";
+      return /Entregado el:\s*\d{1,2}\/\d{1,2}\/\d{4}/i.test(txt) && txt.includes("Cobrado:");
+    });
+    return cards.filter((c, i, arr) => !arr.some(other => other !== c && c.contains(other)));
+  }
+
+  function findCalendarButton() {
+    const btns = Array.from(document.querySelectorAll("button"));
+    return btns.find(b => {
+      if (b.id === "dcDeliveredHideToggleBtn") return false;
+      const t = (b.textContent || "").replace(/\s+/g, " ").trim().toUpperCase();
+      return t.includes("CALENDARIO DE ENTREGAS");
+    }) || null;
+  }
+
+  function setCardsHidden(cards, hidden, btn) {
+    cards.forEach(c => {
+      c.style.setProperty("display", hidden ? "none" : "", "important");
+    });
+    if (btn) {
+      btn.textContent = hidden ? "MOSTRAR ENTREGADOS" : "OCULTAR ENTREGADOS";
+      btn.style.background = hidden ? "#111115" : "#ffffff";
+      btn.style.color = hidden ? "#ffffff" : "#15803d";
+    }
+  }
+
+  function ensureHideButton() {
+    const calBtn = findCalendarButton();
+    const cards = getDeliveredCards();
+    if (!calBtn || !cards.length) return;
+
+    let btn = document.getElementById("dcDeliveredHideToggleBtn");
+    if (!btn) {
+      btn = document.createElement("button");
+      btn.type = "button";
+      btn.id = "dcDeliveredHideToggleBtn";
+      btn.style.cssText = [
+        "margin-left:10px;",
+        "padding:9px 16px;",
+        "border-radius:999px;",
+        "border:1.5px solid #15803d;",
+        "font-size:12px;",
+        "font-weight:800;",
+        "letter-spacing:0.4px;",
+        "text-transform:uppercase;",
+        "cursor:pointer;",
+        "display:inline-flex;",
+        "align-items:center;",
+        "gap:6px;",
+        "vertical-align:middle;",
+        "z-index:20;",
+        "position:relative;"
+      ].join("");
+      calBtn.insertAdjacentElement("afterend", btn);
+    }
+
+    if (!btn.dataset.dcHidden) btn.dataset.dcHidden = "0";
+
+    if (!btn.dataset.dcClickBound) {
+      btn.dataset.dcClickBound = "1";
+      btn.addEventListener("click", function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        const next = btn.dataset.dcHidden === "1" ? "0" : "1";
+        btn.dataset.dcHidden = next;
+        setCardsHidden(getDeliveredCards(), next === "1", btn);
+      });
+    }
+
+    setCardsHidden(cards, btn.dataset.dcHidden === "1", btn);
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", ensureHideButton);
+  } else {
+    ensureHideButton();
+  }
+  setInterval(ensureHideButton, 500);
+})();
+</script>
+<style id="dcAppleNeonButtonsStyle">
+  button,
+  [role="button"],
+  input[type="button"],
+  input[type="submit"],
+  input[type="reset"],
+  input[type="file"]::file-selector-button,
+  input[type="file"]::-webkit-file-upload-button {
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+    background-image: none !important;
+    color: #111115 !important;
+    border: 1.5px solid #ff2a00 !important;
+    border-radius: 999px !important;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.06), 0 0 12px rgba(255,42,0,0.35) !important;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif !important;
+    font-weight: 700 !important;
+    cursor: pointer !important;
+    transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease, color 0.2s ease, border-color 0.2s ease !important;
+  }
+  button:hover,
+  [role="button"]:hover,
+  input[type="button"]:hover,
+  input[type="submit"]:hover,
+  input[type="reset"]:hover,
+  input[type="file"]::file-selector-button:hover,
+  input[type="file"]::-webkit-file-upload-button:hover {
+    background: #ffffff !important;
+    color: #ff2a00 !important;
+    border-color: #ff4500 !important;
+    box-shadow: 0 6px 18px rgba(255,42,0,0.25), 0 0 20px rgba(255,42,0,0.65) !important;
+    transform: translateY(-1px) scale(1.035) !important;
+  }
+  button:active,
+  [role="button"]:active,
+  input[type="button"]:active,
+  input[type="submit"]:active,
+  input[type="reset"]:active,
+  input[type="file"]::file-selector-button:active,
+  input[type="file"]::-webkit-file-upload-button:active {
+    background: #ffffff !important;
+    color: #ff2a00 !important;
+    border-color: #ff2a00 !important;
+    transform: scale(0.9) !important;
+    box-shadow: 0 0 0 5px rgba(255,42,0,0.28), 0 0 28px rgba(255,42,0,0.85) !important;
+    transition: transform 0.07s ease-out !important;
+  }
+</style>
+<script id="dcAiVoiceDictationScript">
+(function () {
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+  const GEMINI_MIC_SVG = `
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <rect x="9" y="2" width="6" height="12" rx="3"></rect>
+      <path d="M5 10v1a7 7 0 0 0 14 0v-1"></path>
+      <line x1="12" y1="18" x2="12" y2="22"></line>
+    </svg>
+  `;
+
+  function findAiTextarea() {
+    return (
+      document.getElementById("darecoreAiKbTextarea") ||
+      document.querySelector('textarea[id*="AiKb" i], textarea[id*="ai" i]')
+    );
+  }
+
+  function findActionRow(textarea) {
+    const saveBtn =
+      document.getElementById("saveDarecoreAiKbBtn") ||
+      Array.from(document.querySelectorAll("button")).find(b =>
+        (b.textContent || "").toLowerCase().includes("guardar información")
+      );
+    if (saveBtn && saveBtn.parentElement) return saveBtn.parentElement;
+    return textarea ? textarea.parentElement : null;
+  }
+
+  function mountGeminiMic() {
+    const textarea = findAiTextarea();
+    if (!textarea) return;
+    const row = findActionRow(textarea);
+    if (!row) return;
+    if (document.getElementById("dcAiMicDictateBtn")) return;
+
+    const micBtn = document.createElement("button");
+    micBtn.type = "button";
+    micBtn.id = "dcAiMicDictateBtn";
+    micBtn.setAttribute("aria-label", "Micrófono");
+    micBtn.title = "Micrófono";
+    micBtn.innerHTML = GEMINI_MIC_SVG;
+
+    const applyIdleStyle = () => {
+      micBtn.style.setProperty("width", "42px", "important");
+      micBtn.style.setProperty("height", "42px", "important");
+      micBtn.style.setProperty("min-width", "42px", "important");
+      micBtn.style.setProperty("padding", "0", "important");
+      micBtn.style.setProperty("border-radius", "999px", "important");
+      micBtn.style.setProperty("background", "#ffffff", "important");
+      micBtn.style.setProperty("background-color", "#ffffff", "important");
+      micBtn.style.setProperty("color", "#111115", "important");
+      micBtn.style.setProperty("border", "1.5px solid rgba(17, 17, 21, 0.16)", "important");
+      micBtn.style.setProperty("box-shadow", "0 2px 8px rgba(0, 0, 0, 0.08)", "important");
+      micBtn.style.setProperty("display", "inline-flex", "important");
+      micBtn.style.setProperty("align-items", "center", "important");
+      micBtn.style.setProperty("justify-content", "center", "important");
+      micBtn.style.setProperty("cursor", "pointer", "important");
+    };
+
+    const applyActiveStyle = () => {
+      micBtn.style.setProperty("width", "42px", "important");
+      micBtn.style.setProperty("height", "42px", "important");
+      micBtn.style.setProperty("min-width", "42px", "important");
+      micBtn.style.setProperty("padding", "0", "important");
+      micBtn.style.setProperty("border-radius", "999px", "important");
+      micBtn.style.setProperty("background", "#ff2a00", "important");
+      micBtn.style.setProperty("background-color", "#ff2a00", "important");
+      micBtn.style.setProperty("color", "#ffffff", "important");
+      micBtn.style.setProperty("border", "1.5px solid #ff2a00", "important");
+      micBtn.style.setProperty("box-shadow", "0 0 0 4px rgba(255, 42, 0, 0.22), 0 0 18px rgba(255, 42, 0, 0.7)", "important");
+      micBtn.style.setProperty("display", "inline-flex", "important");
+      micBtn.style.setProperty("align-items", "center", "important");
+      micBtn.style.setProperty("justify-content", "center", "important");
+      micBtn.style.setProperty("cursor", "pointer", "important");
+    };
+
+    applyIdleStyle();
+
+    const statusEl =
+      document.getElementById("darecoreAiKbStatus") ||
+      document.querySelector('[id*="AiKbStatus" i], [id*="aiKbStatus" i]');
+
+    if (!SpeechRecognition) {
+      micBtn.disabled = true;
+      micBtn.style.setProperty("opacity", "0.45", "important");
+      row.appendChild(micBtn);
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = "es-MX";
+    recognition.continuous = true;
+    recognition.interimResults = true;
+
+    let listening = false;
+    let baseText = "";
+
+    function setListeningState(active) {
+      listening = active;
+      if (active) {
+        applyActiveStyle();
+        if (statusEl) statusEl.textContent = "Escuchando...";
+      } else {
+        applyIdleStyle();
+        if (statusEl && statusEl.textContent === "Escuchando...") {
+          statusEl.textContent = "Dictado listo";
+        }
+      }
+    }
+
+    recognition.onresult = function (event) {
+      let finalTranscript = "";
+      let interimTranscript = "";
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const transcript = event.results[i][0].transcript || "";
+        if (event.results[i].isFinal) {
+          finalTranscript += transcript;
+        } else {
+          interimTranscript += transcript;
+        }
+      }
+      if (finalTranscript) {
+        const sep = baseText && !/\s$/.test(baseText) ? " " : "";
+        baseText = baseText + sep + finalTranscript.trim();
+      }
+      const livePiece = interimTranscript.trim();
+      const joiner = (baseText && livePiece && !/\s$/.test(baseText)) ? " " : "";
+      textarea.value = baseText + joiner + livePiece;
+      textarea.dispatchEvent(new Event("input", { bubbles: true }));
+    };
+
+    recognition.onerror = function (ev) {
+      setListeningState(false);
+      if (statusEl) {
+        statusEl.textContent = "Micrófono: " + (ev.error || "error");
+      }
+    };
+
+    recognition.onend = function () {
+      if (listening) {
+        try {
+          recognition.start();
+        } catch (e) {
+          setListeningState(false);
+        }
+      } else {
+        setListeningState(false);
+      }
+    };
+
+    micBtn.addEventListener("click", function (ev) {
+      ev.preventDefault();
+      ev.stopPropagation();
+      if (!listening) {
+        baseText = textarea.value || "";
+        setListeningState(true);
+        try {
+          recognition.start();
+        } catch (e) {
+          setListeningState(false);
+        }
+      } else {
+        setListeningState(false);
+        try {
+          recognition.stop();
+        } catch (e) {}
+      }
+    });
+
+    row.appendChild(micBtn);
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", mountGeminiMic);
+  } else {
+    mountGeminiMic();
+  }
+  setInterval(mountGeminiMic, 500);
+})();
+</script>
+</body>
+</html>
