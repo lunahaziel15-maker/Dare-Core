@@ -1,8 +1,10 @@
-/* DC_CLEAN_MIC_AND_VOICE_START */
+/* DC_FINAL_SINGLE_SEND_VOICE_START */
 (function () {
   window.DC_CUSTOM_TTS = null;
   let lastInputWasVoice = false;
   let autoSendTimer = null;
+  let lastDispatchedSig = "";
+  let lastDispatchedAt = 0;
   let speakingToken = 0;
   let speechExpectedEndTime = 0;
   let keepAliveTimer = null;
@@ -110,7 +112,7 @@
     return { panel, input, sendBtn };
   }
 
-  function sendCurrentInput(asVoice) {
+  function sendOnceFromVoice() {
     if (autoSendTimer) {
       clearTimeout(autoSendTimer);
       autoSendTimer = null;
@@ -120,16 +122,19 @@
     const val = (input.value || "").trim();
     if (!val) return;
 
-    lastInputWasVoice = Boolean(asVoice);
-    if (sendBtn) {
-      sendBtn.disabled = false;
+    const now = Date.now();
+    if (val === lastDispatchedSig && (now - lastDispatchedAt) < 1800) return;
+    lastDispatchedSig = val;
+    lastDispatchedAt = now;
+
+    lastInputWasVoice = true;
+    if (sendBtn && !sendBtn.disabled) {
       sendBtn.click();
     } else {
       input.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", code: "Enter", keyCode: 13, which: 13, bubbles: true }));
     }
   }
 
-  // Observa cuando el microfono llena el input y lo envia automaticamente tras pausar
   function hookSpeechEventsOnInstance(rec) {
     if (!rec || rec.__dcHooked) return;
     rec.__dcHooked = true;
@@ -141,13 +146,13 @@
       lastInputWasVoice = true;
       if (autoSendTimer) clearTimeout(autoSendTimer);
       autoSendTimer = setTimeout(() => {
-        sendCurrentInput(true);
-      }, 650);
+        sendOnceFromVoice();
+      }, 700);
     });
     rec.addEventListener("end", () => {
       if (autoSendTimer) clearTimeout(autoSendTimer);
       autoSendTimer = setTimeout(() => {
-        sendCurrentInput(true);
+        sendOnceFromVoice();
       }, 150);
     });
   }
@@ -228,6 +233,10 @@
     }
     const label = ((btn.textContent || "") + " " + (btn.getAttribute("aria-label") || "") + " " + (btn.title || "")).toLowerCase();
     if (label.includes("enviar") || btn.type === "submit") {
+      if (autoSendTimer) {
+        clearTimeout(autoSendTimer);
+        autoSendTimer = null;
+      }
       lastInputWasVoice = false;
       stopAllSpeech();
     }
@@ -237,6 +246,10 @@
     if (e.key === "Enter" && !e.shiftKey) {
       const active = document.activeElement;
       if (active && (active.tagName === "INPUT" || active.tagName === "TEXTAREA")) {
+        if (autoSendTimer) {
+          clearTimeout(autoSendTimer);
+          autoSendTimer = null;
+        }
         lastInputWasVoice = false;
         stopAllSpeech();
       }
@@ -292,7 +305,7 @@
   }
   new MutationObserver(ensureStopLogoButton).observe(document.body || document.documentElement, { childList: true, subtree: true });
 })();
-/* DC_CLEAN_MIC_AND_VOICE_END */
+/* DC_FINAL_SINGLE_SEND_VOICE_END */
 (function () {
   const origFetch = window.fetch.bind(window);
   window.fetch = async function (input, init) {
