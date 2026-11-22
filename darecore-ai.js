@@ -1,11 +1,20 @@
-/* DC_MIC_ONLY_TTS_AND_STOP_START */
+/* DC_FAST_AUTO_VOICE_STOP_LOGO_START */
 (function () {
   window.DC_CUSTOM_TTS = null;
   let lastInputWasVoice = false;
   let speakingToken = 0;
+  let isSpeakingNow = false;
+
+  function updateStopLogoVisibility() {
+    const stopBtn = document.getElementById("dcStopVoiceLogoBtn");
+    if (!stopBtn) return;
+    const active = Boolean(isSpeakingNow || ("speechSynthesis" in window && window.speechSynthesis.speaking));
+    stopBtn.style.display = active ? "inline-flex" : "none";
+  }
 
   function stopAllSpeech() {
     speakingToken++;
+    isSpeakingNow = false;
     try {
       if ("speechSynthesis" in window) {
         window.speechSynthesis.cancel();
@@ -17,73 +26,162 @@
         a.currentTime = 0;
       });
     } catch (_) {}
+    updateStopLogoVisibility();
   }
 
-  // Intercepta llamadas a Groq y las redirige a /api/groq en Vercel
-  const origFetch = window.fetch.bind(window);
-  window.fetch = async function (input, init) {
-    const url = typeof input === "string" ? input : (input && input.url) || "";
-    if (url.includes("api.groq.com/openai/v1/chat/completions")) {
-      return origFetch("/api/groq", {
-        method: (init && init.method) || "POST",
-        headers: { "Content-Type": "application/json" },
-        body: init && init.body
-      });
-    }
-    if (url.includes("api.groq.com/openai/v1/models")) {
-      return new Response(JSON.stringify({
-        data: [
-          { id: "openai/gpt-oss-20b" },
-          { id: "qwen/qwen3.8-27b" },
-          { id: "openai/gpt-oss-120b" }
-        ]
-      }), { status: 200, headers: { "Content-Type": "application/json" } });
-    }
+  // Boton detener: solo logo/icono cuadrado (■) y visible/activo solo cuando habla con voz
+  function ensureStopLogoButton() {
+    const panel = Array.from(document.querySelectorAll("div, section, aside")).find(el => {
+      const t = el.innerText || "";
+      return t.includes("DareCore Intelligence") && t.includes("Enviar");
+    });
+    if (!panel) return;
 
-    // Si la peticion salio de un envio por texto/boton Enviar, silencia TTS
-    if (init && typeof init.body === "string" && init.body.includes('"messages"') && !lastInputWasVoice) {
-      stopAllSpeech();
+    const buttons = Array.from(panel.querySelectorAll("button"));
+    const sendBtn = buttons.find(b => (b.textContent || "").trim().toLowerCase() === "enviar");
+    if (sendBtn) {
+      sendBtn.style.setProperty("display", "inline-flex", "important");
+      sendBtn.style.setProperty("align-items", "center", "important");
+      sendBtn.style.setProperty("justify-content", "center", "important");
+      sendBtn.style.setProperty("opacity", "1", "important");
+      sendBtn.style.setProperty("visibility", "visible", "important");
+      sendBtn.style.setProperty("flex-shrink", "0", "important");
+      sendBtn.style.setProperty("min-width", "68px", "important");
+      sendBtn.style.setProperty("padding", "8px 14px", "important");
     }
 
-    const response = await origFetch(input, init);
+    let stopBtn = document.getElementById("dcStopVoiceLogoBtn");
+    if (!stopBtn) {
+      stopBtn = document.createElement("button");
+      stopBtn.id = "dcStopVoiceLogoBtn";
+      stopBtn.type = "button";
+      stopBtn.setAttribute("aria-label", "Detener voz");
+      stopBtn.title = "Detener voz";
+      stopBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="5" y="5" width="14" height="14" rx="2.5"></rect></svg>';
+      stopBtn.style.cssText = [
+        "display:none",
+        "align-items:center",
+        "justify-content:center",
+        "width:34px",
+        "height:34px",
+        "border-radius:50%",
+        "border:1px solid rgba(255,255,255,0.22)",
+        "background:#ea580c",
+        "color:#ffffff",
+        "cursor:pointer",
+        "flex-shrink:0",
+        "margin-right:6px"
+      ].join(";");
+      stopBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        stopAllSpeech();
+      }, true);
 
-    if (init && typeof init.body === "string" && init.body.includes('"messages"')) {
-      const shouldSpeak = lastInputWasVoice;
-      lastInputWasVoice = false;
-      if (shouldSpeak && response.ok) {
-        const myToken = ++speakingToken;
-        response.clone().json().then(data => {
-          if (myToken !== speakingToken) return;
-          const txt = data && data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
-          if (txt && "speechSynthesis" in window) {
-            stopAllSpeech();
-            const currentToken = speakingToken;
-            const cleanTxt = txt.replace(/\*\*/g, "").trim();
-            const utter = new SpeechSynthesisUtterance(cleanTxt);
-            utter.lang = "es-MX";
-            utter.rate = 1.0;
-            utter.pitch = 1.0;
-            utter.onend = () => { if (currentToken === speakingToken) speakingToken++; };
-            window.speechSynthesis.speak(utter);
-          }
-        }).catch(() => {});
+      if (sendBtn && sendBtn.parentElement) {
+        sendBtn.parentElement.insertBefore(stopBtn, sendBtn);
       }
     }
+    updateStopLogoVisibility();
+  }
 
-    return response;
-  };
+  function triggerSendInPanel() {
+    const panel = Array.from(document.querySelectorAll("div, section, aside")).find(el => {
+      const t = el.innerText || "";
+      return t.includes("DareCore Intelligence") && t.includes("Enviar");
+    });
+    if (!panel) return;
+    const input = panel.querySelector("input[type='text'], input:not([type]), textarea");
+    if (!input || !(input.value || "").trim()) return;
 
-  // Marca si el envio se disparo por voz o por texto/boton Enviar
+    const form = input.closest("form");
+    const sendBtn = Array.from(panel.querySelectorAll("button")).find(b => (b.textContent || "").trim().toLowerCase() === "enviar");
+
+    if (sendBtn) {
+      sendBtn.disabled = false;
+      sendBtn.click();
+    } else if (form) {
+      form.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+    } else {
+      input.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", code: "Enter", keyCode: 13, which: 13, bubbles: true }));
+    }
+  }
+
+  // Envia automaticamente al terminar de hablar por microfono
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (SR && !SR.__dcAutoSendPatched) {
+    const OrigSR = SR;
+    function AutoSendSR() {
+      const rec = new OrigSR();
+      rec.lang = "es-MX";
+      rec.interimResults = true;
+      let latestTranscript = "";
+      let sentForSession = false;
+
+      rec.addEventListener("start", () => {
+        lastInputWasVoice = true;
+        latestTranscript = "";
+        sentForSession = false;
+        stopAllSpeech();
+      });
+
+      rec.addEventListener("result", (e) => {
+        lastInputWasVoice = true;
+        let combined = "";
+        let hasFinal = false;
+        for (let i = 0; i < e.results.length; i++) {
+          combined += e.results[i][0].transcript + " ";
+          if (e.results[i].isFinal) hasFinal = true;
+        }
+        latestTranscript = combined.trim();
+
+        const panel = Array.from(document.querySelectorAll("div, section, aside")).find(el => {
+          const t = el.innerText || "";
+          return t.includes("DareCore Intelligence") && t.includes("Enviar");
+        });
+        const input = panel && panel.querySelector("input[type='text'], input:not([type]), textarea");
+        if (input && latestTranscript) {
+          input.value = latestTranscript;
+          input.dispatchEvent(new Event("input", { bubbles: true }));
+        }
+
+        if (hasFinal && latestTranscript && !sentForSession) {
+          sentForSession = true;
+          setTimeout(() => {
+            lastInputWasVoice = true;
+            triggerSendInPanel();
+          }, 120);
+        }
+      });
+
+      rec.addEventListener("end", () => {
+        if (latestTranscript && !sentForSession) {
+          sentForSession = true;
+          setTimeout(() => {
+            lastInputWasVoice = true;
+            triggerSendInPanel();
+          }, 120);
+        }
+      });
+
+      return rec;
+    }
+    AutoSendSR.prototype = OrigSR.prototype;
+    AutoSendSR.__dcAutoSendPatched = true;
+    window.SpeechRecognition = AutoSendSR;
+    window.webkitSpeechRecognition = AutoSendSR;
+  }
+
   document.addEventListener("click", (e) => {
     const btn = e.target && e.target.closest ? e.target.closest("button") : null;
     if (!btn) return;
-    const label = ((btn.textContent || "") + " " + (btn.getAttribute("aria-label") || "") + " " + (btn.title || "")).toLowerCase();
-    if (btn.id === "dcStopVoiceBtn") {
+    if (btn.id === "dcStopVoiceLogoBtn") {
       e.preventDefault();
       e.stopPropagation();
       stopAllSpeech();
       return;
     }
+    const label = ((btn.textContent || "") + " " + (btn.getAttribute("aria-label") || "") + " " + (btn.title || "")).toLowerCase();
     if (label.includes("enviar") || btn.type === "submit") {
       lastInputWasVoice = false;
       stopAllSpeech();
@@ -100,62 +198,78 @@
     }
   }, true);
 
-  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (SR && !SR.__dcVoiceFlagged) {
-    const OrigSR = SR;
-    function FlaggedSR() {
-      const rec = new OrigSR();
-      rec.addEventListener("result", () => {
-        lastInputWasVoice = true;
+  // Intercepta llamadas a Groq para usar /api/groq y hablar solo cuando vino de voz
+  const origFetch = window.fetch.bind(window);
+  window.fetch = async function (input, init) {
+    const url = typeof input === "string" ? input : (input && input.url) || "";
+    if (url.includes("api.groq.com/openai/v1/chat/completions")) {
+      const speakThisTurn = lastInputWasVoice;
+      lastInputWasVoice = false;
+      if (!speakThisTurn) {
         stopAllSpeech();
+      }
+      const res = await origFetch("/api/groq", {
+        method: (init && init.method) || "POST",
+        headers: { "Content-Type": "application/json" },
+        body: init && init.body
       });
-      rec.addEventListener("start", () => {
-        lastInputWasVoice = true;
-        stopAllSpeech();
-      });
-      return rec;
+
+      if (speakThisTurn && res.ok) {
+        const myToken = ++speakingToken;
+        res.clone().json().then(data => {
+          if (myToken !== speakingToken) return;
+          const txt = data && data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
+          if (txt && "speechSynthesis" in window) {
+            stopAllSpeech();
+            const activeToken = speakingToken;
+            const cleanTxt = txt.replace(/\*\*/g, "").trim();
+            const utter = new SpeechSynthesisUtterance(cleanTxt);
+            utter.lang = "es-MX";
+            utter.rate = 1.02;
+            utter.pitch = 1.0;
+            isSpeakingNow = true;
+            updateStopLogoVisibility();
+            utter.onstart = () => {
+              if (activeToken === speakingToken) {
+                isSpeakingNow = true;
+                updateStopLogoVisibility();
+              }
+            };
+            utter.onend = utter.onerror = () => {
+              if (activeToken === speakingToken) {
+                isSpeakingNow = false;
+                updateStopLogoVisibility();
+              }
+            };
+            window.speechSynthesis.speak(utter);
+          }
+        }).catch(() => {});
+      }
+      return res;
     }
-    FlaggedSR.prototype = OrigSR.prototype;
-    FlaggedSR.__dcVoiceFlagged = true;
-    window.SpeechRecognition = FlaggedSR;
-    window.webkitSpeechRecognition = FlaggedSR;
-  }
 
-  // Agrega boton para detener la voz al instante cuando el usuario quiera
-  function ensureStopButton() {
-    if (document.getElementById("dcStopVoiceBtn")) return;
-    const panel = Array.from(document.querySelectorAll("div, section, aside")).find(el => {
-      const t = el.innerText || "";
-      return t.includes("DareCore Intelligence") && t.includes("Enviar");
-    });
-    if (!panel) return;
-
-    const sendBtn = Array.from(panel.querySelectorAll("button")).find(b => (b.textContent || "").trim().toLowerCase() === "enviar");
-    const stopBtn = document.createElement("button");
-    stopBtn.id = "dcStopVoiceBtn";
-    stopBtn.type = "button";
-    stopBtn.textContent = "■ Detener";
-    stopBtn.title = "Detener voz de inmediato";
-    stopBtn.style.cssText = "margin-right:8px;padding:8px 12px;border-radius:999px;border:1px solid rgba(255,255,255,0.2);background:#27272a;color:#ffffff;font-size:12px;font-weight:600;cursor:pointer;flex-shrink:0;";
-    stopBtn.addEventListener("click", (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      stopAllSpeech();
-    });
-
-    if (sendBtn && sendBtn.parentElement) {
-      sendBtn.parentElement.insertBefore(stopBtn, sendBtn);
+    if (url.includes("api.groq.com/openai/v1/models")) {
+      return new Response(JSON.stringify({
+        data: [
+          { id: "llama-3.3-70b-versatile" },
+          { id: "openai/gpt-oss-20b" }
+        ]
+      }), { status: 200, headers: { "Content-Type": "application/json" } });
     }
-  }
+
+    return origFetch(input, init);
+  };
+
+  setInterval(updateStopLogoVisibility, 250);
 
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", ensureStopButton);
+    document.addEventListener("DOMContentLoaded", ensureStopLogoButton);
   } else {
-    ensureStopButton();
+    ensureStopLogoButton();
   }
-  new MutationObserver(ensureStopButton).observe(document.body || document.documentElement, { childList: true, subtree: true });
+  new MutationObserver(ensureStopLogoButton).observe(document.body || document.documentElement, { childList: true, subtree: true });
 })();
-/* DC_MIC_ONLY_TTS_AND_STOP_END */
+/* DC_FAST_AUTO_VOICE_STOP_LOGO_END */
 (function () {
   const origFetch = window.fetch.bind(window);
   window.fetch = async function (input, init) {
@@ -172,7 +286,7 @@
 })();
 (function () {
     const GROQ_API_KEY = "";
-    const TEXT_MODELS = ["openai/gpt-oss-20b", "qwen/qwen3.8-27b", "openai/gpt-oss-120b"];
+    const TEXT_MODELS = ["llama-3.3-70b-versatile", "openai/gpt-oss-20b"];
 
     const SYSTEM_PROMPT = `Eres DareCore Intelligence, el asistente de IA oficial de Dare Core.
 Dare Core es una marca local en León, Guanajuato, dedicada a la creación y venta de ropa urbana y playeras personalizadas 100 % de algodón.
