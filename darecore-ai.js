@@ -1,46 +1,208 @@
-/* DC_GROQ_PROXY_START */
+/* DC_CHAT_VOICE_FIX_START */
 (function () {
+  const DEFAULT_GREETING = "Hola. Soy DareCore Intelligence. Pregúntame por nuestras prendas, cortes, tallas o personalización en Dare Lab.";
+  const conversation = [
+    {
+      role: "system",
+      content: "Eres DareCore Intelligence, el asistente de IA oficial de Dare Core. Dare Core es una marca local en Leon, Guanajuato, dedicada a la creacion y venta de ropa urbana y playeras (incluyendo cortes oversize y sin mangas) y personalizacion en Dare Lab. Responde siempre en espanol, de forma clara, directa, breve y amable. No uses emojis ni asteriscos dobles (**). Escribe solo texto plano limpio."
+    }
+  ];
+
+  // Fuerza voz masculina nativa rapida sin dependencias externas
+  window.DC_CUSTOM_TTS = null;
+  function speakMale(text) {
+    try {
+      if (!("speechSynthesis" in window) || !text) return;
+      window.speechSynthesis.cancel();
+      const utter = new SpeechSynthesisUtterance(text);
+      utter.lang = "es-MX";
+      utter.rate = 1.05;
+      utter.pitch = 0.85;
+      const voices = window.speechSynthesis.getVoices ? window.speechSynthesis.getVoices() : [];
+      const maleEs = voices.find(v =>
+        /es/i.test(v.lang) && /jorge|carlos|diego|mateo|alonso|pablo|raul|enrique|male|hombre|miguel|alvaro/i.test(v.name)
+      ) || voices.find(v => /es/i.test(v.lang));
+      if (maleEs) utter.voice = maleEs;
+      window.speechSynthesis.speak(utter);
+    } catch (_) {}
+  }
+
+  // Intercepta llamadas a Groq y las redirige a /api/groq en Vercel
   const origFetch = window.fetch.bind(window);
   window.fetch = async function (input, init) {
     const url = typeof input === "string" ? input : (input && input.url) || "";
     if (url.includes("api.groq.com/openai/v1/chat/completions")) {
-      const nextInit = Object.assign({}, init || {});
-      const headers = new Headers(nextInit.headers || {});
-      headers.delete("Authorization");
-      nextInit.headers = headers;
       return origFetch("/api/groq", {
-        method: nextInit.method || "POST",
+        method: (init && init.method) || "POST",
         headers: { "Content-Type": "application/json" },
-        body: nextInit.body
+        body: init && init.body
       });
     }
     return origFetch(input, init);
   };
 
-  const clearKeyWarning = () => {
+  function findChatContainer() {
+    const all = Array.from(document.querySelectorAll("div, section, main"));
+    for (const el of all) {
+      const txt = (el.innerText || "").trim();
+      if (txt.includes("DareCore Intelligence") && txt.includes("Enviar")) {
+        const msgs = el.querySelectorAll("div, p");
+        for (const m of msgs) {
+          if ((m.textContent || "").includes("Hola. Soy DareCore Intelligence")) {
+            return m.parentElement || el;
+          }
+        }
+        return el;
+      }
+    }
+    return document.body;
+  }
+
+  function appendBubble(text, isUser) {
+    if (!text) return;
+    const container = findChatContainer();
+    const bubble = document.createElement("div");
+    bubble.setAttribute("data-dc-msg", isUser ? "user" : "bot");
+    bubble.style.cssText = isUser
+      ? "align-self:flex-end;background:#ea580c;color:#ffffff;padding:10px 14px;border-radius:14px;margin:6px 0;max-width:85%;font-size:14px;line-height:1.4;white-space:pre-line;"
+      : "align-self:flex-start;background:#27272a;color:#f4f4f5;padding:10px 14px;border-radius:14px;margin:6px 0;max-width:85%;font-size:14px;line-height:1.4;white-space:pre-line;";
+    bubble.textContent = text;
+    if (container && container.appendChild) {
+      if (getComputedStyle(container).display !== "flex") {
+        container.style.display = "flex";
+        container.style.flexDirection = "column";
+      }
+      container.appendChild(bubble);
+      container.scrollTop = container.scrollHeight;
+    }
+  }
+
+  async function sendToGroq(userText) {
+    const clean = (userText || "").trim();
+    if (!clean) return;
+    if (clean === DEFAULT_GREETING) return;
+
+    appendBubble(clean, true);
+    conversation.push({ role: "user", content: clean });
+
+    const models = ["openai/gpt-oss-20b", "qwen/qwen3.8-27b", "openai/gpt-oss-120b"];
+    let reply = "";
+
+    for (const model of models) {
+      try {
+        const res = await origFetch("/api/groq", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            model,
+            messages: conversation.slice(-12),
+            temperature: 0.6
+          })
+        });
+        if (!res.ok) continue;
+        const data = await res.json();
+        const content = data && data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
+        if (content && content.trim()) {
+          reply = content.trim().replace(/\*\*/g, "");
+          break;
+        }
+      } catch (_) {}
+    }
+
+    if (!reply) {
+      reply = "No pude conectar con el servicio de IA en este momento. Intenta de nuevo en unos segundos.";
+    }
+
+    conversation.push({ role: "assistant", content: reply });
+    appendBubble(reply, false);
+    speakMale(reply);
+  }
+
+  // Engancha formulario / input / boton Enviar y limpia avisos de API key
+  function wireUI() {
     document.querySelectorAll("div, p, span").forEach(el => {
       if (el.children.length === 0) {
         const txt = (el.textContent || "").trim();
         if (txt.includes("Configura primero tu GROQ_API_KEY")) {
-          const bubble = el.closest("[class*='msg'], [class*='bubble'], [class*='message']") || el.parentElement;
-          if (bubble && bubble !== document.body) {
-            bubble.remove();
-          } else {
-            el.remove();
-          }
+          const b = el.closest("[data-dc-msg]") || el.parentElement;
+          if (b && b !== document.body) b.remove();
         }
       }
     });
-  };
+
+    const inputs = Array.from(document.querySelectorAll("input[type='text'], input:not([type]), textarea"));
+    const chatInput = inputs.find(inp => {
+      const ph = (inp.getAttribute("placeholder") || "").toLowerCase();
+      return ph.includes("prendas") || ph.includes("tallas") || ph.includes("escribe") || ph.includes("pregunta");
+    });
+
+    if (chatInput && !chatInput.dataset.dcWired) {
+      chatInput.dataset.dcWired = "1";
+      const form = chatInput.closest("form");
+      const sendBtn = form
+        ? form.querySelector("button[type='submit'], button")
+        : Array.from(document.querySelectorAll("button")).find(b => (b.textContent || "").trim().toLowerCase() === "enviar");
+
+      const handleSend = (ev) => {
+        if (ev) {
+          ev.preventDefault();
+          ev.stopPropagation();
+          if (ev.stopImmediatePropagation) ev.stopImmediatePropagation();
+        }
+        const val = chatInput.value;
+        chatInput.value = "";
+        if (val && val.trim()) {
+          sendToGroq(val.trim());
+        }
+      };
+
+      if (form) {
+        form.addEventListener("submit", handleSend, true);
+      }
+      if (sendBtn && !sendBtn.dataset.dcBtnWired) {
+        sendBtn.dataset.dcBtnWired = "1";
+        sendBtn.addEventListener("click", handleSend, true);
+      }
+      chatInput.addEventListener("keydown", (ev) => {
+        if (ev.key === "Enter" && !ev.shiftKey) {
+          handleSend(ev);
+        }
+      }, true);
+    }
+  }
+
+  // Conecta SpeechRecognition para que la voz envie lo dicho directo a Groq
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (SR && !SR.__dcPatched) {
+    const OrigSR = SR;
+    function PatchedSR() {
+      const rec = new OrigSR();
+      rec.lang = "es-MX";
+      rec.addEventListener("result", (e) => {
+        const last = e.results[e.results.length - 1];
+        if (last && last.isFinal && last[0] && last[0].transcript) {
+          const spoken = last[0].transcript.trim();
+          if (spoken) {
+            setTimeout(() => sendToGroq(spoken), 120);
+          }
+        }
+      });
+      return rec;
+    }
+    PatchedSR.prototype = OrigSR.prototype;
+    PatchedSR.__dcPatched = true;
+    window.SpeechRecognition = PatchedSR;
+    window.webkitSpeechRecognition = PatchedSR;
+  }
 
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", clearKeyWarning);
+    document.addEventListener("DOMContentLoaded", wireUI);
   } else {
-    clearKeyWarning();
+    wireUI();
   }
-  new MutationObserver(clearKeyWarning).observe(document.body || document.documentElement, { childList: true, subtree: true });
+  new MutationObserver(wireUI).observe(document.body || document.documentElement, { childList: true, subtree: true });
 })();
-/* DC_GROQ_PROXY_END */
+/* DC_CHAT_VOICE_FIX_END */
 (function () {
   const origFetch = window.fetch.bind(window);
   window.fetch = async function (input, init) {
