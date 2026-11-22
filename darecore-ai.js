@@ -2,10 +2,46 @@
 (function () {
   window.DC_CUSTOM_TTS = null;
   let lastInputWasVoice = false;
-  let blockVoiceInputUntil = 0;
+  let clearLockUntil = 0;
+  let activeRecognizer = null;
   let speakingToken = 0;
   let speechExpectedEndTime = 0;
   let keepAliveTimer = null;
+
+  const nativeInputDesc = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value");
+  const nativeTextareaDesc = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, "value");
+
+  function setRawInputValue(el, val) {
+    if (!el) return;
+    if (el.tagName === "TEXTAREA" && nativeTextareaDesc && nativeTextareaDesc.set) {
+      nativeTextareaDesc.set.call(el, val);
+    } else if (nativeInputDesc && nativeInputDesc.set) {
+      nativeInputDesc.set.call(el, val);
+    } else {
+      el.value = val;
+    }
+  }
+
+  function getChatInput(panel) {
+    const root = panel || document;
+    return root.querySelector("input[type='text'], input:not([type]), textarea");
+  }
+
+  function forceClearInput(panel) {
+    const input = getChatInput(panel);
+    if (!input) return;
+    setRawInputValue(input, "");
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+    input.dispatchEvent(new Event("change", { bubbles: true }));
+  }
+
+  function activateClearGuard(panel) {
+    clearLockUntil = Date.now() + 2500;
+    forceClearInput(panel);
+    [20, 80, 180, 350, 650, 1100, 1800].forEach(ms => {
+      setTimeout(() => forceClearInput(panel), ms);
+    });
+  }
 
   function isVoiceActuallyPlaying() {
     if ("speechSynthesis" in window) {
@@ -98,28 +134,6 @@
     }, 200);
   }
 
-  function getChatInput(panel) {
-    const root = panel || document;
-    return root.querySelector("input[type='text'], input:not([type]), textarea");
-  }
-
-  function clearChatInputField(panel) {
-    const input = getChatInput(panel);
-    if (input) {
-      input.value = "";
-      input.dispatchEvent(new Event("input", { bubbles: true }));
-      input.dispatchEvent(new Event("change", { bubbles: true }));
-    }
-  }
-
-  function lockAndClearAfterVoiceSend(panel) {
-    blockVoiceInputUntil = Date.now() + 900;
-    clearChatInputField(panel);
-    [60, 180, 400, 750].forEach(ms => {
-      setTimeout(() => clearChatInputField(panel), ms);
-    });
-  }
-
   function ensureStopLogoButton() {
     const panel = Array.from(document.querySelectorAll("div, section, aside")).find(el => {
       const t = el.innerText || "";
@@ -184,10 +198,18 @@
     const input = getChatInput(panel);
     if (!input || !(input.value || "").trim()) return;
 
+    try {
+      if (activeRecognizer && typeof activeRecognizer.abort === "function") {
+        activeRecognizer.abort();
+      }
+    } catch (_) {}
+
     const form = input.closest("form");
     const sendBtn = Array.from(panel.querySelectorAll("button")).find(b => (b.textContent || "").trim().toLowerCase() === "enviar");
 
     lastInputWasVoice = true;
+    activateClearGuard(panel);
+
     if (sendBtn) {
       sendBtn.disabled = false;
       sendBtn.click();
@@ -197,7 +219,7 @@
       input.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", code: "Enter", keyCode: 13, which: 13, bubbles: true }));
     }
 
-    lockAndClearAfterVoiceSend(panel);
+    activateClearGuard(panel);
   }
 
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -205,22 +227,24 @@
     const OrigSR = SR;
     function SyncVoiceSR() {
       const rec = new OrigSR();
+      activeRecognizer = rec;
       rec.lang = "es-MX";
       rec.interimResults = true;
       let latestTranscript = "";
       let sentForSession = false;
 
       rec.addEventListener("start", () => {
+        activeRecognizer = rec;
         lastInputWasVoice = true;
-        blockVoiceInputUntil = 0;
+        clearLockUntil = 0;
         latestTranscript = "";
         sentForSession = false;
         stopAllSpeech();
       });
 
       rec.addEventListener("result", (e) => {
-        if (Date.now() < blockVoiceInputUntil) {
-          clearChatInputField();
+        if (sentForSession || Date.now() < clearLockUntil) {
+          forceClearInput();
           return;
         }
         lastInputWasVoice = true;
@@ -238,7 +262,7 @@
         });
         const input = getChatInput(panel);
         if (input && latestTranscript && !sentForSession) {
-          input.value = latestTranscript;
+          setRawInputValue(input, latestTranscript);
           input.dispatchEvent(new Event("input", { bubbles: true }));
         }
 
@@ -246,7 +270,7 @@
           sentForSession = true;
           setTimeout(() => {
             triggerSendInPanel();
-          }, 100);
+          }, 80);
         }
       });
 
@@ -255,9 +279,9 @@
           sentForSession = true;
           setTimeout(() => {
             triggerSendInPanel();
-          }, 100);
+          }, 80);
         } else if (sentForSession) {
-          lockAndClearAfterVoiceSend();
+          activateClearGuard();
         }
       });
 
@@ -268,6 +292,15 @@
     window.SpeechRecognition = SyncVoiceSR;
     window.webkitSpeechRecognition = SyncVoiceSR;
   }
+
+  document.addEventListener("input", () => {
+    if (Date.now() < clearLockUntil) {
+      const inp = getChatInput();
+      if (inp && inp.value) {
+        setRawInputValue(inp, "");
+      }
+    }
+  }, true);
 
   document.addEventListener("click", (e) => {
     const btn = e.target && e.target.closest ? e.target.closest("button") : null;
@@ -302,7 +335,7 @@
       const speakThisTurn = lastInputWasVoice;
       lastInputWasVoice = false;
       if (speakThisTurn) {
-        lockAndClearAfterVoiceSend();
+        activateClearGuard();
       } else {
         stopAllSpeech();
       }
@@ -318,11 +351,11 @@
           const txt = data && data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
           if (txt) {
             speakSimultaneously(txt);
-            lockAndClearAfterVoiceSend();
+            activateClearGuard();
           }
         }).catch(() => {});
       } else if (!speakThisTurn) {
-        setTimeout(() => clearChatInputField(), 60);
+        setTimeout(() => forceClearInput(), 60);
       }
 
       return res;
@@ -340,7 +373,15 @@
     return origFetch(input, init);
   };
 
-  setInterval(updateStopLogoVisibility, 250);
+  setInterval(() => {
+    updateStopLogoVisibility();
+    if (Date.now() < clearLockUntil) {
+      const inp = getChatInput();
+      if (inp && inp.value) {
+        setRawInputValue(inp, "");
+      }
+    }
+  }, 150);
 
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", ensureStopLogoButton);
