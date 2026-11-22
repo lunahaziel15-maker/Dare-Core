@@ -2,6 +2,7 @@
 (function () {
   window.DC_CUSTOM_TTS = null;
   let lastInputWasVoice = false;
+  let blockVoiceInputUntil = 0;
   let speakingToken = 0;
   let speechExpectedEndTime = 0;
   let keepAliveTimer = null;
@@ -97,14 +98,26 @@
     }, 200);
   }
 
-  function clearChatInputField(panel) {
+  function getChatInput(panel) {
     const root = panel || document;
-    const input = root.querySelector("input[type='text'], input:not([type]), textarea");
+    return root.querySelector("input[type='text'], input:not([type]), textarea");
+  }
+
+  function clearChatInputField(panel) {
+    const input = getChatInput(panel);
     if (input) {
       input.value = "";
       input.dispatchEvent(new Event("input", { bubbles: true }));
       input.dispatchEvent(new Event("change", { bubbles: true }));
     }
+  }
+
+  function lockAndClearAfterVoiceSend(panel) {
+    blockVoiceInputUntil = Date.now() + 900;
+    clearChatInputField(panel);
+    [60, 180, 400, 750].forEach(ms => {
+      setTimeout(() => clearChatInputField(panel), ms);
+    });
   }
 
   function ensureStopLogoButton() {
@@ -168,7 +181,7 @@
       return t.includes("DareCore Intelligence") && t.includes("Enviar");
     });
     if (!panel) return;
-    const input = panel.querySelector("input[type='text'], input:not([type]), textarea");
+    const input = getChatInput(panel);
     if (!input || !(input.value || "").trim()) return;
 
     const form = input.closest("form");
@@ -184,7 +197,7 @@
       input.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", code: "Enter", keyCode: 13, which: 13, bubbles: true }));
     }
 
-    setTimeout(() => clearChatInputField(panel), 50);
+    lockAndClearAfterVoiceSend(panel);
   }
 
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -199,12 +212,17 @@
 
       rec.addEventListener("start", () => {
         lastInputWasVoice = true;
+        blockVoiceInputUntil = 0;
         latestTranscript = "";
         sentForSession = false;
         stopAllSpeech();
       });
 
       rec.addEventListener("result", (e) => {
+        if (Date.now() < blockVoiceInputUntil) {
+          clearChatInputField();
+          return;
+        }
         lastInputWasVoice = true;
         let combined = "";
         let hasFinal = false;
@@ -218,8 +236,8 @@
           const t = el.innerText || "";
           return t.includes("DareCore Intelligence") && t.includes("Enviar");
         });
-        const input = panel && panel.querySelector("input[type='text'], input:not([type]), textarea");
-        if (input && latestTranscript) {
+        const input = getChatInput(panel);
+        if (input && latestTranscript && !sentForSession) {
           input.value = latestTranscript;
           input.dispatchEvent(new Event("input", { bubbles: true }));
         }
@@ -228,7 +246,7 @@
           sentForSession = true;
           setTimeout(() => {
             triggerSendInPanel();
-          }, 120);
+          }, 100);
         }
       });
 
@@ -237,7 +255,9 @@
           sentForSession = true;
           setTimeout(() => {
             triggerSendInPanel();
-          }, 120);
+          }, 100);
+        } else if (sentForSession) {
+          lockAndClearAfterVoiceSend();
         }
       });
 
@@ -281,7 +301,9 @@
     if (url.includes("api.groq.com/openai/v1/chat/completions")) {
       const speakThisTurn = lastInputWasVoice;
       lastInputWasVoice = false;
-      if (!speakThisTurn) {
+      if (speakThisTurn) {
+        lockAndClearAfterVoiceSend();
+      } else {
         stopAllSpeech();
       }
 
@@ -296,7 +318,7 @@
           const txt = data && data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
           if (txt) {
             speakSimultaneously(txt);
-            setTimeout(() => clearChatInputField(), 60);
+            lockAndClearAfterVoiceSend();
           }
         }).catch(() => {});
       } else if (!speakThisTurn) {
@@ -354,7 +376,8 @@ Lo que ofrecen:
 - Personalización completa: estampan diseños exclusivos, frases o detalles a petición del cliente.
 
 Responde siempre en español, de forma clara, directa, breve y amable, basándote únicamente en esta información y en el catálogo actual de la tienda.
-No uses emojis ni asteriscos dobles (**). Escribe solo texto plano limpio.`;
+No uses emojis ni asteriscos dobles (**). Escribe solo texto plano limpio.
+Para dudas sobre envios, tiempos de entrega o pedidos personalizados en Dare Core (Leon, Guanajuato), orienta al cliente indicando que puede revisar los detalles en la tienda o contactar a Dare Core para confirmar tiempos y cobertura segun su ubicacion.`;
 
     const chatHistory = [];
     let isSending = false;
