@@ -1,6 +1,25 @@
-/* DC_VERCEL_GROQ_PROXY_START */
+/* DC_MIC_ONLY_TTS_AND_STOP_START */
 (function () {
   window.DC_CUSTOM_TTS = null;
+  let lastInputWasVoice = false;
+  let speakingToken = 0;
+
+  function stopAllSpeech() {
+    speakingToken++;
+    try {
+      if ("speechSynthesis" in window) {
+        window.speechSynthesis.cancel();
+      }
+    } catch (_) {}
+    try {
+      document.querySelectorAll("audio").forEach(a => {
+        a.pause();
+        a.currentTime = 0;
+      });
+    } catch (_) {}
+  }
+
+  // Intercepta llamadas a Groq y las redirige a /api/groq en Vercel
   const origFetch = window.fetch.bind(window);
   window.fetch = async function (input, init) {
     const url = typeof input === "string" ? input : (input && input.url) || "";
@@ -20,10 +39,123 @@
         ]
       }), { status: 200, headers: { "Content-Type": "application/json" } });
     }
-    return origFetch(input, init);
+
+    // Si la peticion salio de un envio por texto/boton Enviar, silencia TTS
+    if (init && typeof init.body === "string" && init.body.includes('"messages"') && !lastInputWasVoice) {
+      stopAllSpeech();
+    }
+
+    const response = await origFetch(input, init);
+
+    if (init && typeof init.body === "string" && init.body.includes('"messages"')) {
+      const shouldSpeak = lastInputWasVoice;
+      lastInputWasVoice = false;
+      if (shouldSpeak && response.ok) {
+        const myToken = ++speakingToken;
+        response.clone().json().then(data => {
+          if (myToken !== speakingToken) return;
+          const txt = data && data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
+          if (txt && "speechSynthesis" in window) {
+            stopAllSpeech();
+            const currentToken = speakingToken;
+            const cleanTxt = txt.replace(/\*\*/g, "").trim();
+            const utter = new SpeechSynthesisUtterance(cleanTxt);
+            utter.lang = "es-MX";
+            utter.rate = 1.0;
+            utter.pitch = 1.0;
+            utter.onend = () => { if (currentToken === speakingToken) speakingToken++; };
+            window.speechSynthesis.speak(utter);
+          }
+        }).catch(() => {});
+      }
+    }
+
+    return response;
   };
+
+  // Marca si el envio se disparo por voz o por texto/boton Enviar
+  document.addEventListener("click", (e) => {
+    const btn = e.target && e.target.closest ? e.target.closest("button") : null;
+    if (!btn) return;
+    const label = ((btn.textContent || "") + " " + (btn.getAttribute("aria-label") || "") + " " + (btn.title || "")).toLowerCase();
+    if (btn.id === "dcStopVoiceBtn") {
+      e.preventDefault();
+      e.stopPropagation();
+      stopAllSpeech();
+      return;
+    }
+    if (label.includes("enviar") || btn.type === "submit") {
+      lastInputWasVoice = false;
+      stopAllSpeech();
+    }
+  }, true);
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      const active = document.activeElement;
+      if (active && (active.tagName === "INPUT" || active.tagName === "TEXTAREA")) {
+        lastInputWasVoice = false;
+        stopAllSpeech();
+      }
+    }
+  }, true);
+
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (SR && !SR.__dcVoiceFlagged) {
+    const OrigSR = SR;
+    function FlaggedSR() {
+      const rec = new OrigSR();
+      rec.addEventListener("result", () => {
+        lastInputWasVoice = true;
+        stopAllSpeech();
+      });
+      rec.addEventListener("start", () => {
+        lastInputWasVoice = true;
+        stopAllSpeech();
+      });
+      return rec;
+    }
+    FlaggedSR.prototype = OrigSR.prototype;
+    FlaggedSR.__dcVoiceFlagged = true;
+    window.SpeechRecognition = FlaggedSR;
+    window.webkitSpeechRecognition = FlaggedSR;
+  }
+
+  // Agrega boton para detener la voz al instante cuando el usuario quiera
+  function ensureStopButton() {
+    if (document.getElementById("dcStopVoiceBtn")) return;
+    const panel = Array.from(document.querySelectorAll("div, section, aside")).find(el => {
+      const t = el.innerText || "";
+      return t.includes("DareCore Intelligence") && t.includes("Enviar");
+    });
+    if (!panel) return;
+
+    const sendBtn = Array.from(panel.querySelectorAll("button")).find(b => (b.textContent || "").trim().toLowerCase() === "enviar");
+    const stopBtn = document.createElement("button");
+    stopBtn.id = "dcStopVoiceBtn";
+    stopBtn.type = "button";
+    stopBtn.textContent = "■ Detener";
+    stopBtn.title = "Detener voz de inmediato";
+    stopBtn.style.cssText = "margin-right:8px;padding:8px 12px;border-radius:999px;border:1px solid rgba(255,255,255,0.2);background:#27272a;color:#ffffff;font-size:12px;font-weight:600;cursor:pointer;flex-shrink:0;";
+    stopBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      stopAllSpeech();
+    });
+
+    if (sendBtn && sendBtn.parentElement) {
+      sendBtn.parentElement.insertBefore(stopBtn, sendBtn);
+    }
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", ensureStopButton);
+  } else {
+    ensureStopButton();
+  }
+  new MutationObserver(ensureStopButton).observe(document.body || document.documentElement, { childList: true, subtree: true });
 })();
-/* DC_VERCEL_GROQ_PROXY_END */
+/* DC_MIC_ONLY_TTS_AND_STOP_END */
 (function () {
   const origFetch = window.fetch.bind(window);
   window.fetch = async function (input, init) {
