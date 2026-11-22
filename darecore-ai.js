@@ -1,258 +1,137 @@
-/* DC_STRICT_SINGLE_TURN_VOICE_START */
+/* DC_CLEAN_CORE_START */
 (function () {
   window.DC_CUSTOM_TTS = null;
-  let lastInputWasVoice = false;
-  let autoSendTimer = null;
-  let requestInFlight = false;
-  let lastPromptText = "";
-  let lastPromptTime = 0;
-  let speakingToken = 0;
-  let speechExpectedEndTime = 0;
-  let keepAliveTimer = null;
+  let fromVoice = false;
+  let voiceTimer = null;
+  let busy = false;
+  let lastSent = "";
+  let lastSentTs = 0;
+  let speakId = 0;
+  let speakUntil = 0;
 
-  function isVoiceActuallyPlaying() {
-    if ("speechSynthesis" in window) {
-      if (window.speechSynthesis.speaking || window.speechSynthesis.pending) return true;
-    }
-    return Date.now() < speechExpectedEndTime;
-  }
-
-  function updateStopLogoVisibility() {
-    const stopBtn = document.getElementById("dcStopVoiceLogoBtn");
-    if (!stopBtn) return;
-    stopBtn.style.display = isVoiceActuallyPlaying() ? "inline-flex" : "none";
-  }
-
-  function clearKeepAlive() {
-    if (keepAliveTimer) {
-      clearInterval(keepAliveTimer);
-      keepAliveTimer = null;
-    }
-  }
-
-  function stopAllSpeech() {
-    speakingToken++;
-    speechExpectedEndTime = 0;
-    clearKeepAlive();
+  function stopVoice() {
+    speakId++;
+    speakUntil = 0;
+    try { if (window.speechSynthesis) window.speechSynthesis.cancel(); } catch (_) {}
     try {
-      if ("speechSynthesis" in window) {
-        window.speechSynthesis.cancel();
-      }
+      document.querySelectorAll("audio").forEach(a => { a.pause(); a.currentTime = 0; });
     } catch (_) {}
-    try {
-      document.querySelectorAll("audio").forEach(a => {
-        a.pause();
-        a.currentTime = 0;
-      });
-    } catch (_) {}
-    updateStopLogoVisibility();
+    updateStopBtn();
   }
 
-  function speakSimultaneously(rawText) {
-    if (!("speechSynthesis" in window) || !rawText) return;
-    const cleanTxt = String(rawText).replace(/\*\*/g, "").replace(/[#*`]/g, "").trim();
-    if (!cleanTxt) return;
-
-    stopAllSpeech();
-    const myToken = speakingToken;
-    const estimatedMs = Math.max(2500, Math.min(45000, cleanTxt.length * 75));
-    speechExpectedEndTime = Date.now() + estimatedMs;
-
-    const utter = new SpeechSynthesisUtterance(cleanTxt);
-    utter.lang = "es-MX";
-    utter.rate = 1.02;
-    utter.pitch = 1.0;
-
-    utter.onstart = () => {
-      if (myToken !== speakingToken) return;
-      speechExpectedEndTime = Date.now() + estimatedMs;
-      updateStopLogoVisibility();
-    };
-
-    utter.onend = utter.onerror = () => {
-      if (myToken !== speakingToken) return;
-      speechExpectedEndTime = 0;
-      clearKeepAlive();
-      updateStopLogoVisibility();
-    };
-
-    try {
-      window.speechSynthesis.speak(utter);
-      if (window.speechSynthesis.paused) {
-        window.speechSynthesis.resume();
-      }
-    } catch (_) {}
-
-    updateStopLogoVisibility();
-
-    keepAliveTimer = setInterval(() => {
-      if (myToken !== speakingToken) {
-        clearKeepAlive();
-        return;
-      }
-      if ("speechSynthesis" in window && window.speechSynthesis.paused) {
-        try { window.speechSynthesis.resume(); } catch (_) {}
-      }
-      if (!("speechSynthesis" in window && (window.speechSynthesis.speaking || window.speechSynthesis.pending)) && Date.now() >= speechExpectedEndTime) {
-        speechExpectedEndTime = 0;
-        clearKeepAlive();
-      }
-      updateStopLogoVisibility();
-    }, 200);
+  function isSpeaking() {
+    if (window.speechSynthesis && (window.speechSynthesis.speaking || window.speechSynthesis.pending)) return true;
+    return Date.now() < speakUntil;
   }
 
-  function getPanelAndInput() {
+  function updateStopBtn() {
+    const btn = document.getElementById("dcStopLogo");
+    if (btn) btn.style.display = isSpeaking() ? "inline-flex" : "none";
+  }
+
+  function speakNow(text) {
+    if (!window.speechSynthesis || !text) return;
+    const clean = String(text).replace(/[*#`]/g, "").trim();
+    if (!clean) return;
+    stopVoice();
+    const id = speakId;
+    speakUntil = Date.now() + Math.min(40000, Math.max(2500, clean.length * 75));
+    const u = new SpeechSynthesisUtterance(clean);
+    u.lang = "es-MX";
+    u.rate = 1.02;
+    u.onstart = () => { if (id === speakId) updateStopBtn(); };
+    u.onend = u.onerror = () => { if (id === speakId) { speakUntil = 0; updateStopBtn(); } };
+    try { window.speechSynthesis.speak(u); } catch (_) {}
+    updateStopBtn();
+  }
+
+  function getUI() {
     const panel = Array.from(document.querySelectorAll("div, section, aside")).find(el => {
       const t = el.innerText || "";
       return t.includes("DareCore Intelligence") && t.includes("Enviar");
     });
     const input = panel ? panel.querySelector("input[type='text'], input:not([type]), textarea") : null;
-    const sendBtn = panel
-      ? Array.from(panel.querySelectorAll("button")).find(b => (b.textContent || "").trim().toLowerCase() === "enviar")
-      : null;
+    const sendBtn = panel ? Array.from(panel.querySelectorAll("button")).find(b => (b.textContent || "").trim().toLowerCase() === "enviar") : null;
     return { panel, input, sendBtn };
   }
 
-  function sendOnceFromVoice() {
-    if (autoSendTimer) {
-      clearTimeout(autoSendTimer);
-      autoSendTimer = null;
+  function ensureStopBtn() {
+    const { panel, sendBtn } = getUI();
+    if (!panel || !sendBtn) return;
+    if (!document.getElementById("dcStopLogo")) {
+      const b = document.createElement("button");
+      b.id = "dcStopLogo";
+      b.type = "button";
+      b.title = "Detener voz";
+      b.setAttribute("aria-label", "Detener voz");
+      b.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="5" y="5" width="14" height="14" rx="2.5"></rect></svg>';
+      b.style.cssText = "display:none;align-items:center;justify-content:center;width:34px;height:34px;border-radius:50%;border:1px solid rgba(255,255,255,0.22);background:#ea580c;color:#fff;cursor:pointer;flex-shrink:0;margin-right:6px;";
+      b.addEventListener("click", e => { e.preventDefault(); e.stopPropagation(); stopVoice(); }, true);
+      sendBtn.parentElement.insertBefore(b, sendBtn);
     }
-    if (requestInFlight) return;
-
-    const { input, sendBtn } = getPanelAndInput();
-    if (!input) return;
-    const val = (input.value || "").trim();
-    if (!val) return;
-
-    const now = Date.now();
-    if (val === lastPromptText && (now - lastPromptTime) < 3500) return;
-
-    lastInputWasVoice = true;
-    if (sendBtn && !sendBtn.disabled) {
-      sendBtn.click();
-    } else {
-      input.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", code: "Enter", keyCode: 13, which: 13, bubbles: true }));
-    }
+    updateStopBtn();
   }
 
-  function hookSpeechEventsOnInstance(rec) {
-    if (!rec || rec.__dcHooked) return;
-    rec.__dcHooked = true;
-    rec.addEventListener("start", () => {
-      lastInputWasVoice = true;
-      stopAllSpeech();
-    });
+  function flushVoiceSend() {
+    if (voiceTimer) { clearTimeout(voiceTimer); voiceTimer = null; }
+    if (busy) return;
+    const { input, sendBtn } = getUI();
+    if (!input || !sendBtn || sendBtn.disabled) return;
+    const txt = (input.value || "").trim();
+    if (!txt) return;
+    if (txt === lastSent && (Date.now() - lastSentTs) < 3000) return;
+    fromVoice = true;
+    sendBtn.click();
+  }
+
+  function bindRec(rec) {
+    if (!rec || rec.__dcBound) return;
+    rec.__dcBound = true;
+    rec.addEventListener("start", () => { fromVoice = true; stopVoice(); });
     rec.addEventListener("result", () => {
-      lastInputWasVoice = true;
-      if (autoSendTimer) clearTimeout(autoSendTimer);
-      autoSendTimer = setTimeout(() => {
-        sendOnceFromVoice();
-      }, 700);
+      fromVoice = true;
+      if (voiceTimer) clearTimeout(voiceTimer);
+      voiceTimer = setTimeout(flushVoiceSend, 700);
     });
     rec.addEventListener("end", () => {
-      if (autoSendTimer) clearTimeout(autoSendTimer);
-      autoSendTimer = setTimeout(() => {
-        sendOnceFromVoice();
-      }, 150);
+      if (voiceTimer) clearTimeout(voiceTimer);
+      voiceTimer = setTimeout(flushVoiceSend, 150);
     });
   }
 
-  ["SpeechRecognition", "webkitSpeechRecognition"].forEach(name => {
-    const Ctor = window[name];
-    if (typeof Ctor === "function" && !Ctor.__dcWrapped) {
-      const Wrapped = new Proxy(Ctor, {
-        construct(target, args) {
-          const instance = new target(...args);
-          hookSpeechEventsOnInstance(instance);
-          return instance;
+  ["SpeechRecognition", "webkitSpeechRecognition"].forEach(k => {
+    const Orig = window[k];
+    if (typeof Orig === "function" && !Orig.__dcProxy) {
+      window[k] = new Proxy(Orig, {
+        construct(t, args) {
+          const r = new t(...args);
+          bindRec(r);
+          return r;
         }
       });
-      Wrapped.__dcWrapped = true;
-      window[name] = Wrapped;
+      window[k].__dcProxy = true;
     }
   });
 
-  function ensureStopLogoButton() {
-    const { panel, sendBtn } = getPanelAndInput();
-    if (!panel) return;
-
-    if (sendBtn) {
-      sendBtn.style.setProperty("display", "inline-flex", "important");
-      sendBtn.style.setProperty("align-items", "center", "important");
-      sendBtn.style.setProperty("justify-content", "center", "important");
-      sendBtn.style.setProperty("opacity", "1", "important");
-      sendBtn.style.setProperty("visibility", "visible", "important");
-      sendBtn.style.setProperty("flex-shrink", "0", "important");
-      sendBtn.style.setProperty("min-width", "68px", "important");
-      sendBtn.style.setProperty("padding", "8px 14px", "important");
-    }
-
-    let stopBtn = document.getElementById("dcStopVoiceLogoBtn");
-    if (!stopBtn) {
-      stopBtn = document.createElement("button");
-      stopBtn.id = "dcStopVoiceLogoBtn";
-      stopBtn.type = "button";
-      stopBtn.setAttribute("aria-label", "Detener voz");
-      stopBtn.title = "Detener voz";
-      stopBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="5" y="5" width="14" height="14" rx="2.5"></rect></svg>';
-      stopBtn.style.cssText = [
-        "display:none",
-        "align-items:center",
-        "justify-content:center",
-        "width:34px",
-        "height:34px",
-        "border-radius:50%",
-        "border:1px solid rgba(255,255,255,0.22)",
-        "background:#ea580c",
-        "color:#ffffff",
-        "cursor:pointer",
-        "flex-shrink:0",
-        "margin-right:6px"
-      ].join(";");
-      stopBtn.addEventListener("click", (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        stopAllSpeech();
-      }, true);
-
-      if (sendBtn && sendBtn.parentElement) {
-        sendBtn.parentElement.insertBefore(stopBtn, sendBtn);
-      }
-    }
-    updateStopLogoVisibility();
-  }
-
-  document.addEventListener("click", (e) => {
-    const btn = e.target && e.target.closest ? e.target.closest("button") : null;
-    if (!btn) return;
-    if (btn.id === "dcStopVoiceLogoBtn") {
-      e.preventDefault();
-      e.stopPropagation();
-      stopAllSpeech();
-      return;
-    }
-    const label = ((btn.textContent || "") + " " + (btn.getAttribute("aria-label") || "") + " " + (btn.title || "")).toLowerCase();
-    if (label.includes("enviar") || btn.type === "submit") {
-      if (autoSendTimer) {
-        clearTimeout(autoSendTimer);
-        autoSendTimer = null;
-      }
-      lastInputWasVoice = false;
-      stopAllSpeech();
+  document.addEventListener("click", e => {
+    const b = e.target && e.target.closest ? e.target.closest("button") : null;
+    if (!b) return;
+    if (b.id === "dcStopLogo") { e.preventDefault(); e.stopPropagation(); stopVoice(); return; }
+    const lbl = ((b.textContent || "") + " " + (b.title || "")).toLowerCase();
+    if (lbl.includes("enviar") || b.type === "submit") {
+      if (voiceTimer) { clearTimeout(voiceTimer); voiceTimer = null; }
+      fromVoice = false;
+      stopVoice();
     }
   }, true);
 
-  document.addEventListener("keydown", (e) => {
+  document.addEventListener("keydown", e => {
     if (e.key === "Enter" && !e.shiftKey) {
-      const active = document.activeElement;
-      if (active && (active.tagName === "INPUT" || active.tagName === "TEXTAREA")) {
-        if (autoSendTimer) {
-          clearTimeout(autoSendTimer);
-          autoSendTimer = null;
-        }
-        lastInputWasVoice = false;
-        stopAllSpeech();
+      const el = document.activeElement;
+      if (el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA")) {
+        if (voiceTimer) { clearTimeout(voiceTimer); voiceTimer = null; }
+        fromVoice = false;
+        stopVoice();
       }
     }
   }, true);
@@ -261,34 +140,29 @@
   window.fetch = async function (input, init) {
     const url = typeof input === "string" ? input : (input && input.url) || "";
     if (url.includes("api.groq.com/openai/v1/chat/completions")) {
-      let userMsg = "";
+      let msg = "";
       try {
-        const parsed = init && init.body ? JSON.parse(init.body) : null;
-        const msgs = parsed && Array.isArray(parsed.messages) ? parsed.messages : [];
-        for (let i = msgs.length - 1; i >= 0; i--) {
-          if (msgs[i] && msgs[i].role === "user") {
-            userMsg = String(msgs[i].content || "").trim();
-            break;
-          }
+        const bodyObj = init && init.body ? JSON.parse(init.body) : null;
+        const arr = bodyObj && Array.isArray(bodyObj.messages) ? bodyObj.messages : [];
+        for (let i = arr.length - 1; i >= 0; i--) {
+          if (arr[i] && arr[i].role === "user") { msg = String(arr[i].content || "").trim(); break; }
         }
       } catch (_) {}
 
       const now = Date.now();
-      if (requestInFlight || (userMsg && userMsg === lastPromptText && (now - lastPromptTime) < 3500)) {
-        return new Response(JSON.stringify({
-          choices: [{ message: { content: "" } }]
-        }), { status: 200, headers: { "Content-Type": "application/json" } });
+      if (busy || (msg && msg === lastSent && (now - lastSentTs) < 3000)) {
+        return new Response(JSON.stringify({ choices: [{ message: { content: "" } }] }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
       }
 
-      requestInFlight = true;
-      lastPromptText = userMsg;
-      lastPromptTime = now;
-
-      const speakThisTurn = lastInputWasVoice;
-      lastInputWasVoice = false;
-      if (!speakThisTurn) {
-        stopAllSpeech();
-      }
+      busy = true;
+      lastSent = msg;
+      lastSentTs = now;
+      const speakTurn = fromVoice;
+      fromVoice = false;
+      if (!speakTurn) stopVoice();
 
       try {
         const res = await origFetch("/api/groq", {
@@ -296,28 +170,24 @@
           headers: { "Content-Type": "application/json" },
           body: init && init.body
         });
-
-        if (speakThisTurn && res.ok) {
-          res.clone().json().then(data => {
-            const txt = data && data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
-            if (txt) {
-              speakSimultaneously(txt);
-            }
+        if (speakTurn && res.ok) {
+          res.clone().json().then(d => {
+            const out = d && d.choices && d.choices[0] && d.choices[0].message && d.choices[0].message.content;
+            if (out) speakNow(out);
           }).catch(() => {});
         }
-
         return res;
       } finally {
-        setTimeout(() => {
-          requestInFlight = false;
-        }, 400);
+        setTimeout(() => { busy = false; }, 350);
       }
     }
 
     if (url.includes("api.groq.com/openai/v1/models")) {
       return new Response(JSON.stringify({
         data: [
-          { id: "llama-3.3-70b-versatile" }
+          { id: "openai/gpt-oss-20b" },
+          { id: "qwen/qwen3.8-27b" },
+          { id: "openai/gpt-oss-120b" }
         ]
       }), { status: 200, headers: { "Content-Type": "application/json" } });
     }
@@ -325,16 +195,15 @@
     return origFetch(input, init);
   };
 
-  setInterval(updateStopLogoVisibility, 250);
-
+  setInterval(updateStopBtn, 250);
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", ensureStopLogoButton);
+    document.addEventListener("DOMContentLoaded", ensureStopBtn);
   } else {
-    ensureStopLogoButton();
+    ensureStopBtn();
   }
-  new MutationObserver(ensureStopLogoButton).observe(document.body || document.documentElement, { childList: true, subtree: true });
+  new MutationObserver(ensureStopBtn).observe(document.body || document.documentElement, { childList: true, subtree: true });
 })();
-/* DC_STRICT_SINGLE_TURN_VOICE_END */
+/* DC_CLEAN_CORE_END */
 (function () {
   const origFetch = window.fetch.bind(window);
   window.fetch = async function (input, init) {
@@ -351,7 +220,7 @@
 })();
 (function () {
     const GROQ_API_KEY = "";
-    const TEXT_MODELS = ["llama-3.3-70b-versatile"];
+    const TEXT_MODELS = ["openai/gpt-oss-20b", "qwen/qwen3.8-27b", "openai/gpt-oss-120b"];
 
     const SYSTEM_PROMPT = `Eres DareCore Intelligence, el asistente de IA oficial de Dare Core.
 Dare Core es una marca local en León, Guanajuato, dedicada a la creación y venta de ropa urbana y playeras personalizadas 100 % de algodón.
@@ -361,8 +230,7 @@ Lo que ofrecen:
 - Personalización completa: estampan diseños exclusivos, frases o detalles a petición del cliente.
 
 Responde siempre en español, de forma clara, directa, breve y amable, basándote únicamente en esta información y en el catálogo actual de la tienda.
-No uses emojis ni asteriscos dobles (**). Escribe solo texto plano limpio.
-Para dudas sobre envios, tiempos de entrega o pedidos personalizados en Dare Core (Leon, Guanajuato), orienta al cliente indicando que puede revisar los detalles en la tienda o contactar a Dare Core para confirmar tiempos y cobertura segun su ubicacion.`;
+No uses emojis ni asteriscos dobles (**). Escribe solo texto plano limpio.`;
 
     const chatHistory = [];
     let isSending = false;
