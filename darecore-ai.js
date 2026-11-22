@@ -1,20 +1,35 @@
-/* DC_FAST_AUTO_VOICE_STOP_LOGO_START */
+/* DC_SYNC_MIC_VOICE_AND_STOP_START */
 (function () {
   window.DC_CUSTOM_TTS = null;
   let lastInputWasVoice = false;
   let speakingToken = 0;
-  let isSpeakingNow = false;
+  let speechExpectedEndTime = 0;
+  let keepAliveTimer = null;
+
+  function isVoiceActuallyPlaying() {
+    if ("speechSynthesis" in window) {
+      if (window.speechSynthesis.speaking || window.speechSynthesis.pending) return true;
+    }
+    return Date.now() < speechExpectedEndTime;
+  }
 
   function updateStopLogoVisibility() {
     const stopBtn = document.getElementById("dcStopVoiceLogoBtn");
     if (!stopBtn) return;
-    const active = Boolean(isSpeakingNow || ("speechSynthesis" in window && window.speechSynthesis.speaking));
-    stopBtn.style.display = active ? "inline-flex" : "none";
+    stopBtn.style.display = isVoiceActuallyPlaying() ? "inline-flex" : "none";
+  }
+
+  function clearKeepAlive() {
+    if (keepAliveTimer) {
+      clearInterval(keepAliveTimer);
+      keepAliveTimer = null;
+    }
   }
 
   function stopAllSpeech() {
     speakingToken++;
-    isSpeakingNow = false;
+    speechExpectedEndTime = 0;
+    clearKeepAlive();
     try {
       if ("speechSynthesis" in window) {
         window.speechSynthesis.cancel();
@@ -29,7 +44,69 @@
     updateStopLogoVisibility();
   }
 
-  // Boton detener: solo logo/icono cuadrado (■) y visible/activo solo cuando habla con voz
+  function speakSimultaneously(rawText) {
+    if (!("speechSynthesis" in window) || !rawText) return;
+    const cleanTxt = String(rawText).replace(/\*\*/g, "").replace(/[#*`]/g, "").trim();
+    if (!cleanTxt) return;
+
+    stopAllSpeech();
+    const myToken = speakingToken;
+    const estimatedMs = Math.max(2500, Math.min(45000, cleanTxt.length * 75));
+    speechExpectedEndTime = Date.now() + estimatedMs;
+
+    const utter = new SpeechSynthesisUtterance(cleanTxt);
+    utter.lang = "es-MX";
+    utter.rate = 1.02;
+    utter.pitch = 1.0;
+
+    utter.onstart = () => {
+      if (myToken !== speakingToken) return;
+      speechExpectedEndTime = Date.now() + estimatedMs;
+      updateStopLogoVisibility();
+    };
+
+    utter.onend = utter.onerror = () => {
+      if (myToken !== speakingToken) return;
+      speechExpectedEndTime = 0;
+      clearKeepAlive();
+      updateStopLogoVisibility();
+    };
+
+    try {
+      window.speechSynthesis.speak(utter);
+      if (window.speechSynthesis.paused) {
+        window.speechSynthesis.resume();
+      }
+    } catch (_) {}
+
+    updateStopLogoVisibility();
+
+    keepAliveTimer = setInterval(() => {
+      if (myToken !== speakingToken) {
+        clearKeepAlive();
+        return;
+      }
+      if ("speechSynthesis" in window && window.speechSynthesis.paused) {
+        try { window.speechSynthesis.resume(); } catch (_) {}
+      }
+      if (!("speechSynthesis" in window && (window.speechSynthesis.speaking || window.speechSynthesis.pending)) && Date.now() >= speechExpectedEndTime) {
+        speechExpectedEndTime = 0;
+        clearKeepAlive();
+      }
+      updateStopLogoVisibility();
+    }, 200);
+  }
+
+  function clearChatInputField(panel) {
+    const root = panel || document;
+    const input = root.querySelector("input[type='text'], input:not([type]), textarea");
+    if (input) {
+      input.value = "";
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+      input.dispatchEvent(new Event("change", { bubbles: true }));
+    }
+  }
+
   function ensureStopLogoButton() {
     const panel = Array.from(document.querySelectorAll("div, section, aside")).find(el => {
       const t = el.innerText || "";
@@ -97,6 +174,7 @@
     const form = input.closest("form");
     const sendBtn = Array.from(panel.querySelectorAll("button")).find(b => (b.textContent || "").trim().toLowerCase() === "enviar");
 
+    lastInputWasVoice = true;
     if (sendBtn) {
       sendBtn.disabled = false;
       sendBtn.click();
@@ -105,13 +183,14 @@
     } else {
       input.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", code: "Enter", keyCode: 13, which: 13, bubbles: true }));
     }
+
+    setTimeout(() => clearChatInputField(panel), 50);
   }
 
-  // Envia automaticamente al terminar de hablar por microfono
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (SR && !SR.__dcAutoSendPatched) {
+  if (SR && !SR.__dcSyncVoicePatched) {
     const OrigSR = SR;
-    function AutoSendSR() {
+    function SyncVoiceSR() {
       const rec = new OrigSR();
       rec.lang = "es-MX";
       rec.interimResults = true;
@@ -148,7 +227,6 @@
         if (hasFinal && latestTranscript && !sentForSession) {
           sentForSession = true;
           setTimeout(() => {
-            lastInputWasVoice = true;
             triggerSendInPanel();
           }, 120);
         }
@@ -158,7 +236,6 @@
         if (latestTranscript && !sentForSession) {
           sentForSession = true;
           setTimeout(() => {
-            lastInputWasVoice = true;
             triggerSendInPanel();
           }, 120);
         }
@@ -166,10 +243,10 @@
 
       return rec;
     }
-    AutoSendSR.prototype = OrigSR.prototype;
-    AutoSendSR.__dcAutoSendPatched = true;
-    window.SpeechRecognition = AutoSendSR;
-    window.webkitSpeechRecognition = AutoSendSR;
+    SyncVoiceSR.prototype = OrigSR.prototype;
+    SyncVoiceSR.__dcSyncVoicePatched = true;
+    window.SpeechRecognition = SyncVoiceSR;
+    window.webkitSpeechRecognition = SyncVoiceSR;
   }
 
   document.addEventListener("click", (e) => {
@@ -198,7 +275,6 @@
     }
   }, true);
 
-  // Intercepta llamadas a Groq para usar /api/groq y hablar solo cuando vino de voz
   const origFetch = window.fetch.bind(window);
   window.fetch = async function (input, init) {
     const url = typeof input === "string" ? input : (input && input.url) || "";
@@ -208,6 +284,7 @@
       if (!speakThisTurn) {
         stopAllSpeech();
       }
+
       const res = await origFetch("/api/groq", {
         method: (init && init.method) || "POST",
         headers: { "Content-Type": "application/json" },
@@ -215,36 +292,17 @@
       });
 
       if (speakThisTurn && res.ok) {
-        const myToken = ++speakingToken;
         res.clone().json().then(data => {
-          if (myToken !== speakingToken) return;
           const txt = data && data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
-          if (txt && "speechSynthesis" in window) {
-            stopAllSpeech();
-            const activeToken = speakingToken;
-            const cleanTxt = txt.replace(/\*\*/g, "").trim();
-            const utter = new SpeechSynthesisUtterance(cleanTxt);
-            utter.lang = "es-MX";
-            utter.rate = 1.02;
-            utter.pitch = 1.0;
-            isSpeakingNow = true;
-            updateStopLogoVisibility();
-            utter.onstart = () => {
-              if (activeToken === speakingToken) {
-                isSpeakingNow = true;
-                updateStopLogoVisibility();
-              }
-            };
-            utter.onend = utter.onerror = () => {
-              if (activeToken === speakingToken) {
-                isSpeakingNow = false;
-                updateStopLogoVisibility();
-              }
-            };
-            window.speechSynthesis.speak(utter);
+          if (txt) {
+            speakSimultaneously(txt);
+            setTimeout(() => clearChatInputField(), 60);
           }
         }).catch(() => {});
+      } else if (!speakThisTurn) {
+        setTimeout(() => clearChatInputField(), 60);
       }
+
       return res;
     }
 
@@ -269,7 +327,7 @@
   }
   new MutationObserver(ensureStopLogoButton).observe(document.body || document.documentElement, { childList: true, subtree: true });
 })();
-/* DC_FAST_AUTO_VOICE_STOP_LOGO_END */
+/* DC_SYNC_MIC_VOICE_AND_STOP_END */
 (function () {
   const origFetch = window.fetch.bind(window);
   window.fetch = async function (input, init) {
