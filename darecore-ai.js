@@ -1,3 +1,46 @@
+/* DC_GROQ_PROXY_START */
+(function () {
+  const origFetch = window.fetch.bind(window);
+  window.fetch = async function (input, init) {
+    const url = typeof input === "string" ? input : (input && input.url) || "";
+    if (url.includes("api.groq.com/openai/v1/chat/completions")) {
+      const nextInit = Object.assign({}, init || {});
+      const headers = new Headers(nextInit.headers || {});
+      headers.delete("Authorization");
+      nextInit.headers = headers;
+      return origFetch("/api/groq", {
+        method: nextInit.method || "POST",
+        headers: { "Content-Type": "application/json" },
+        body: nextInit.body
+      });
+    }
+    return origFetch(input, init);
+  };
+
+  const clearKeyWarning = () => {
+    document.querySelectorAll("div, p, span").forEach(el => {
+      if (el.children.length === 0) {
+        const txt = (el.textContent || "").trim();
+        if (txt.includes("Configura primero tu GROQ_API_KEY")) {
+          const bubble = el.closest("[class*='msg'], [class*='bubble'], [class*='message']") || el.parentElement;
+          if (bubble && bubble !== document.body) {
+            bubble.remove();
+          } else {
+            el.remove();
+          }
+        }
+      }
+    });
+  };
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", clearKeyWarning);
+  } else {
+    clearKeyWarning();
+  }
+  new MutationObserver(clearKeyWarning).observe(document.body || document.documentElement, { childList: true, subtree: true });
+})();
+/* DC_GROQ_PROXY_END */
 (function () {
   const origFetch = window.fetch.bind(window);
   window.fetch = async function (input, init) {
