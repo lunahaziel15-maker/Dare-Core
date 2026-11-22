@@ -1,10 +1,11 @@
-/* DC_FINAL_SINGLE_SEND_VOICE_START */
+/* DC_STRICT_SINGLE_TURN_VOICE_START */
 (function () {
   window.DC_CUSTOM_TTS = null;
   let lastInputWasVoice = false;
   let autoSendTimer = null;
-  let lastDispatchedSig = "";
-  let lastDispatchedAt = 0;
+  let requestInFlight = false;
+  let lastPromptText = "";
+  let lastPromptTime = 0;
   let speakingToken = 0;
   let speechExpectedEndTime = 0;
   let keepAliveTimer = null;
@@ -117,15 +118,15 @@
       clearTimeout(autoSendTimer);
       autoSendTimer = null;
     }
+    if (requestInFlight) return;
+
     const { input, sendBtn } = getPanelAndInput();
     if (!input) return;
     const val = (input.value || "").trim();
     if (!val) return;
 
     const now = Date.now();
-    if (val === lastDispatchedSig && (now - lastDispatchedAt) < 1800) return;
-    lastDispatchedSig = val;
-    lastDispatchedAt = now;
+    if (val === lastPromptText && (now - lastPromptTime) < 3500) return;
 
     lastInputWasVoice = true;
     if (sendBtn && !sendBtn.disabled) {
@@ -260,35 +261,63 @@
   window.fetch = async function (input, init) {
     const url = typeof input === "string" ? input : (input && input.url) || "";
     if (url.includes("api.groq.com/openai/v1/chat/completions")) {
+      let userMsg = "";
+      try {
+        const parsed = init && init.body ? JSON.parse(init.body) : null;
+        const msgs = parsed && Array.isArray(parsed.messages) ? parsed.messages : [];
+        for (let i = msgs.length - 1; i >= 0; i--) {
+          if (msgs[i] && msgs[i].role === "user") {
+            userMsg = String(msgs[i].content || "").trim();
+            break;
+          }
+        }
+      } catch (_) {}
+
+      const now = Date.now();
+      if (requestInFlight || (userMsg && userMsg === lastPromptText && (now - lastPromptTime) < 3500)) {
+        return new Response(JSON.stringify({
+          choices: [{ message: { content: "" } }]
+        }), { status: 200, headers: { "Content-Type": "application/json" } });
+      }
+
+      requestInFlight = true;
+      lastPromptText = userMsg;
+      lastPromptTime = now;
+
       const speakThisTurn = lastInputWasVoice;
       lastInputWasVoice = false;
       if (!speakThisTurn) {
         stopAllSpeech();
       }
 
-      const res = await origFetch("/api/groq", {
-        method: (init && init.method) || "POST",
-        headers: { "Content-Type": "application/json" },
-        body: init && init.body
-      });
+      try {
+        const res = await origFetch("/api/groq", {
+          method: (init && init.method) || "POST",
+          headers: { "Content-Type": "application/json" },
+          body: init && init.body
+        });
 
-      if (speakThisTurn && res.ok) {
-        res.clone().json().then(data => {
-          const txt = data && data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
-          if (txt) {
-            speakSimultaneously(txt);
-          }
-        }).catch(() => {});
+        if (speakThisTurn && res.ok) {
+          res.clone().json().then(data => {
+            const txt = data && data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
+            if (txt) {
+              speakSimultaneously(txt);
+            }
+          }).catch(() => {});
+        }
+
+        return res;
+      } finally {
+        setTimeout(() => {
+          requestInFlight = false;
+        }, 400);
       }
-
-      return res;
     }
 
     if (url.includes("api.groq.com/openai/v1/models")) {
       return new Response(JSON.stringify({
         data: [
-          { id: "llama-3.3-70b-versatile" },
-          { id: "openai/gpt-oss-20b" }
+          { id: "llama-3.3-70b-versatile" }
         ]
       }), { status: 200, headers: { "Content-Type": "application/json" } });
     }
@@ -305,7 +334,7 @@
   }
   new MutationObserver(ensureStopLogoButton).observe(document.body || document.documentElement, { childList: true, subtree: true });
 })();
-/* DC_FINAL_SINGLE_SEND_VOICE_END */
+/* DC_STRICT_SINGLE_TURN_VOICE_END */
 (function () {
   const origFetch = window.fetch.bind(window);
   window.fetch = async function (input, init) {
@@ -322,7 +351,7 @@
 })();
 (function () {
     const GROQ_API_KEY = "";
-    const TEXT_MODELS = ["llama-3.3-70b-versatile", "openai/gpt-oss-20b"];
+    const TEXT_MODELS = ["llama-3.3-70b-versatile"];
 
     const SYSTEM_PROMPT = `Eres DareCore Intelligence, el asistente de IA oficial de Dare Core.
 Dare Core es una marca local en León, Guanajuato, dedicada a la creación y venta de ropa urbana y playeras personalizadas 100 % de algodón.
