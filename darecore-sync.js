@@ -1,10 +1,20 @@
 (function () {
   const AI_KB_KEY = "darecore_ai_knowledge";
+  const PRODUCTS_KEY = "darecore_products";
+  const BASES_KEY = "darecore_custom_bases";
   const GUEST_EMAIL_KEY = "darecore_guest_email";
   const GUEST_NAME_KEY = "darecore_guest_name";
+  const EMAIL_GATE_KEY = "darecore_customer_email";
   const EMAILJS_PUBLIC_KEY = "";
   const EMAILJS_SERVICE_ID = "";
   const EMAILJS_TEMPLATE_ID = "";
+
+  const FALLBACK_BASES = [
+    { id: "b1", name: "BOXY TEE 240G", price: 580, desc: "Camisa / playera algodón peinado pesado", garmentType: "camisa" },
+    { id: "b2", name: "HEAVY HOODIE 400G", price: 1099, desc: "Sudadera / hoodie felpa francesa alto gramaje", garmentType: "sudadera" },
+    { id: "b3", name: "VARSITY JACKET BORDADA", price: 1750, desc: "Chamarra de equipo", garmentType: "sudadera" },
+    { id: "b4", name: "TOP DEPORTIVO SEAMLESS", price: 460, desc: "Top / licra compresión gym", garmentType: "top" }
+  ];
 
   function getDb() {
     if (window.db) return window.db;
@@ -24,33 +34,16 @@
     return clean ? "user_" + clean.replace(/[^a-z0-9]/g, "_") : "";
   }
 
-  // Limpiador universal de doble/triple codificacion UTF-8 / Latin-1
   const CORRUPT_PAIRS = [
-    ["\u00C3\u00A1", "\u00E1"], // á
-    ["\u00C3\u00A9", "\u00E9"], // é
-    ["\u00C3\u00AD", "\u00ED"], // í
-    ["\u00C3\u00B3", "\u00F3"], // ó
-    ["\u00C3\u00BA", "\u00FA"], // ú
-    ["\u00C3\u0081", "\u00C1"], // Á
-    ["\u00C3\u2030", "\u00C9"], // É
-    ["\u00C3\u008D", "\u00CD"], // Í
-    ["\u00C3\u201C", "\u00D3"], // Ó
-    ["\u00C3\u0161", "\u00DA"], // Ú
-    ["\u00C3\u00B1", "\u00F1"], // ñ
-    ["\u00C3\u2018", "\u00D1"], // Ñ
-    ["\u00C3\u00BC", "\u00FC"], // ü
-    ["\u00C3\u0153", "\u00DC"], // Ü
-    ["\u00E2\u20AC\u00A2", "\u2022"], // •
-    ["\u00E2\u20AC\u201D", "\u2014"], // —
-    ["\u00E2\u20AC\u201C", "\u2013"], // –
-    ["\u00E2\u20AC\u02DC", "\u2018"], // ‘
-    ["\u00E2\u20AC\u2122", "\u2019"], // ’
-    ["\u00E2\u20AC\u0153", "\u201C"], // “
-    ["\u00E2\u20AC\u009D", "\u201D"], // ”
-    ["\u00C2\u00BF", "\u00BF"], // ¿
-    ["\u00C2\u00A1", "\u00A1"], // ¡
-    ["\u00C2\u00B0", "\u00B0"], // °
-    ["\u00C2\u00B7", "\u00B7"]  // ·
+    ["\u00C3\u00A1", "\u00E1"], ["\u00C3\u00A9", "\u00E9"], ["\u00C3\u00AD", "\u00ED"],
+    ["\u00C3\u00B3", "\u00F3"], ["\u00C3\u00BA", "\u00FA"], ["\u00C3\u0081", "\u00C1"],
+    ["\u00C3\u2030", "\u00C9"], ["\u00C3\u008D", "\u00CD"], ["\u00C3\u201C", "\u00D3"],
+    ["\u00C3\u0161", "\u00DA"], ["\u00C3\u00B1", "\u00F1"], ["\u00C3\u2018", "\u00D1"],
+    ["\u00C3\u00BC", "\u00FC"], ["\u00C3\u0153", "\u00DC"], ["\u00E2\u20AC\u00A2", "\u2022"],
+    ["\u00E2\u20AC\u201D", "\u2014"], ["\u00E2\u20AC\u201C", "\u2013"], ["\u00E2\u20AC\u02DC", "\u2018"],
+    ["\u00E2\u20AC\u2122", "\u2019"], ["\u00E2\u20AC\u0153", "\u201C"], ["\u00E2\u20AC\u009D", "\u201D"],
+    ["\u00C2\u00BF", "\u00BF"], ["\u00C2\u00A1", "\u00A1"], ["\u00C2\u00B0", "\u00B0"],
+    ["\u00C2\u00B7", "\u00B7"]
   ];
 
   function cleanMojibake(str) {
@@ -89,27 +82,24 @@
     });
   }
 
-  // Auto-ocultar cualquier banner verde / toast despues de 3.5 segundos
+  // Ocultar automaticamente cualquier toast / banner verde tras 3.5 segundos
   function autoDismissToasts() {
     const candidates = Array.from(document.querySelectorAll("div, span, p"));
     candidates.forEach((el) => {
+      if (el.id === "dc-user-email-bar" || el.closest("#dc-user-email-bar")) return;
       if (el.children.length > 2) return;
       const txt = (el.textContent || "").trim();
       if (!txt || txt.length > 220) return;
       const style = getComputedStyle(el);
-      const rect = el.getBoundingClientRect();
       const isFloating = style.position === "fixed" || style.position === "absolute";
-      const isGreenToast =
-        /estatus actualizado|guardado|actualizado|notificación enviada/i.test(txt) &&
-        (isFloating || rect.top < 160 || /rgb\(\s*(22|34|16|21|5|4)\s*,\s*(163|197|128|150|150|120)\s*,/i.test(style.backgroundColor));
+      const isToastText = /estatus actualizado|notificación enviada|guardado|actualizado|eliminado|archivado/i.test(txt);
 
-      if (isGreenToast && !el.dataset.dcToastTimer) {
+      if (isFloating && isToastText && !el.dataset.dcToastTimer) {
         el.dataset.dcToastTimer = "1";
         setTimeout(() => {
           try {
-            el.style.transition = "opacity 0.25s ease, transform 0.25s ease";
+            el.style.transition = "opacity 0.25s ease";
             el.style.opacity = "0";
-            el.style.transform = "translateY(-8px)";
             setTimeout(() => {
               if (el && el.parentElement) el.remove();
             }, 260);
@@ -117,6 +107,52 @@
         }, 3500);
       }
     });
+  }
+
+  // Sincronizar catalogos (productos y bases Dare Lab) entre Firestore y cualquier navegador/cuenta
+  async function syncCatalogAcrossAccounts() {
+    const db = getDb();
+    if (!db) return;
+
+    try {
+      const snap = await db.collection("products").get();
+      if (!snap.empty) {
+        const cloudProds = snap.docs.map((d) => ({ ...d.data(), firestoreId: d.id }));
+        localStorage.setItem(PRODUCTS_KEY, JSON.stringify(cloudProds));
+        if (typeof window.initStore === "function" && !window.__dcInitialStoreRendered) {
+          window.__dcInitialStoreRendered = true;
+          window.initStore();
+          if (typeof window.renderHeroSlide === "function") {
+            window.renderHeroSlide(0);
+          }
+        }
+      } else {
+        // Si Firestore esta vacio pero este navegador tiene productos cargados, subirlos a Firestore para que todos los vean
+        const localRaw = localStorage.getItem(PRODUCTS_KEY);
+        if (localRaw) {
+          const parsed = JSON.parse(localRaw);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            for (const item of parsed) {
+              if (!item.firestoreId) {
+                await db.collection("products").add(item).catch(() => {});
+              }
+            }
+          }
+        }
+      }
+    } catch (_) {}
+
+    try {
+      const basesDoc = await db.collection("settings").doc("customBases").get();
+      if (basesDoc.exists && Array.isArray(basesDoc.data()?.items) && basesDoc.data().items.length > 0) {
+        localStorage.setItem(BASES_KEY, JSON.stringify(basesDoc.data().items));
+        if (typeof window.renderCustomBasesPublic === "function") {
+          window.renderCustomBasesPublic();
+        }
+      } else if (!localStorage.getItem(BASES_KEY)) {
+        localStorage.setItem(BASES_KEY, JSON.stringify(FALLBACK_BASES));
+      }
+    } catch (_) {}
   }
 
   function getActiveCustomer() {
@@ -133,7 +169,8 @@
       };
     }
     const guestEmail = normalizeEmail(
-      localStorage.getItem(GUEST_EMAIL_KEY) ||
+      localStorage.getItem(EMAIL_GATE_KEY) ||
+        localStorage.getItem(GUEST_EMAIL_KEY) ||
         localStorage.getItem("darecore_user_email") ||
         sessionStorage.getItem(GUEST_EMAIL_KEY) ||
         ""
@@ -150,7 +187,6 @@
     return null;
   }
 
-  // Deduplicar cuentas con el mismo correo en Firestore 'users'
   async function deduplicateUsersCollection() {
     const db = getDb();
     if (!db || window.__dcDedupRunning) return;
@@ -167,7 +203,6 @@
         if (!existing) {
           byEmail.set(em, { id: docSnap.id, data: d, canonicalId });
         } else {
-          // Conservar el documento canonico o el mas reciente y borrar el duplicado
           const keepCurrent = docSnap.id === canonicalId;
           if (keepCurrent) {
             db.collection("users").doc(existing.id).delete().catch(() => {});
@@ -197,7 +232,6 @@
     window.__dcDedupRunning = false;
   }
 
-  // 1. Registrar cliente UNA SOLA VEZ por correo en Firestore 'users'
   async function syncCustomerToFirestore(customEmail, customName, method) {
     const db = getDb();
     if (!db) return;
@@ -231,12 +265,9 @@
         { merge: true }
       );
       deduplicateUsersCollection();
-    } catch (e) {
-      console.warn("Error registrando cliente en Firestore:", e);
-    }
+    } catch (_) {}
   }
 
-  // Evitar que script.js escriba un documento duplicado con uid aleatorio/google si ya existe por correo
   function patchUserCollectionUniqueness() {
     const db = getDb();
     if (!db || db.__dcUsersPatched) return;
@@ -254,7 +285,11 @@
             if (data && data.email) {
               const canonId = docIdFromEmail(data.email);
               if (canonId && id !== canonId) {
-                const merged = Object.assign({}, data, { uid: canonId, email: normalizeEmail(data.email), name: cleanMojibake(data.name || "") });
+                const merged = Object.assign({}, data, {
+                  uid: canonId,
+                  email: normalizeEmail(data.email),
+                  name: cleanMojibake(data.name || "")
+                });
                 return origDoc(canonId).set(merged, opts || { merge: true });
               }
             }
@@ -284,7 +319,6 @@
     };
   }
 
-  // Interceptar guardado de correo manual
   const origSetItem = localStorage.setItem.bind(localStorage);
   localStorage.setItem = function (k, v) {
     origSetItem(k, v);
@@ -310,50 +344,54 @@
     true
   );
 
-  // Cerrar sesion limpio en UN SOLO CLIC
+  // Cerrar sesion limpio en UN SOLO CLIC en cualquier pagina
   function handleOneClickLogout(e) {
-    const target = e.target.closest("button, a");
+    const target = e.target.closest("#dc-logout-email-btn, button, a");
     if (!target) return;
     const label = (target.textContent || "").trim().toLowerCase();
-    if (label === "cerrar sesión" || label === "cerrar sesion") {
+    if (target.id === "dc-logout-email-btn" || label === "cerrar sesión" || label === "cerrar sesion") {
       e.preventDefault();
       e.stopPropagation();
       if (typeof e.stopImmediatePropagation === "function") e.stopImmediatePropagation();
 
       [
+        EMAIL_GATE_KEY,
         GUEST_EMAIL_KEY,
         GUEST_NAME_KEY,
         "darecore_user_email",
         "darecore_user_name",
         "darecore_guest_verified",
-        "darecore_session_email"
+        "darecore_session_email",
+        "darecore_client_orders"
       ].forEach((key) => {
         try { localStorage.removeItem(key); } catch (_) {}
         try { sessionStorage.removeItem(key); } catch (_) {}
       });
 
-      const signOutPromise =
-        typeof firebase !== "undefined" && firebase.auth && firebase.auth().currentUser
-          ? firebase.auth().signOut().catch(() => {})
-          : Promise.resolve();
+      const bar = document.getElementById("dc-user-email-bar") || target.closest("div");
+      if (bar && bar.id === "dc-user-email-bar") {
+        bar.remove();
+      }
 
-      signOutPromise.finally(() => {
-        // Ocultar barra flotante de sesion de inmediato
-        const bar = target.closest("div");
-        if (bar && (bar.textContent || "").includes("@")) {
-          bar.remove();
-        }
-        if (typeof window.renderAuthBar === "function") {
-          try { window.renderAuthBar(); } catch (_) {}
-        }
+      const authObj =
+        (typeof firebase !== "undefined" && firebase.auth && firebase.auth()) ||
+        window.auth;
+
+      const finishLogout = () => {
         window.location.reload();
-      });
+      };
+
+      if (authObj && typeof authObj.signOut === "function") {
+        authObj.signOut().then(finishLogout).catch(finishLogout);
+        setTimeout(finishLogout, 400);
+      } else {
+        finishLogout();
+      }
     }
   }
 
   document.addEventListener("click", handleOneClickLogout, true);
 
-  // Notificacion automatica por correo al actualizar estatus
   async function sendOrderStatusEmail(orderData, collectionName, docId, newStatus) {
     const toEmail = normalizeEmail(orderData.userEmail || "");
     if (!toEmail || !toEmail.includes("@") || /invitado/i.test(toEmail)) return;
@@ -402,9 +440,7 @@
           subject: subject,
           message: message
         });
-      } catch (err) {
-        console.warn("EmailJS error:", err);
-      }
+      } catch (_) {}
     }
   }
 
@@ -418,7 +454,7 @@
           try {
             const snap = await db.collection(collectionName).doc(docId).get();
             if (snap.exists) orderSnapData = snap.data();
-          } catch (e) {}
+          } catch (_) {}
         }
 
         origUpdate(collectionName, docId, newStatus);
@@ -426,12 +462,13 @@
         if (orderSnapData) {
           await sendOrderStatusEmail(orderSnapData, collectionName, docId, newStatus);
         }
+        setTimeout(autoDismissToasts, 50);
+        setTimeout(autoDismissToasts, 3550);
       };
       window.updateOrderStatus.__dcWrapped = true;
     }
   }
 
-  // Sincronizar "Modificar IA" en admin.html con Firestore ('settings/aiKnowledge')
   async function initAiKnowledgeSync() {
     const db = getDb();
     if (!db) return;
@@ -445,7 +482,7 @@
           ta.value = cloudText;
         });
       }
-    } catch (e) {}
+    } catch (_) {}
 
     document.addEventListener(
       "click",
@@ -541,6 +578,7 @@
     wrapAdminStatusUpdater();
     patchClientOrderLookup();
     initAiKnowledgeSync();
+    syncCatalogAcrossAccounts();
     periodicSweep();
 
     if (typeof firebase !== "undefined" && firebase.auth) {
