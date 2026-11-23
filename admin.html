@@ -2814,66 +2814,70 @@
   </script>
 <script id="dcConsoleAndCatalogFixScript">
     (function () {
-      // Evitar que errores no capturados de Firebase detengan el panel o provoquen re-renders en blanco
-      window.addEventListener("error", function (event) {
-        const msg = String((event && event.message) || "");
-        if (msg.includes("No Firebase App") || msg.includes("initializeApp")) {
-          event.preventDefault();
-          return true;
-        }
-      });
+      // Evitar que errores de Firebase sin inicializar detengan la página o provoquen saltos
+      if (window.firebase && typeof window.firebase.firestore === "function") {
+        const origFirestore = window.firebase.firestore.bind(window.firebase);
+        window.firebase.firestore = function () {
+          try {
+            if (!window.firebase.apps || window.firebase.apps.length === 0) {
+              return null;
+            }
+            return origFirestore.apply(window.firebase, arguments);
+          } catch (_) {
+            return null;
+          }
+        };
+      }
 
-      // Respetar el scroll del usuario si algo intenta regresarlo arriba
-      let lastScrollY = 0;
-      let scrollingDown = false;
-      let scrollTimeout = null;
+      // Impedir que algún script devuelva el scroll arriba mientras el usuario está desplazándose hacia abajo
+      let lastY = window.scrollY || window.pageYOffset || 0;
+      let userScrolling = false;
+      let timer = null;
 
       window.addEventListener("scroll", function () {
-        const curr = window.scrollY || window.pageYOffset || 0;
-        if (curr > lastScrollY + 10) {
-          scrollingDown = true;
+        const currentY = window.scrollY || window.pageYOffset || 0;
+        if (Math.abs(currentY - lastY) > 2) {
+          userScrolling = true;
+          clearTimeout(timer);
+          timer = setTimeout(function () {
+            userScrolling = false;
+          }, 800);
         }
-        lastScrollY = curr;
-        clearTimeout(scrollTimeout);
-        scrollTimeout = setTimeout(function () {
-          scrollingDown = false;
-        }, 700);
+        lastY = currentY;
       }, { passive: true });
 
-      const nativeScrollTo = window.scrollTo.bind(window);
+      const origScrollTo = window.scrollTo.bind(window);
       window.scrollTo = function (x, y) {
         const targetY = typeof x === "object" && x !== null ? (x.top ?? 0) : y;
-        if (scrollingDown && lastScrollY > 120 && (targetY === 0 || targetY === undefined)) {
+        if (userScrolling && lastY > 100 && (targetY === 0 || targetY === undefined)) {
           return;
         }
-        return nativeScrollTo.apply(window, arguments);
+        return origScrollTo.apply(window, arguments);
       };
 
-      // Ocultar bloques duplicados de Pedidos Entregados y Tabla de Medidas dentro de #sec-catalogo
-      function hideDuplicatesInsideCatalog() {
+      // Ocultar bloques duplicados de Pedidos Entregados y Tablas de Medidas dentro de Catálogo
+      function cleanCatalogExtras() {
         const cat = document.getElementById("sec-catalogo");
         if (!cat) return;
-        const blocks = cat.querySelectorAll("section, article, div");
-        blocks.forEach(function (el) {
+        cat.querySelectorAll("section, article, div").forEach(function (el) {
           if (el === cat || el.id === "addProductForm" || el.id === "adminProductList") return;
           if (el.querySelector("#addProductForm") || el.querySelector("#adminProductList")) return;
-          const heading = (el.querySelector("h1, h2, h3, h4")?.textContent || "").toUpperCase();
-          const text = (el.textContent || "").toUpperCase();
-          const isDup =
-            heading.includes("PEDIDOS ENTREGADOS") ||
-            heading.includes("TABLAS DE MEDIDAS") ||
-            heading.includes("TABLA DE MEDIDAS") ||
-            (text.includes("PECHO/BUSTO") && text.includes("CINTURA (CM)"));
-          if (isDup) {
+          const title = (el.querySelector("h1, h2, h3, h4")?.textContent || "").toUpperCase();
+          const bodyText = (el.textContent || "").toUpperCase();
+          if (
+            title.includes("PEDIDOS ENTREGADOS") ||
+            title.includes("TABLA DE MEDIDAS") ||
+            title.includes("TABLAS DE MEDIDAS") ||
+            (bodyText.includes("PECHO/BUSTO") && bodyText.includes("CINTURA (CM)"))
+          ) {
             el.style.display = "none";
           }
         });
       }
 
       document.addEventListener("DOMContentLoaded", function () {
-        hideDuplicatesInsideCatalog();
-        setTimeout(hideDuplicatesInsideCatalog, 400);
-        setTimeout(hideDuplicatesInsideCatalog, 1200);
+        cleanCatalogExtras();
+        setTimeout(cleanCatalogExtras, 500);
       });
     })();
   </script>
