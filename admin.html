@@ -730,11 +730,6 @@
           <div id="darecoreAiKnowledgeAdmin">
             <canvas id="dcAiFlowCanvas"></canvas>
 
-            <div class="dc-ai-top-bar">
-              <h2>DareCore Intelligence • Memoria</h2>
-              <span id="darecoreAiKbStatus" style="font-size:11px;font-weight:500;color:#22d3ee;background:rgba(15,23,42,0.72);border:1px solid rgba(34,211,238,0.35);padding:4px 11px;border-radius:999px;">Memoria Activa</span>
-            </div>
-
             <!-- Espacio central libre para que luzca completa la esfera de flujo animada -->
             <div class="dc-ai-spacer"></div>
 
@@ -759,25 +754,29 @@
     (function () {
       const KB_KEY = "darecore_ai_knowledge";
 
-      function neonVortexColor(normX, alpha) {
-        // Degradado exacto: izquierda magenta neón -> centro-izq violeta -> centro azul cobalto -> derecha turquesa/cian
+      function cosmicFiberColor(normX, alpha) {
         const x = Math.max(0, Math.min(1, normX));
         let r, g, b;
-        if (x < 0.28) {
-          const k = x / 0.28;
-          r = Math.round(255 - k * 85);   // 255 -> 170
-          g = Math.round(25 + k * 25);    // 25 -> 50
-          b = Math.round(245 + k * 10);   // 245 -> 255
-        } else if (x < 0.55) {
-          const k = (x - 0.28) / 0.27;
-          r = Math.round(170 - k * 145);  // 170 -> 25
-          g = Math.round(50 + k * 65);    // 50 -> 115
+        if (x < 0.26) {
+          const k = x / 0.26;
+          r = Math.round(248 - k * 68);   // 248 -> 180 (magenta eléctrico)
+          g = Math.round(28 + k * 14);    // 28 -> 42
+          b = Math.round(242 + k * 13);   // 242 -> 255
+        } else if (x < 0.52) {
+          const k = (x - 0.26) / 0.26;
+          r = Math.round(180 - k * 162);  // 180 -> 18 (violeta -> azul cobalto)
+          g = Math.round(42 + k * 68);    // 42 -> 110
           b = 255;
+        } else if (x < 0.78) {
+          const k = (x - 0.52) / 0.26;
+          r = Math.round(18 - k * 10);    // 18 -> 8 (azul -> turquesa)
+          g = Math.round(110 + k * 115);  // 110 -> 225
+          b = Math.round(255 - k * 15);   // 255 -> 240
         } else {
-          const k = (x - 0.55) / 0.45;
-          r = Math.round(25 - k * 15);    // 25 -> 10
-          g = Math.round(115 + k * 130);  // 115 -> 245
-          b = Math.round(255 - k * 25);   // 255 -> 230
+          const k = (x - 0.78) / 0.22;
+          r = Math.round(8 + k * 75);     // 8 -> 83 (cian luminoso en puntas derechas)
+          g = Math.round(225 + k * 28);   // 225 -> 253
+          b = Math.round(240 + k * 12);   // 240 -> 252
         }
         return `rgba(${r}, ${g}, ${b}, ${alpha})`;
       }
@@ -792,36 +791,58 @@
         let width = 0;
         let height = 0;
 
-        // 1. Fibras entrelazadas del anillo exterior (estilo "peludo" denso de la referencia)
-        const rimFibers = Array.from({ length: 340 }, (_, i) => ({
-          baseAngle: (i / 340) * Math.PI * 2,
-          span: 0.45 + ((i * 29) % 55) / 100,
-          rInFactor: 0.72 + ((i * 17) % 24) / 100,
-          rOutFactor: 0.96 + ((i * 13) % 10) / 100,
-          curl: (((i % 2 === 0 ? 1 : -1) * (18 + (i % 34)))),
-          speed: (i % 2 === 0 ? 1 : -1) * (0.0018 + (i % 9) * 0.00022),
+        // 1. Cerdas/pelos radiales salientes en todo el perímetro (característica clave de la referencia)
+        const outerBristles = Array.from({ length: 920 }, (_, i) => {
+          const ang = (i / 920) * Math.PI * 2;
+          const sideBoost = Math.pow(Math.abs(Math.cos(ang)), 0.7);
+          return {
+            angle: ang,
+            rStart: 0.80 + ((i * 19) % 15) / 100,
+            rEnd: 0.96 + sideBoost * (0.06 + ((i * 31) % 9) / 100),
+            bend: (((i % 2 === 0 ? 1 : -1) * (0.05 + ((i * 17) % 14) / 100))),
+            phase: i * 0.19,
+            hasTipDot: i % 3 === 0
+          };
+        });
+
+        // 2. Anillo denso de arcos entrelazados en el borde interno/medio
+        const rimArcs = Array.from({ length: 520 }, (_, i) => ({
+          a1: (i / 520) * Math.PI * 2,
+          span: 0.28 + ((i * 23) % 45) / 100,
+          r1: 0.74 + ((i * 13) % 21) / 100,
+          r2: 0.78 + ((i * 29) % 20) / 100,
+          curl: ((i % 2 === 0 ? 1 : -1) * (0.06 + ((i * 11) % 10) / 100)),
+          phase: i * 0.23
+        }));
+
+        // 3. Fibras radiales curvas desde el centro hacia todo el perímetro
+        const centerWeb = Array.from({ length: 240 }, (_, i) => ({
+          angle: (i / 240) * Math.PI * 2,
+          bend: ((i * 37) % 100 - 50) / 160,
+          rEnd: 0.86 + ((i * 17) % 12) / 100,
           phase: i * 0.31
         }));
 
-        // 2. Haces cósmicos internos que conectan el nodo central y el nodo superior-izquierdo con el anillo
-        const coreStreams = Array.from({ length: 150 }, (_, i) => ({
-          targetAngle: (i / 150) * Math.PI * 2,
-          fromUpperNode: i % 3 === 0,
-          bend1: ((i * 41) % 90) - 45,
-          bend2: ((i * 67) % 110) - 55,
-          speed: 0.0022 + (i % 7) * 0.0003,
-          phase: i * 0.27
-        }));
+        // 4. Tres ríos curvos de fibras paralelas desde el nodo a las 10 en punto (upper node)
+        const upperRivers = Array.from({ length: 210 }, (_, i) => {
+          const branch = i % 3; // 0: río superior hacia la derecha, 1: río diagonal hacia centro-derecha, 2: arco inferior izquierdo
+          const spread = ((i / 210) - 0.5) * 0.24;
+          return {
+            branch,
+            spread,
+            phase: i * 0.17
+          };
+        });
 
-        // 3. Partículas estelares blancas brillantes sobre el anillo y los haces
-        const stars = Array.from({ length: 320 }, (_, i) => ({
-          angle: (i / 320) * Math.PI * 2 + ((i * 19) % 100) * 0.01,
-          rFactor: i < 220
-            ? 0.74 + ((i * 23) % 28) / 100
-            : 0.08 + ((i * 31) % 66) / 100,
-          speed: (i % 2 === 0 ? 1 : -1) * (0.0014 + (i % 8) * 0.00032),
-          size: i % 9 === 0 ? 1.85 : (0.75 + (i % 3) * 0.35),
-          twinklePhase: i * 0.7
+        // 5. Micro-partículas blancas nítidas distribuidas por toda la esfera
+        const microDots = Array.from({ length: 580 }, (_, i) => ({
+          angle: (i * 2.399963) % (Math.PI * 2),
+          rFactor: i < 410
+            ? 0.74 + ((i * 43) % 26) / 100
+            : 0.06 + ((i * 53) % 68) / 100,
+          speed: (i % 2 === 0 ? 1 : -1) * (0.0008 + (i % 7) * 0.00018),
+          size: i % 11 === 0 ? 1.45 : (0.65 + (i % 3) * 0.25),
+          phase: i * 0.41
         }));
 
         function resizeCanvas() {
@@ -841,7 +862,7 @@
         let t = 0;
         function renderFrame() {
           if (!width || !height) resizeCanvas();
-          t += 0.012;
+          t += 0.009;
 
           ctx.globalCompositeOperation = "source-over";
           ctx.fillStyle = "#000000";
@@ -855,110 +876,153 @@
           ctx.globalCompositeOperation = "lighter";
 
           const cx = width * 0.5;
-          const cy = height * 0.47;
-          const R = Math.min(width * 0.44, height * 0.44);
+          const cy = height * 0.49;
+          const R = Math.min(width * 0.46, height * 0.47);
+          const rot = t * 0.16;
 
-          // Posición orbital suave del nodo superior izquierdo (como en la imagen de referencia)
-          const upperAngle = -Math.PI * 0.78 + Math.sin(t * 0.6) * 0.08;
-          const upperX = cx + Math.cos(upperAngle) * (R * 0.76);
-          const upperY = cy + Math.sin(upperAngle) * (R * 0.76);
+          // Nodo a las 10 en punto (sin halo artificial, solo punto de convergencia de fibras)
+          const uAng = -Math.PI * 0.79 + rot * 0.35 + Math.sin(t * 0.7) * 0.04;
+          const ux = cx + Math.cos(uAng) * (R * 0.68);
+          const uy = cy + Math.sin(uAng) * (R * 0.68);
 
-          // Posición del nodo central luminoso
-          const coreX = cx + Math.cos(t * 0.8) * 5;
-          const coreY = cy + Math.sin(t * 0.9) * 5;
+          // Centro ligeramente desplazado hacia abajo-izquierda como en la imagen
+          const kx = cx - R * 0.04 + Math.cos(t * 0.6) * 3;
+          const ky = cy + R * 0.03 + Math.sin(t * 0.7) * 3;
 
-          // A) Haces internos desde el nodo central y nodo superior-izquierdo hacia el anillo
-          for (let i = 0; i < coreStreams.length; i++) {
-            const s = coreStreams[i];
-            const ang = s.targetAngle + t * (s.fromUpperNode ? 0.28 : -0.24);
-            const endR = R * (0.86 + 0.08 * Math.sin(t * 1.4 + s.phase));
-            const ex = cx + Math.cos(ang) * endR;
-            const ey = cy + Math.sin(ang) * endR;
+          // A) Red radial curva desde el nodo central
+          ctx.lineWidth = 0.55;
+          for (let i = 0; i < centerWeb.length; i++) {
+            const w = centerWeb[i];
+            const a = w.angle + rot * 0.5;
+            const ex = cx + Math.cos(a) * (R * w.rEnd);
+            const ey = cy + Math.sin(a) * (R * w.rEnd);
+            const midA = a + w.bend + Math.sin(t + w.phase) * 0.09;
+            const cpx = kx + Math.cos(midA) * (R * 0.46);
+            const cpy = ky + Math.sin(midA) * (R * 0.46);
 
-            const sx = s.fromUpperNode ? upperX : coreX;
-            const sy = s.fromUpperNode ? upperY : coreY;
-
-            const midX = (sx + ex) * 0.5 + Math.cos(ang + Math.PI * 0.5) * (s.bend1 + Math.sin(t + s.phase) * 18);
-            const midY = (sy + ey) * 0.5 + Math.sin(ang + Math.PI * 0.5) * (s.bend2 + Math.cos(t + s.phase) * 18);
-
-            const normS = (sx - (cx - R)) / (2 * R);
-            const normE = (ex - (cx - R)) / (2 * R);
-            const grad = ctx.createLinearGradient(sx, sy, ex, ey);
-            grad.addColorStop(0, neonVortexColor(normS, 0.34));
-            grad.addColorStop(1, neonVortexColor(normE, 0.28));
+            const n1 = (kx - (cx - R)) / (2 * R);
+            const n2 = (ex - (cx - R)) / (2 * R);
+            const g = ctx.createLinearGradient(kx, ky, ex, ey);
+            g.addColorStop(0, cosmicFiberColor(n1, 0.24));
+            g.addColorStop(1, cosmicFiberColor(n2, 0.22));
 
             ctx.beginPath();
-            ctx.moveTo(sx, sy);
-            ctx.quadraticCurveTo(midX, midY, ex, ey);
-            ctx.strokeStyle = grad;
-            ctx.lineWidth = 0.85;
+            ctx.moveTo(kx, ky);
+            ctx.quadraticCurveTo(cpx, cpy, ex, ey);
+            ctx.strokeStyle = g;
             ctx.stroke();
           }
 
-          // B) Anillo exterior denso de fibras cósmicas curvas y puntas en el borde
-          for (let i = 0; i < rimFibers.length; i++) {
-            const f = rimFibers[i];
-            const a1 = f.baseAngle + t * (f.speed * 140);
-            const a2 = a1 + f.span * Math.sin(t * 0.5 + f.phase * 0.2) + 0.35;
+          // B) Tres ríos curvos desde el nodo superior izquierdo (10 en punto)
+          ctx.lineWidth = 0.62;
+          for (let i = 0; i < upperRivers.length; i++) {
+            const rv = upperRivers[i];
+            const wave = Math.sin(t * 1.1 + rv.phase) * 0.04;
+            let endAng, cp1x, cp1y, cp2x, cp2y;
 
-            const r1 = R * f.rInFactor;
-            const r2 = R * (f.rOutFactor + 0.03 * Math.sin(t * 1.8 + f.phase));
+            if (rv.branch === 0) {
+              // Río superior que cruza en arco hacia el cuadrante superior derecho
+              endAng = -Math.PI * 0.18 + rv.spread + rot * 0.35;
+              cp1x = cx - R * 0.25;
+              cp1y = cy - R * (0.28 + wave);
+              cp2x = cx + R * 0.22;
+              cp2y = cy - R * (0.48 - wave);
+            } else if (rv.branch === 1) {
+              // Río diagonal central desde las 10 hacia las 3-4 en punto
+              endAng = Math.PI * 0.14 + rv.spread * 1.1 + rot * 0.35;
+              cp1x = cx - R * 0.24;
+              cp1y = cy - R * 0.12;
+              cp2x = cx + R * 0.26;
+              cp2y = cy - R * (0.04 + wave);
+            } else {
+              // Arco envolvente hacia abajo a la izquierda (7-8 en punto)
+              endAng = Math.PI * 0.66 + rv.spread * 1.2 + rot * 0.35;
+              cp1x = cx - R * (0.44 + wave);
+              cp1y = cy - R * 0.05;
+              cp2x = cx - R * 0.42;
+              cp2y = cy + R * 0.38;
+            }
 
-            const x1 = cx + Math.cos(a1) * r1;
-            const y1 = cy + Math.sin(a1) * r1;
-            const x2 = cx + Math.cos(a2) * r2;
-            const y2 = cy + Math.sin(a2) * r2;
+            const ex = cx + Math.cos(endAng) * (R * 0.88);
+            const ey = cy + Math.sin(endAng) * (R * 0.88);
+            const n1 = (ux - (cx - R)) / (2 * R);
+            const n2 = (ex - (cx - R)) / (2 * R);
+            const g = ctx.createLinearGradient(ux, uy, ex, ey);
+            g.addColorStop(0, cosmicFiberColor(n1, 0.34));
+            g.addColorStop(1, cosmicFiberColor(n2, 0.26));
 
-            const midA = (a1 + a2) * 0.5;
-            const ctrlR = R * 0.94 + f.curl * Math.cos(t + f.phase);
+            ctx.beginPath();
+            ctx.moveTo(ux, uy);
+            ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, ex, ey);
+            ctx.strokeStyle = g;
+            ctx.stroke();
+          }
+
+          // C) Malla circular entrelazada del anillo
+          ctx.lineWidth = 0.58;
+          for (let i = 0; i < rimArcs.length; i++) {
+            const a = rimArcs[i];
+            const ang1 = a.a1 + rot;
+            const ang2 = ang1 + a.span + Math.sin(t * 0.8 + a.phase) * 0.06;
+            const x1 = cx + Math.cos(ang1) * (R * a.r1);
+            const y1 = cy + Math.sin(ang1) * (R * a.r1);
+            const x2 = cx + Math.cos(ang2) * (R * a.r2);
+            const y2 = cy + Math.sin(ang2) * (R * a.r2);
+
+            const midA = (ang1 + ang2) * 0.5;
+            const ctrlR = R * (0.86 + a.curl * Math.cos(t + a.phase));
             const cpx = cx + Math.cos(midA) * ctrlR;
             const cpy = cy + Math.sin(midA) * ctrlR;
 
-            const norm1 = (x1 - (cx - R)) / (2 * R);
-            const norm2 = (x2 - (cx - R)) / (2 * R);
-            const grad = ctx.createLinearGradient(x1, y1, x2, y2);
-            grad.addColorStop(0, neonVortexColor(norm1, 0.42));
-            grad.addColorStop(1, neonVortexColor(norm2, 0.48));
-
+            const norm = (x1 - (cx - R)) / (2 * R);
             ctx.beginPath();
             ctx.moveTo(x1, y1);
             ctx.quadraticCurveTo(cpx, cpy, x2, y2);
-            ctx.strokeStyle = grad;
-            ctx.lineWidth = 0.95;
+            ctx.strokeStyle = cosmicFiberColor(norm, 0.32);
             ctx.stroke();
           }
 
-          // C) Destellos en el nodo central y en el nodo superior izquierdo
-          const coreGlow = ctx.createRadialGradient(coreX, coreY, 0, coreX, coreY, R * 0.14);
-          coreGlow.addColorStop(0, "rgba(125, 211, 252, 0.95)");
-          coreGlow.addColorStop(0.35, "rgba(59, 130, 246, 0.45)");
-          coreGlow.addColorStop(1, "rgba(0, 0, 0, 0)");
-          ctx.fillStyle = coreGlow;
-          ctx.beginPath();
-          ctx.arc(coreX, coreY, R * 0.14, 0, Math.PI * 2);
-          ctx.fill();
+          // D) Cerdas radiales finas en todo el borde exterior de la esfera
+          ctx.lineWidth = 0.55;
+          for (let i = 0; i < outerBristles.length; i++) {
+            const b = outerBristles[i];
+            const a1 = b.angle + rot * 0.65;
+            const sway = Math.sin(t * 1.6 + b.phase) * 0.025;
+            const a2 = a1 + b.bend + sway;
 
-          const upperGlow = ctx.createRadialGradient(upperX, upperY, 0, upperX, upperY, R * 0.16);
-          upperGlow.addColorStop(0, "rgba(245, 208, 254, 0.9)");
-          upperGlow.addColorStop(0.4, "rgba(217, 70, 239, 0.42)");
-          upperGlow.addColorStop(1, "rgba(0, 0, 0, 0)");
-          ctx.fillStyle = upperGlow;
-          ctx.beginPath();
-          ctx.arc(upperX, upperY, R * 0.16, 0, Math.PI * 2);
-          ctx.fill();
+            const x1 = cx + Math.cos(a1) * (R * b.rStart);
+            const y1 = cy + Math.sin(a1) * (R * b.rStart);
+            const x2 = cx + Math.cos(a2) * (R * b.rEnd);
+            const y2 = cy + Math.sin(a2) * (R * b.rEnd);
 
-          // D) Micro-partículas blancas luminosas flotando en órbita
-          for (let p = 0; p < stars.length; p++) {
-            const st = stars[p];
-            st.angle += st.speed;
-            const rad = R * st.rFactor + Math.sin(t * 1.5 + st.twinklePhase) * 5;
-            const px = cx + Math.cos(st.angle) * rad;
-            const py = cy + Math.sin(st.angle) * rad;
-            const twinkle = 0.55 + 0.45 * Math.sin(t * 3 + st.twinklePhase);
+            const cpx = cx + Math.cos(a1 + b.bend * 0.4) * (R * ((b.rStart + b.rEnd) * 0.5));
+            const cpy = cy + Math.sin(a1 + b.bend * 0.4) * (R * ((b.rStart + b.rEnd) * 0.5));
+
+            const norm = (x2 - (cx - R)) / (2 * R);
+            ctx.beginPath();
+            ctx.moveTo(x1, y1);
+            ctx.quadraticCurveTo(cpx, cpy, x2, y2);
+            ctx.strokeStyle = cosmicFiberColor(norm, 0.44);
+            ctx.stroke();
+
+            if (b.hasTipDot) {
+              ctx.fillStyle = "rgba(255, 255, 255, 0.55)";
+              ctx.fillRect(x2, y2, 1, 1);
+            }
+          }
+
+          // E) Micro-partículas estelares blancas salpicadas por toda la estructura
+          for (let p = 0; p < microDots.length; p++) {
+            const d = microDots[p];
+            d.angle += d.speed;
+            const rad = R * d.rFactor + Math.sin(t * 1.4 + d.phase) * 3;
+            const px = cx + Math.cos(d.angle) * rad;
+            const py = cy + Math.sin(d.angle) * rad;
+            const alpha = 0.55 + 0.45 * Math.sin(t * 2.5 + d.phase);
 
             ctx.beginPath();
-            ctx.arc(px, py, st.size, 0, Math.PI * 2);
-            ctx.fillStyle = `rgba(255, 255, 255, ${twinkle.toFixed(2)})`;
+            ctx.arc(px, py, d.size, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(255, 255, 255, ${alpha.toFixed(2)})`;
             ctx.fill();
           }
 
@@ -970,7 +1034,6 @@
 
       function persistAiKnowledgeText(newText) {
         const clean = String(newText || "").trim();
-        const status = document.getElementById("darecoreAiKbStatus");
         try { localStorage.setItem(KB_KEY, clean); } catch (_) {}
         if (window.db) {
           window.db.collection("settings").doc("aiKnowledge").set({
@@ -978,10 +1041,6 @@
             text: clean,
             updatedAt: new Date().toISOString()
           }, { merge: true }).catch(() => {});
-        }
-        if (status) {
-          status.textContent = "Memoria Guardada";
-          setTimeout(() => { status.textContent = "Memoria Activa"; }, 2500);
         }
       }
 
