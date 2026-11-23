@@ -3159,5 +3159,103 @@
       }, true);
     })();
   </script>
+<script id="dcMoveSectionsToTabsScript">
+    (function () {
+      function findTabPanelByLabel(labelRegex) {
+        // Buscar botón de pestaña y su panel asociado por data-target / aria-controls / id
+        const btns = Array.from(document.querySelectorAll("button, a, [role='tab']"));
+        const matchBtn = btns.find(function (b) {
+          const t = (b.textContent || "").trim();
+          return labelRegex.test(t) && !/tienda/i.test(t);
+        });
+
+        if (matchBtn) {
+          const targetId =
+            matchBtn.getAttribute("data-dc-target") ||
+            matchBtn.getAttribute("data-target") ||
+            matchBtn.getAttribute("aria-controls") ||
+            (matchBtn.getAttribute("href") || "").replace(/^#/, "");
+          if (targetId) {
+            const panel = document.getElementById(targetId);
+            if (panel) return panel;
+          }
+        }
+
+        // Respaldo por ID común
+        const ids = Array.from(document.querySelectorAll("[id]")).map(function (el) { return el.id; });
+        const foundId = ids.find(function (id) { return labelRegex.test(id); });
+        return foundId ? document.getElementById(foundId) : null;
+      }
+
+      function locateSectionContainer(titleRegex, extraTextRegex) {
+        const headings = Array.from(document.querySelectorAll("h1, h2, h3, h4, h5, label, span, div"));
+        for (let i = 0; i < headings.length; i++) {
+          const h = headings[i];
+          const txt = (h.textContent || "").trim();
+          if (!titleRegex.test(txt)) continue;
+          if (txt.length > 140) continue;
+
+          // Subir hasta el contenedor de tarjeta/sección que agrupa ese bloque
+          let curr = h.parentElement;
+          let best = null;
+          for (let depth = 0; depth < 6 && curr && curr !== document.body; depth++) {
+            const cText = curr.textContent || "";
+            const hasCatalogForm = curr.querySelector("#addProductForm, #adminProductList");
+            if (hasCatalogForm) break;
+
+            if (!extraTextRegex || extraTextRegex.test(cText)) {
+              // Evitar agarrar todo el dashboard
+              if (!curr.querySelector("#addProductForm") && curr.id !== "dashboardSection") {
+                best = curr;
+              }
+            }
+            curr = curr.parentElement;
+          }
+          if (best) return best;
+        }
+        return null;
+      }
+
+      function moveStrayBlocksToAssignedTabs() {
+        const entregadosPanel = findTabPanelByLabel(/^entregados$/i) || document.getElementById("sec-entregados");
+        const medidasPanel = findTabPanelByLabel(/^medidas$/i) || document.getElementById("sec-medidas");
+
+        const entregadosBlock = locateSectionContainer(
+          /pedidos entregados/i,
+          /historial de compras y pedidos dare lab entregados/i
+        );
+        if (entregadosBlock && entregadosPanel && !entregadosPanel.contains(entregadosBlock)) {
+          entregadosPanel.appendChild(entregadosBlock);
+          entregadosBlock.style.display = "";
+          entregadosBlock.style.visibility = "visible";
+          entregadosBlock.style.opacity = "1";
+        }
+
+        const medidasGeneroBlock = locateSectionContainer(
+          /tablas de medidas por g[eé]nero y prenda\s*\/\s*tela/i,
+          /hombre.*mujer|camisa\s*\/\s*playera/i
+        );
+        if (medidasGeneroBlock && medidasPanel && !medidasPanel.contains(medidasGeneroBlock)) {
+          medidasPanel.appendChild(medidasGeneroBlock);
+          medidasGeneroBlock.style.display = "";
+          medidasGeneroBlock.style.visibility = "visible";
+          medidasGeneroBlock.style.opacity = "1";
+        }
+      }
+
+      function runMove() {
+        moveStrayBlocksToAssignedTabs();
+        setTimeout(moveStrayBlocksToAssignedTabs, 250);
+        setTimeout(moveStrayBlocksToAssignedTabs, 800);
+        setTimeout(moveStrayBlocksToAssignedTabs, 1600);
+      }
+
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", runMove);
+      } else {
+        runMove();
+      }
+    })();
+  </script>
 </body>
 </html>
