@@ -1245,3 +1245,49 @@
     return (p && p.from_email) ? p.from_email : "darecore313@gmail.com";
   }
 })();
+/* DARECORE STRICT SINGLE EMAIL GUARD V2 */
+(function () {
+  if (window.__dcStrictSingleEmailV2Installed) return;
+  window.__dcStrictSingleEmailV2Installed = true;
+
+  const MEMORY_SENT = new Set();
+  const STORAGE_PREFIX = "dc_shipped_sent_v2_";
+
+  function alreadySentForOrder(folio, toEmail, statusVal) {
+    const f = String(folio || "").replace(/^#/, "").trim().toUpperCase();
+    const e = String(toEmail || "").trim().toLowerCase();
+    const s = String(statusVal || "").trim().toLowerCase();
+    if (!f && !e) return false;
+    const key = f + "|" + e + "|" + s;
+    if (MEMORY_SENT.has(key)) return true;
+    try {
+      if (sessionStorage.getItem(STORAGE_PREFIX + key) === "1") return true;
+    } catch (_) {}
+    MEMORY_SENT.add(key);
+    try {
+      sessionStorage.setItem(STORAGE_PREFIX + key, "1");
+    } catch (_) {}
+    return false;
+  }
+
+  function wrapEmailJsOnce() {
+    if (!window.emailjs || typeof window.emailjs.send !== "function" || window.emailjs.__dcV2Wrapped) return;
+    const origSend = window.emailjs.send.bind(window.emailjs);
+    window.emailjs.send = function (serviceId, templateId, templateParams, publicKey) {
+      const p = templateParams || {};
+      const statusText = String(p.status || p.subject || p.message || "").toLowerCase();
+      const isShippedMsg = /enviado|shipped/i.test(statusText);
+      const folio = String(p.folio || p.order_id || "").trim();
+      const recipient = String(p.to_email || p.email || p.to || "").trim();
+
+      if (isShippedMsg && alreadySentForOrder(folio, recipient, "enviado")) {
+        return Promise.resolve({ status: 200, text: "BLOCKED_DUPLICATE_SHIPPED_EMAIL" });
+      }
+      return origSend(serviceId, templateId, templateParams, publicKey);
+    };
+    window.emailjs.__dcV2Wrapped = true;
+  }
+
+  wrapEmailJsOnce();
+  setInterval(wrapEmailJsOnce, 400);
+})();
