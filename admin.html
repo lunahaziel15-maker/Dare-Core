@@ -593,7 +593,69 @@
       .dc-kpi-grid { grid-template-columns: 1fr; }
       .dc-main-pane { padding: 16px 14px 28px; }
     }
-  </style>
+  /* RESTAURACIÓN DE ANCHO COMPLETO (100%) Y BARRA DE PESTAÑAS SUPERIOR */
+    .admin-shell,
+    .dc-admin-shell,
+    .workspace-grid,
+    .admin-layout,
+    main,
+    body > div:first-of-type {
+      grid-template-columns: minmax(0, 1fr) !important;
+      width: 100% !important;
+      max-width: 1360px !important;
+      margin-left: auto !important;
+      margin-right: auto !important;
+    }
+
+    aside,
+    .admin-sidebar,
+    .dc-sidebar {
+      display: none !important;
+    }
+
+    .dc-top-nav,
+    .dc-tabs-bar,
+    nav[aria-label*="Admin"],
+    [class*="tab-bar"],
+    [class*="top-nav"] {
+      display: flex !important;
+      flex-wrap: wrap !important;
+      align-items: center !important;
+      gap: 8px !important;
+      width: 100% !important;
+      margin: 10px 0 18px 0 !important;
+      visibility: visible !important;
+      opacity: 1 !important;
+    }
+
+    .dc-top-nav button,
+    .dc-top-nav a,
+    [data-dc-target] {
+      display: inline-flex !important;
+      align-items: center !important;
+      visibility: visible !important;
+      opacity: 1 !important;
+    }
+
+    /* Asegurar que las 4 tarjetas KPI se expandan a lo ancho en 4 columnas iguales */
+    .stats-grid,
+    .kpi-grid,
+    .dc-stats-grid,
+    [class*="stats-row"] {
+      display: grid !important;
+      grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+      gap: 14px !important;
+      width: 100% !important;
+    }
+
+    /* Asegurar que el panel de Modificación de IA ocupe todo el ancho disponible */
+    #sec-ia,
+    #darecoreAiKnowledgeAdmin {
+      width: 100% !important;
+      max-width: 100% !important;
+    }
+
+    </style>
 
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -2175,7 +2237,69 @@
     box-shadow: 0 0 0 5px rgba(255,42,0,0.28), 0 0 28px rgba(255,42,0,0.85) !important;
     transition: transform 0.07s ease-out !important;
   }
-</style>
+/* RESTAURACIÓN DE ANCHO COMPLETO (100%) Y BARRA DE PESTAÑAS SUPERIOR */
+    .admin-shell,
+    .dc-admin-shell,
+    .workspace-grid,
+    .admin-layout,
+    main,
+    body > div:first-of-type {
+      grid-template-columns: minmax(0, 1fr) !important;
+      width: 100% !important;
+      max-width: 1360px !important;
+      margin-left: auto !important;
+      margin-right: auto !important;
+    }
+
+    aside,
+    .admin-sidebar,
+    .dc-sidebar {
+      display: none !important;
+    }
+
+    .dc-top-nav,
+    .dc-tabs-bar,
+    nav[aria-label*="Admin"],
+    [class*="tab-bar"],
+    [class*="top-nav"] {
+      display: flex !important;
+      flex-wrap: wrap !important;
+      align-items: center !important;
+      gap: 8px !important;
+      width: 100% !important;
+      margin: 10px 0 18px 0 !important;
+      visibility: visible !important;
+      opacity: 1 !important;
+    }
+
+    .dc-top-nav button,
+    .dc-top-nav a,
+    [data-dc-target] {
+      display: inline-flex !important;
+      align-items: center !important;
+      visibility: visible !important;
+      opacity: 1 !important;
+    }
+
+    /* Asegurar que las 4 tarjetas KPI se expandan a lo ancho en 4 columnas iguales */
+    .stats-grid,
+    .kpi-grid,
+    .dc-stats-grid,
+    [class*="stats-row"] {
+      display: grid !important;
+      grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+      gap: 14px !important;
+      width: 100% !important;
+    }
+
+    /* Asegurar que el panel de Modificación de IA ocupe todo el ancho disponible */
+    #sec-ia,
+    #darecoreAiKnowledgeAdmin {
+      width: 100% !important;
+      max-width: 100% !important;
+    }
+
+    </style>
 <script id="dcAiVoiceDictationScript">
 (function () {
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -2406,6 +2530,40 @@
       window.addEventListener("DOMContentLoaded", () => {
         cleanDuplicateSectionsInCatalog();
         setTimeout(cleanDuplicateSectionsInCatalog, 400);
+      });
+    })();
+  </script>
+<script id="dcFullWidthGuardScript">
+    (function () {
+      function restoreFullWidthWorkspace() {
+        // Buscar cualquier contenedor padre directo de <main> o de #sec-catalogo que tenga 2 columnas CSS y pasarlo a 1fr
+        const anchor = document.querySelector("main") || document.getElementById("sec-catalogo") || document.getElementById("darecoreAiKnowledgeAdmin");
+        let el = anchor ? anchor.parentElement : null;
+        while (el && el !== document.body) {
+          const cs = window.getComputedStyle(el);
+          if (cs.display === "grid" && cs.gridTemplateColumns.split(" ").length > 1) {
+            el.style.gridTemplateColumns = "minmax(0, 1fr)";
+            el.style.width = "100%";
+          }
+          el = el.parentElement;
+        }
+
+        // Asegurar que todos los botones de pestañas superiores (Catálogo, Bases Lab, Pedidos, Dare Lab, Entregados, Medidas, Clientes, IA, Tienda, Cerrar Sesión) sean visibles
+        document.querySelectorAll("[data-dc-target], .dc-top-nav button, .dc-top-nav a").forEach((btn) => {
+          btn.style.display = "inline-flex";
+          btn.style.visibility = "visible";
+          btn.style.opacity = "1";
+          if (btn.parentElement) {
+            btn.parentElement.style.display = "flex";
+            btn.parentElement.style.flexWrap = "wrap";
+            btn.parentElement.style.width = "100%";
+          }
+        });
+      }
+
+      window.addEventListener("DOMContentLoaded", () => {
+        restoreFullWidthWorkspace();
+        setTimeout(restoreFullWidthWorkspace, 200);
       });
     })();
   </script>
