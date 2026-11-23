@@ -18,7 +18,7 @@
       --ink-secondary: #52525b;
       --ink-muted: #71717a;
       --line-subtle: #e4e4e7;
-      --pill-active: #27272a;
+      --pill-active: #18181b;
       --brand-orange: #ff4500;
       --brand-soft: rgba(255, 69, 0, 0.08);
       --radius-shell: 22px;
@@ -64,7 +64,7 @@
 
     .dc-dashboard-frame {
       display: grid;
-      grid-template-columns: 244px minmax(0, 1fr);
+      grid-template-columns: 236px minmax(0, 1fr);
       background: var(--shell-bg);
       border: 1px solid var(--line-subtle);
       border-radius: var(--radius-shell);
@@ -74,6 +74,7 @@
       animation: dcPanelReveal 0.4s var(--ease-smooth) both;
     }
 
+    /* Sidebar limpio sin bordes rojos */
     .dc-sidebar {
       background: var(--card-bg);
       border-right: 1px solid var(--line-subtle);
@@ -88,7 +89,7 @@
       display: flex;
       align-items: center;
       gap: 10px;
-      padding: 0 8px 16px;
+      padding: 0 6px 16px;
       border-bottom: 1px solid #f4f4f5;
     }
 
@@ -116,54 +117,68 @@
       letter-spacing: 0.06em;
       text-transform: uppercase;
       color: var(--ink-muted);
-      padding: 0 12px 6px;
+      padding: 0 6px 8px;
     }
 
-    .dc-side-list {
-      list-style: none;
-      margin: 0 0 16px;
-      padding: 0;
+    .dc-side-pills {
       display: flex;
       flex-direction: column;
-      gap: 3px;
+      gap: 7px;
+      margin-bottom: 16px;
     }
 
-    .dc-side-link {
-      width: 100%;
-      display: flex;
+    /* Estilo unificado tipo pastilla limpia de la 2a imagen */
+    .dc-pill-btn {
+      border: 1px solid #e4e4e7 !important;
+      background: #ffffff !important;
+      color: #3f3f46 !important;
+      font-size: 12px !important;
+      font-weight: 600 !important;
+      padding: 0 14px !important;
+      height: 32px !important;
+      line-height: 1 !important;
+      border-radius: 999px !important;
+      text-decoration: none !important;
+      display: inline-flex;
       align-items: center;
-      gap: 10px;
-      padding: 9px 12px;
-      border-radius: 10px;
-      border: 1px solid transparent;
-      background: transparent;
-      color: var(--ink-secondary);
-      font-size: 13px;
-      font-weight: 600;
-      text-decoration: none;
-      text-align: left;
+      justify-content: center;
+      gap: 6px;
       cursor: pointer;
-      transition: background-color 0.2s var(--ease-smooth), color 0.2s var(--ease-smooth), transform 0.2s var(--ease-smooth);
+      box-shadow: 0 1px 2px rgba(24, 24, 27, 0.03) !important;
+      transition: all 0.2s var(--ease-smooth) !important;
+      white-space: nowrap;
     }
 
-    .dc-side-link:hover {
-      background: #f4f4f5;
-      color: var(--ink-primary);
-      transform: translateX(2px);
+    .dc-side-pills .dc-pill-btn {
+      width: 100%;
+      justify-content: flex-start;
+      padding: 0 14px !important;
     }
 
-    .dc-side-link.is-active {
-      background: #f4f4f5;
-      color: var(--ink-primary);
-      font-weight: 700;
-      box-shadow: inset 3px 0 0 var(--brand-orange);
+    .dc-pill-btn:hover {
+      border-color: #cbd5e1 !important;
+      color: #18181b !important;
+      background: #f4f4f5 !important;
+      transform: translateY(-1px);
+    }
+
+    .dc-pill-btn.active {
+      background: #18181b !important;
+      color: #ffffff !important;
+      border-color: #18181b !important;
+    }
+
+    .dc-pill-btn.logout-pill:hover {
+      border-color: #fca5a5 !important;
+      color: #b91c1c !important;
+      background: #fef2f2 !important;
     }
 
     .dc-promo-card {
       background: #fafafa;
       border: 1px solid var(--line-subtle);
       border-radius: 16px;
-      padding: 15px;
+      padding: 14px;
       text-align: left;
     }
 
@@ -193,44 +208,11 @@
       color: var(--ink-primary);
     }
 
-    /* Botones delgados y finos en la barra superior */
     .dc-topbar-pills {
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 7px;
       flex-wrap: wrap;
-    }
-
-    .dc-pill-btn {
-      border: 1px solid #e4e4e7 !important;
-      background: #ffffff !important;
-      color: #3f3f46 !important;
-      font-size: 11.5px !important;
-      font-weight: 600 !important;
-      padding: 5px 12px !important;
-      height: 28px !important;
-      line-height: 1 !important;
-      border-radius: 999px !important;
-      text-decoration: none;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      box-shadow: none !important;
-      transition: all 0.2s var(--ease-smooth) !important;
-    }
-
-    .dc-pill-btn:hover {
-      border-color: #a1a1aa !important;
-      color: #18181b !important;
-      background: #f4f4f5 !important;
-      transform: translateY(-1px);
-    }
-
-    .dc-pill-btn.active {
-      background: #18181b !important;
-      color: #ffffff !important;
-      border-color: #18181b !important;
     }
 
     .dc-kpi-grid {
@@ -293,11 +275,11 @@
     }
 
     .dc-tab-panel.is-visible {
-      display: block;
+      display: block !important;
     }
 
     #sec-catalogo.dc-tab-panel.is-visible {
-      display: grid;
+      display: grid !important;
       grid-template-columns: minmax(320px, 430px) minmax(0, 1fr);
       gap: 18px;
       align-items: start;
@@ -356,8 +338,11 @@
       transform: translateY(-1px);
     }
 
-    /* Panel Modificacion de IA con motion graphics y degradado animado */
+    /* Panel Modificacion de IA con motion graphics y colores animados */
     #darecoreAiKnowledgeAdmin {
+      display: block !important;
+      visibility: visible !important;
+      opacity: 1 !important;
       position: relative;
       overflow: hidden;
       background: linear-gradient(125deg, #ffffff 0%, #fff7ed 35%, #eef2ff 70%, #ffffff 100%) !important;
@@ -395,17 +380,10 @@
     }
 
     #darecoreAiKbTextarea {
-      background: rgba(255, 255, 255, 0.92) !important;
+      background: rgba(255, 255, 255, 0.94) !important;
       color: var(--ink-primary) !important;
       border: 1.5px solid #cbd5e1 !important;
       border-radius: 14px !important;
-      transition: border-color 0.25s var(--ease-smooth), box-shadow 0.25s var(--ease-smooth) !important;
-    }
-
-    #darecoreAiKbTextarea:focus {
-      outline: none !important;
-      border-color: #6366f1 !important;
-      box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.15) !important;
     }
 
     #saveDarecoreAiKbBtn {
@@ -415,11 +393,11 @@
       color: #ffffff !important;
       border: none !important;
       border-radius: 999px !important;
-      padding: 9px 20px !important;
+      padding: 0 20px !important;
+      height: 34px !important;
       font-size: 12px !important;
       font-weight: 700 !important;
       cursor: pointer;
-      box-shadow: 0 10px 22px -8px rgba(79, 70, 229, 0.45) !important;
     }
 
     #dc-user-email-bar { display: none !important; }
@@ -483,22 +461,22 @@
 
           <div style="margin-top:16px;">
             <div class="dc-nav-group-label">Menú Principal</div>
-            <ul class="dc-side-list">
-              <li><button type="button" data-dc-tab="sec-catalogo" class="dc-side-link is-active">Catálogo y Prendas</button></li>
-              <li><button type="button" data-dc-tab="sec-bases" class="dc-side-link">Bases Dare Lab</button></li>
-              <li><button type="button" data-dc-tab="sec-pedidos" class="dc-side-link">Pedidos Carrito</button></li>
-              <li><button type="button" data-dc-tab="sec-darelab" class="dc-side-link">Solicitudes Lab</button></li>
-              <li><button type="button" data-dc-tab="sec-entregados" class="dc-side-link">Pedidos Entregados</button></li>
-              <li><button type="button" data-dc-tab="sec-medidas" class="dc-side-link">Tabla de Medidas</button></li>
-              <li><button type="button" data-dc-tab="sec-clientes" class="dc-side-link">Clientes Registrados</button></li>
-            </ul>
+            <div class="dc-side-pills">
+              <button type="button" data-dc-tab="sec-catalogo" class="dc-pill-btn active">Catálogo y Prendas</button>
+              <button type="button" data-dc-tab="sec-bases" class="dc-pill-btn">Bases Dare Lab</button>
+              <button type="button" data-dc-tab="sec-pedidos" class="dc-pill-btn">Pedidos Carrito</button>
+              <button type="button" data-dc-tab="sec-darelab" class="dc-pill-btn">Solicitudes Lab</button>
+              <button type="button" data-dc-tab="sec-entregados" class="dc-pill-btn">Pedidos Entregados</button>
+              <button type="button" data-dc-tab="sec-medidas" class="dc-pill-btn">Tabla de Medidas</button>
+              <button type="button" data-dc-tab="sec-clientes" class="dc-pill-btn">Clientes Registrados</button>
+            </div>
 
             <div class="dc-nav-group-label">Sistema</div>
-            <ul class="dc-side-list">
-              <li><button type="button" id="openAiModSectionBtn" data-dc-tab="sec-ia" class="dc-side-link">Modificación de IA</button></li>
-              <li><a href="index.html" class="dc-side-link">Ver Tienda Pública ↗</a></li>
-              <li><button type="button" id="logoutBtn" class="dc-side-link hidden" style="color:#b91c1c;">Cerrar Sesión</button></li>
-            </ul>
+            <div class="dc-side-pills">
+              <button type="button" id="openAiModSectionBtn" data-dc-tab="sec-ia" class="dc-pill-btn">Modificación de IA</button>
+              <a href="index.html" class="dc-pill-btn">Ver Tienda Pública ↗</a>
+              <button type="button" id="logoutBtn" class="dc-pill-btn logout-pill hidden">Cerrar Sesión</button>
+            </div>
           </div>
         </div>
 
@@ -520,12 +498,15 @@
 
           <div class="dc-topbar-pills">
             <button type="button" data-dc-tab="sec-catalogo" class="dc-pill-btn active">Catálogo</button>
+            <button type="button" data-dc-tab="sec-bases" class="dc-pill-btn">Bases Lab</button>
             <button type="button" data-dc-tab="sec-pedidos" class="dc-pill-btn">Pedidos</button>
             <button type="button" data-dc-tab="sec-darelab" class="dc-pill-btn">Dare Lab</button>
             <button type="button" data-dc-tab="sec-entregados" class="dc-pill-btn">Entregados</button>
             <button type="button" data-dc-tab="sec-medidas" class="dc-pill-btn">Medidas</button>
             <button type="button" data-dc-tab="sec-clientes" class="dc-pill-btn">Clientes</button>
             <button type="button" data-dc-tab="sec-ia" class="dc-pill-btn">IA</button>
+            <a href="index.html" class="dc-pill-btn">Tienda ↗</a>
+            <button type="button" id="topbarLogoutBtn" class="dc-pill-btn logout-pill hidden">Cerrar Sesión</button>
           </div>
         </div>
 
@@ -714,14 +695,33 @@
         const target = document.getElementById(tabId) || document.getElementById("sec-catalogo");
         if (!target) return;
 
-        panels.forEach((p) => p.classList.remove("is-visible"));
+        panels.forEach((p) => {
+          p.classList.remove("is-visible");
+          p.style.display = "none";
+        });
+
         target.classList.add("is-visible");
+        target.style.display = target.id === "sec-catalogo" ? "grid" : "block";
+
+        if (target.id === "sec-ia") {
+          const kbBox = document.getElementById("darecoreAiKnowledgeAdmin");
+          const kbArea = document.getElementById("darecoreAiKbTextarea");
+          if (kbBox) {
+            kbBox.classList.remove("hidden");
+            kbBox.style.display = "block";
+          }
+          if (kbArea && !kbArea.value.trim()) {
+            try {
+              const savedKb = localStorage.getItem("darecore_ai_knowledge");
+              if (savedKb) kbArea.value = savedKb;
+            } catch (_) {}
+          }
+        }
 
         document.querySelectorAll("[data-dc-tab]").forEach((ctrl) => {
           const match = ctrl.getAttribute("data-dc-tab") === target.id;
-          if (ctrl.classList.contains("dc-side-link") || ctrl.classList.contains("dc-pill-btn")) {
+          if (ctrl.classList.contains("dc-pill-btn")) {
             ctrl.classList.toggle("active", match);
-            ctrl.classList.toggle("is-active", match);
           }
         });
 
@@ -809,17 +809,17 @@
       function enforceAdminState() {
         const loginSec = document.getElementById("loginSection");
         const dashSec = document.getElementById("dashboardSection");
-        const logoutBtn = document.getElementById("logoutBtn");
+        const logoutBtns = document.querySelectorAll("#logoutBtn, #topbarLogoutBtn");
         const authed = sessionStorage.getItem(SESSION_FLAG) === "true";
 
         if (authed) {
           if (loginSec) loginSec.classList.add("hidden");
           if (dashSec) dashSec.classList.remove("hidden");
-          if (logoutBtn) logoutBtn.classList.remove("hidden");
+          logoutBtns.forEach((b) => b.classList.remove("hidden"));
         } else {
           if (dashSec) dashSec.classList.add("hidden");
           if (loginSec) loginSec.classList.remove("hidden");
-          if (logoutBtn) logoutBtn.classList.add("hidden");
+          logoutBtns.forEach((b) => b.classList.add("hidden"));
         }
 
         const strayBar = document.getElementById("dc-user-email-bar");
@@ -842,7 +842,7 @@
       }
 
       document.addEventListener("click", (e) => {
-        const btn = e.target.closest("#logoutBtn");
+        const btn = e.target.closest("#logoutBtn, #topbarLogoutBtn");
         if (btn) {
           performAdminLogout(e);
         }
@@ -854,7 +854,7 @@
         const userInput = document.getElementById("adminUser");
         const passInput = document.getElementById("adminPass");
         const errEl = document.getElementById("loginError");
-        const logoutBtn = document.getElementById("logoutBtn");
+        const logoutBtns = document.querySelectorAll("#logoutBtn, #topbarLogoutBtn");
 
         if (form) {
           form.addEventListener("submit", (e) => {
@@ -875,9 +875,7 @@
           }, true);
         }
 
-        if (logoutBtn) {
-          logoutBtn.onclick = performAdminLogout;
-        }
+        logoutBtns.forEach((b) => { b.onclick = performAdminLogout; });
       });
 
       setInterval(enforceAdminState, 500);
