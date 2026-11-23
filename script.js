@@ -3748,3 +3748,114 @@ window.addEventListener('click', function(e) {
         };
     }
 })();
+<script id="dcFixAdminProductsSync">
+(function () {
+  if (window.__dcFixAdminProductsSyncApplied) return;
+  window.__dcFixAdminProductsSyncApplied = true;
+
+  function normalizeProductDoc(doc) {
+    const rawData = typeof doc.data === "function" ? (doc.data() || {}) : (doc || {});
+    const docId = doc && doc.id ? doc.id : (rawData.firestoreId || rawData.id || "");
+    return {
+      ...rawData,
+      id: rawData.id !== undefined && rawData.id !== null ? rawData.id : docId,
+      firestoreId: docId || rawData.firestoreId || "",
+      name: rawData.name || rawData.title || rawData.nombre || "Prenda sin nombre",
+      category: rawData.category || rawData.section || rawData.categoria || "inicio",
+      price: Number(rawData.price ?? rawData.precio ?? 0) || 0,
+      image: rawData.image || rawData.img || rawData.imagen || rawData.photo || ""
+    };
+  }
+
+  function updatePublishedCount(products) {
+    const list = Array.isArray(products) ? products : [];
+    const countIds = ["totalCount", "productsCount", "publishedCount"];
+    countIds.forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = String(list.length);
+    });
+    document.querySelectorAll("*").forEach((el) => {
+      if (el.children.length === 0 && /prendas publicadas/i.test((el.textContent || "").trim())) {
+        const card = el.closest(".dc-kpi-card, .kpi-card, .stat-card, div");
+        if (card) {
+          const numEl = Array.from(card.querySelectorAll("div, span, strong, h2, h3")).find((n) =>
+            n.children.length === 0 && /^\d+$/.test((n.textContent || "").trim())
+          );
+          if (numEl) numEl.textContent = String(list.length);
+        }
+      }
+    });
+  }
+
+  function refreshAdminCatalogUI(products) {
+    updatePublishedCount(products);
+    if (typeof loadAdminProducts === "function" && document.getElementById("adminProductList")) {
+      loadAdminProducts();
+    }
+  }
+
+  async function pullProductsFromFirestoreNow() {
+    try {
+      const refs = typeof ensureFirebaseRefs === "function" ? ensureFirebaseRefs() : {};
+      const db = refs.db || window.db || (window.firebase && firebase.firestore ? firebase.firestore() : null);
+      if (!db) return;
+      const snap = await db.collection("products").get();
+      if (!snap || snap.empty) {
+        const localRaw = localStorage.getItem("darecore_products");
+        const localArr = localRaw ? JSON.parse(localRaw) : [];
+        refreshAdminCatalogUI(Array.isArray(localArr) ? localArr : []);
+        return;
+      }
+      const cloudProducts = snap.docs
+        .map(normalizeProductDoc)
+        .sort((a, b) => {
+          const na = Number(a.id) || 0;
+          const nb = Number(b.id) || 0;
+          if (nb !== na) return nb - na;
+          return String(b.firestoreId || "").localeCompare(String(a.firestoreId || ""));
+        });
+
+      localStorage.setItem("darecore_products", JSON.stringify(cloudProducts));
+      if (typeof initStore === "function") initStore();
+      if (typeof renderHeroSlide === "function" && typeof heroSlideIndex !== "undefined") {
+        renderHeroSlide(heroSlideIndex);
+      }
+      refreshAdminCatalogUI(cloudProducts);
+    } catch (err) {
+      console.error("Error sincronizando productos en admin:", err);
+    }
+  }
+
+  window.dcPullProductsFromFirestoreNow = pullProductsFromFirestoreNow;
+
+  const origLoadAdminProducts = window.loadAdminProducts;
+  if (typeof origLoadAdminProducts === "function") {
+    window.loadAdminProducts = function () {
+      const res = origLoadAdminProducts.apply(this, arguments);
+      try {
+        const localRaw = localStorage.getItem("darecore_products");
+        const localArr = localRaw ? JSON.parse(localRaw) : [];
+        updatePublishedCount(Array.isArray(localArr) ? localArr : []);
+      } catch (_) {}
+      return res;
+    };
+  }
+
+  function runInitialSync() {
+    try {
+      const localRaw = localStorage.getItem("darecore_products");
+      const localArr = localRaw ? JSON.parse(localRaw) : [];
+      if (Array.isArray(localArr) && localArr.length > 0) {
+        refreshAdminCatalogUI(localArr);
+      }
+    } catch (_) {}
+    pullProductsFromFirestoreNow();
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", () => setTimeout(runInitialSync, 250));
+  } else {
+    setTimeout(runInitialSync, 250);
+  }
+})();
+</script>
