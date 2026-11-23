@@ -801,6 +801,140 @@
       window.updateOrderStatus.__dcDeliveredHook = true;
     }
   };
+  
+  // Persistencia garantizada de pedidos y cambio de estatus en vivo (admin <-> cliente)
+  function syncOrderStatusEverywhere(collectionName, docId, folioOrId, newStatus) {
+    const cleanStatus = String(newStatus || "En proceso").trim();
+    const isDelivered = /entregad/i.test(cleanStatus);
+
+    [DC_REG_ORDERS_KEY, DC_REG_LAB_KEY, "darecore_client_orders"].forEach((storageKey) => {
+      const arr = readRegArray(storageKey);
+      let changed = false;
+      const updated = arr.map((item) => {
+        const match =
+          (docId && (item.id === docId || item.docId === docId)) ||
+          (folioOrId && (item.purchaseNumber === folioOrId || item.orderNumber === folioOrId || item.folio === folioOrId));
+        if (match) {
+          changed = true;
+          const nextItem = Object.assign({}, item, {
+            status: cleanStatus,
+            updatedAt: new Date().toISOString()
+          });
+          if (isDelivered) {
+            recordOrderEntry(DC_REG_DELIVERED_KEY, Object.assign({}, nextItem, { deliveredAt: new Date().toISOString() }));
+          }
+          return nextItem;
+        }
+        return item;
+      });
+      if (changed) writeRegArray(storageKey, updated);
+    });
+
+    const db = getDb();
+    if (db && docId) {
+      db.collection(collectionName).doc(docId).set({
+        status: cleanStatus,
+        updatedAt: new Date().toISOString()
+      }, { merge: true }).catch(() => {});
+    }
+  }
+
+  window.dcChangeAdminOrderStatus = function (collectionName, docId, folioOrId, newStatus) {
+    syncOrderStatusEverywhere(collectionName, docId, folioOrId, newStatus);
+    if (typeof window.updateOrderStatus === "function" && docId) {
+      try { window.updateOrderStatus(collectionName, docId, newStatus); } catch (_) {}
+    }
+    hydrateAdminRegistries();
+  };
+
+  hydrateAdminRegistries = function () {
+    if (!/admin\.html/i.test(window.location.pathname || "")) return;
+
+    const usersBox = document.getElementById("adminUsersList");
+    const usersCountEl = document.getElementById("usersCount");
+    const savedUsers = readRegArray(DC_REG_USERS_KEY);
+    if (usersBox && savedUsers.length > 0 && (!usersBox.children.length || /no hay clientes/i.test(usersBox.textContent || ""))) {
+      usersBox.innerHTML = savedUsers
+        .map(
+          (u) => `<div style="padding:12px 15px;border:1px solid #eceef2;border-radius:12px;background:#fff;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+            <div>
+              <div style="font-weight:600;font-size:13.5px;color:#18181b;">${cleanMojibake(u.name || u.email)}</div>
+              <div style="font-size:12px;color:#52525b;">${normalizeEmail(u.email)} • ${cleanMojibake(u.loginMethod || "Cuenta")}</div>
+            </div>
+            <div style="font-size:11px;color:#71717a;">${new Date(u.lastLogin || Date.now()).toLocaleString("es-MX")}</div>
+          </div>`
+        )
+        .join("");
+      if (usersCountEl) usersCountEl.textContent = String(savedUsers.length);
+    }
+
+    const renderEditableOrderCards = (containerId, countId, list, collectionName, emptyMsg) => {
+      const box = document.getElementById(containerId);
+      const countEl = document.getElementById(countId);
+      if (!box) return;
+      if (countEl && list.length > 0) countEl.textContent = String(list.length);
+
+      const hasEmptyText = /no hay (pedidos|solicitudes|compras)/i.test(box.textContent || "");
+      if (list.length > 0 && (!box.children.length || hasEmptyText)) {
+        const statuses = ["Pendiente", "En proceso", "Enviado", "En camino", "Entregado"];
+        box.innerHTML = list
+          .map((o) => {
+            const code = cleanMojibake(o.purchaseNumber || o.orderNumber || o.folio || o.id || "PEDIDO");
+            const curStatus = cleanMojibake(o.status || "Pendiente");
+            const opts = statuses
+              .map((st) => `<option value="${st}" ${curStatus.toLowerCase() === st.toLowerCase() ? "selected" : ""}>${st}</option>`)
+              .join("");
+            const detailLine = o.baseName
+              ? `Base: ${cleanMojibake(o.baseName)} (${cleanMojibake(o.size || "Única")})`
+              : `Total: ${Number(o.total || 0).toLocaleString("es-MX")} MXN`;
+
+            return `<div style="padding:15px 16px;border:1px solid #e4e4e7;border-radius:14px;background:#ffffff;display:flex;flex-direction:column;gap:8px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
+                <span style="font-weight:600;font-size:13.5px;color:#18181b;">#${code}</span>
+                <span style="font-size:11px;font-weight:600;color:#ff4500;background:rgba(255,69,0,0.08);padding:3px 9px;border-radius:999px;">${curStatus}</span>
+              </div>
+              <div style="font-size:12px;color:#52525b;">Cliente: ${normalizeEmail(o.userEmail || "Sin correo")}</div>
+              <div style="font-size:12.5px;font-weight:500;color:#27272a;">${detailLine}</div>
+              <div style="margin-top:4px;">
+                <label style="font-size:10.5px;font-weight:600;color:#71717a;display:block;margin-bottom:4px;">Estado del pedido</label>
+                <select onchange="dcChangeAdminOrderStatus('${collectionName}', '${o.docId || o.id || ""}', '${code}', this.value)" style="width:100%;padding:7px 10px;border-radius:10px;border:1px solid #d4d4d8;background:#fafafa;font-size:12px;color:#18181b;cursor:pointer;">
+                  ${opts}
+                </select>
+              </div>
+            </div>`;
+          })
+          .join("");
+      } else if (!box.innerHTML.trim() && emptyMsg) {
+        box.innerHTML = `<div style="padding:14px;font-size:12.5px;color:#71717a;">${emptyMsg}</div>`;
+      }
+    };
+
+    renderEditableOrderCards("adminOrdersList", "ordersCount", readRegArray(DC_REG_ORDERS_KEY), "orders", "Aún no hay compras registradas.");
+    renderEditableOrderCards("adminDareLabList", "dareLabCount", readRegArray(DC_REG_LAB_KEY), "darelab_orders", "Aún no hay solicitudes Dare Lab.");
+
+    const deliveredBox = document.getElementById("adminDeliveredOrdersList");
+    const deliveredCountEl = document.getElementById("deliveredOrdersCount");
+    const savedDelivered = readRegArray(DC_REG_DELIVERED_KEY);
+    if (deliveredBox) {
+      if (savedDelivered.length > 0) {
+        deliveredBox.innerHTML = savedDelivered
+          .map(
+            (d) => `<div style="padding:14px 16px;border:1px solid #e4e4e7;border-left:3px solid #15803d;border-radius:14px;background:#fff;">
+              <div style="display:flex;justify-content:space-between;gap:8px;margin-bottom:6px;">
+                <span style="font-weight:600;font-size:13px;">#${cleanMojibake(d.purchaseNumber || d.orderNumber || d.folio || d.id)}</span>
+                <span style="font-size:11px;font-weight:600;color:#15803d;background:#dcfce7;padding:2px 9px;border-radius:999px;">Entregado</span>
+              </div>
+              <div style="font-size:12px;color:#52525b;">Cliente: ${normalizeEmail(d.userEmail || "Sin correo")}</div>
+              <div style="font-size:11.5px;color:#71717a;margin-top:4px;">${new Date(d.deliveredAt || d.createdAt || Date.now()).toLocaleString("es-MX")}</div>
+            </div>`
+          )
+          .join("");
+      } else if (!deliveredBox.innerHTML.trim()) {
+        deliveredBox.innerHTML = `<div style="padding:14px;font-size:12.5px;color:#71717a;">Aún no hay pedidos marcados como entregados.</div>`;
+      }
+      if (deliveredCountEl) deliveredCountEl.textContent = String(savedDelivered.length);
+    }
+  };
   setTimeout(boot, 1200);
   setInterval(hydrateAdminRegistries, 900);
 })();

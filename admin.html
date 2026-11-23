@@ -6,7 +6,7 @@
   <title>DareCore — Admin Dashboard</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Plus+Jakarta+Sans:wght@500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
 
   <style id="dcSkillsetProDashboard">
@@ -23,9 +23,9 @@
       --brand-soft: rgba(255, 69, 0, 0.08);
       --radius-shell: 22px;
       --radius-card: 16px;
-      --shadow-shell: 0 24px 60px -24px rgba(15, 23, 42, 0.16);
-      --shadow-card: 0 6px 20px -8px rgba(24, 24, 27, 0.07), 0 1px 3px rgba(24, 24, 27, 0.04);
-      --shadow-card-hover: 0 16px 32px -12px rgba(24, 24, 27, 0.13);
+      --shadow-shell: 0 24px 60px -24px rgba(15, 23, 42, 0.14);
+      --shadow-card: 0 6px 20px -8px rgba(24, 24, 27, 0.06), 0 1px 3px rgba(24, 24, 27, 0.03);
+      --shadow-card-hover: 0 14px 28px -12px rgba(24, 24, 27, 0.11);
       --ease-smooth: cubic-bezier(0.2, 0.8, 0.2, 1);
     }
 
@@ -36,12 +36,20 @@
       padding: 0;
       background: var(--canvas-bg) !important;
       color: var(--ink-primary) !important;
-      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif !important;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
+      font-weight: 400;
+      letter-spacing: -0.01em;
       -webkit-font-smoothing: antialiased;
     }
 
+    h1, h2, h3, h4 {
+      font-family: 'Plus Jakarta Sans', 'Inter', sans-serif !important;
+      font-weight: 600 !important;
+      letter-spacing: -0.02em;
+    }
+
     @keyframes dcPanelReveal {
-      from { opacity: 0; transform: translateY(10px); }
+      from { opacity: 0; transform: translateY(8px); }
       to { opacity: 1; transform: translateY(0); }
     }
 
@@ -53,7 +61,7 @@
 
     .dc-dashboard-frame {
       display: grid;
-      grid-template-columns: 236px minmax(0, 1fr);
+      grid-template-columns: 232px minmax(0, 1fr);
       background: var(--shell-bg);
       border: 1px solid var(--line-subtle);
       border-radius: var(--radius-shell);
@@ -82,15 +90,15 @@
     }
 
     .dc-brand-mark {
-      width: 34px;
-      height: 34px;
-      border-radius: 10px;
+      width: 32px;
+      height: 32px;
+      border-radius: 9px;
       background: var(--pill-active);
       color: #ffffff;
       display: grid;
       place-items: center;
-      font-weight: 800;
-      font-size: 16px;
+      font-weight: 700;
+      font-size: 15px;
       transition: transform 0.25s var(--ease-smooth), background-color 0.25s var(--ease-smooth);
     }
 
@@ -100,9 +108,9 @@
     }
 
     .dc-nav-group-label {
-      font-size: 10.5px;
-      font-weight: 700;
-      letter-spacing: 0.06em;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
       text-transform: uppercase;
       color: var(--ink-muted);
       padding: 0 6px 8px;
@@ -111,7 +119,7 @@
     .dc-side-pills {
       display: flex;
       flex-direction: column;
-      gap: 7px;
+      gap: 6px;
       margin-bottom: 16px;
     }
 
@@ -119,10 +127,11 @@
       border: 1px solid #e4e4e7 !important;
       background: #ffffff !important;
       color: #3f3f46 !important;
+      font-family: 'Inter', sans-serif !important;
       font-size: 12px !important;
-      font-weight: 600 !important;
-      padding: 0 14px !important;
-      height: 32px !important;
+      font-weight: 500 !important;
+      padding: 0 13px !important;
+      height: 30px !important;
       line-height: 1 !important;
       border-radius: 999px !important;
       text-decoration: none !important;
@@ -131,7 +140,7 @@
       justify-content: center;
       gap: 6px;
       cursor: pointer;
-      box-shadow: 0 1px 2px rgba(24, 24, 27, 0.03) !important;
+      box-shadow: none !important;
       transition: all 0.2s var(--ease-smooth) !important;
       white-space: nowrap;
     }
@@ -139,7 +148,6 @@
     .dc-side-pills .dc-pill-btn {
       width: 100%;
       justify-content: flex-start;
-      padding: 0 14px !important;
     }
 
     .dc-pill-btn:hover {
@@ -153,6 +161,7 @@
       background: #18181b !important;
       color: #ffffff !important;
       border-color: #18181b !important;
+      font-weight: 500 !important;
     }
 
     .dc-pill-btn.logout-pill:hover {
@@ -164,9 +173,8 @@
     .dc-promo-card {
       background: #fafafa;
       border: 1px solid var(--line-subtle);
-      border-radius: 16px;
+      border-radius: 14px;
       padding: 14px;
-      text-align: left;
     }
 
     .dc-main-pane {
@@ -189,16 +197,15 @@
 
     .dc-topbar-title {
       margin: 0;
-      font-size: 25px;
-      font-weight: 700;
-      letter-spacing: -0.025em;
+      font-size: 22px !important;
+      font-weight: 600 !important;
       color: var(--ink-primary);
     }
 
     .dc-topbar-pills {
       display: flex;
       align-items: center;
-      gap: 7px;
+      gap: 6px;
       flex-wrap: wrap;
     }
 
@@ -237,28 +244,27 @@
 
     .dc-kpi-label {
       font-size: 11.5px;
-      font-weight: 600;
+      font-weight: 500;
       color: var(--ink-secondary);
       margin-bottom: 6px;
     }
 
     .dc-kpi-value {
-      font-size: 22px;
-      font-weight: 700;
-      letter-spacing: -0.02em;
+      font-size: 21px;
+      font-weight: 600;
       line-height: 1.15;
     }
 
     .dc-kpi-sub {
       margin-top: 6px;
       font-size: 11px;
-      font-weight: 600;
+      font-weight: 500;
       color: #15803d;
     }
 
     .dc-tab-panel {
       display: none;
-      animation: dcPanelReveal 0.3s var(--ease-smooth) both;
+      animation: dcPanelReveal 0.28s var(--ease-smooth) both;
     }
 
     .dc-tab-panel.is-visible {
@@ -282,16 +288,16 @@
     }
 
     .login-box {
-      max-width: 430px !important;
+      max-width: 420px !important;
       margin: 72px auto !important;
-      padding: 32px 28px !important;
+      padding: 30px 26px !important;
     }
 
     label {
       display: block;
       font-size: 11px !important;
-      font-weight: 700 !important;
-      letter-spacing: 0.04em;
+      font-weight: 500 !important;
+      letter-spacing: 0.03em;
       text-transform: uppercase;
       color: var(--ink-secondary) !important;
       margin-bottom: 6px;
@@ -302,10 +308,11 @@
       background: #f9fafb !important;
       color: var(--ink-primary) !important;
       border: 1px solid #e4e4e7 !important;
-      border-radius: 11px !important;
-      padding: 10px 13px !important;
-      font-size: 13.5px !important;
-      font-family: inherit !important;
+      border-radius: 10px !important;
+      padding: 9px 12px !important;
+      font-size: 13px !important;
+      font-family: 'Inter', sans-serif !important;
+      font-weight: 400 !important;
     }
 
     .btn-primary, button[type="submit"] {
@@ -313,9 +320,9 @@
       color: #ffffff !important;
       border: none !important;
       border-radius: 10px !important;
-      padding: 10px 16px !important;
+      padding: 9px 16px !important;
       font-size: 12.5px !important;
-      font-weight: 700 !important;
+      font-weight: 500 !important;
       cursor: pointer;
       transition: transform 0.2s var(--ease-smooth), background-color 0.2s var(--ease-smooth) !important;
     }
@@ -325,19 +332,23 @@
       transform: translateY(-1px);
     }
 
-    /* Panel Modificacion de IA con esfera de flujo violeta-magenta a azul-cian en movimiento */
+    /* PANEL ÚNICO DE MODIFICACIÓN DE IA: esfera animada protagonista y un solo cuadro traslúcido */
     #darecoreAiKnowledgeAdmin {
       display: block !important;
       visibility: visible !important;
       opacity: 1 !important;
       position: relative;
       overflow: hidden;
-      background: #05050a !important;
+      min-height: 520px;
+      background: radial-gradient(circle at 50% 45%, #11162b 0%, #06070f 65%, #030308 100%) !important;
       color: #f8fafc !important;
-      border: 1px solid rgba(139, 92, 246, 0.35) !important;
+      border: 1px solid rgba(139, 92, 246, 0.32) !important;
       border-radius: 22px !important;
-      box-shadow: 0 24px 55px -18px rgba(15, 23, 42, 0.65), 0 0 35px -12px rgba(217, 70, 239, 0.28) !important;
-      padding: 24px 26px !important;
+      box-shadow: 0 24px 60px -20px rgba(3, 7, 18, 0.78) !important;
+      padding: 26px 28px !important;
+      display: flex !important;
+      flex-direction: column;
+      justify-content: space-between;
     }
 
     #dcAiFlowCanvas {
@@ -347,92 +358,102 @@
       height: 100%;
       pointer-events: none;
       z-index: 0;
-      opacity: 0.92;
     }
 
-    .dc-ai-content-layer {
+    .dc-ai-top-bar {
       position: relative;
       z-index: 1;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
     }
 
-    #darecoreAiKnowledgeAdmin h2 {
+    .dc-ai-top-bar h2 {
+      margin: 0;
+      font-size: 18px !important;
+      font-weight: 500 !important;
       color: #ffffff !important;
+      letter-spacing: -0.01em;
     }
 
-    #darecoreAiKnowledgeAdmin p {
-      color: #cbd5e1 !important;
+    .dc-ai-spacer {
+      min-height: 170px;
+      pointer-events: none;
     }
 
-    #darecoreAiKbTextarea {
-      background: rgba(10, 12, 24, 0.78) !important;
+    .dc-ai-single-dock {
+      position: relative;
+      z-index: 1;
+      background: rgba(8, 11, 22, 0.56);
       backdrop-filter: blur(10px);
       -webkit-backdrop-filter: blur(10px);
-      color: #f8fafc !important;
-      border: 1.5px solid rgba(168, 85, 247, 0.45) !important;
-      border-radius: 14px !important;
-    }
-
-    #darecoreAiKbTextarea:focus {
-      outline: none !important;
-      border-color: #22d3ee !important;
-      box-shadow: 0 0 0 3px rgba(34, 211, 238, 0.22) !important;
-    }
-
-    #saveDarecoreAiKbBtn {
-      background: linear-gradient(90deg, #d946ef 0%, #6366f1 50%, #06b6d4 100%) !important;
-      color: #ffffff !important;
-      border: none !important;
-      border-radius: 999px !important;
-      padding: 0 20px !important;
-      height: 34px !important;
-      font-size: 12px !important;
-      font-weight: 700 !important;
-      cursor: pointer;
-    }
-
-    .dc-ai-assistant-box {
-      margin-top: 16px;
-      padding: 16px;
+      border: 1px solid rgba(148, 163, 184, 0.22);
       border-radius: 16px;
-      background: rgba(11, 14, 28, 0.82);
-      border: 1px solid rgba(56, 189, 248, 0.3);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
+      padding: 14px 16px;
     }
 
     .dc-ai-chat-log {
-      max-height: 220px;
+      max-height: 165px;
       overflow-y: auto;
       display: flex;
       flex-direction: column;
       gap: 8px;
-      margin-bottom: 12px;
+      margin-bottom: 10px;
       padding-right: 4px;
     }
 
     .dc-ai-msg-admin {
       align-self: flex-end;
-      max-width: 86%;
-      background: rgba(217, 70, 239, 0.24);
-      border: 1px solid rgba(217, 70, 239, 0.45);
+      max-width: 82%;
+      background: rgba(217, 70, 239, 0.22);
+      border: 1px solid rgba(217, 70, 239, 0.4);
       color: #ffffff;
-      padding: 9px 13px;
-      border-radius: 14px 14px 4px 14px;
+      padding: 8px 12px;
+      border-radius: 12px 12px 3px 12px;
       font-size: 12.5px;
+      font-weight: 400;
       line-height: 1.45;
     }
 
     .dc-ai-msg-bot {
       align-self: flex-start;
-      max-width: 92%;
-      background: rgba(15, 23, 42, 0.88);
-      border: 1px solid rgba(34, 211, 238, 0.35);
+      max-width: 90%;
+      background: rgba(15, 23, 42, 0.72);
+      border: 1px solid rgba(34, 211, 238, 0.3);
       color: #e2e8f0;
-      padding: 10px 14px;
-      border-radius: 14px 14px 14px 4px;
+      padding: 9px 13px;
+      border-radius: 12px 12px 12px 3px;
       font-size: 12.5px;
+      font-weight: 400;
       line-height: 1.5;
       white-space: pre-line;
+    }
+
+    #dcAiCoachInput {
+      background: rgba(15, 23, 42, 0.65) !important;
+      color: #f8fafc !important;
+      border: 1px solid rgba(148, 163, 184, 0.28) !important;
+      border-radius: 999px !important;
+      padding: 9px 15px !important;
+      font-size: 12.5px !important;
+    }
+
+    #dcAiCoachInput::placeholder {
+      color: #94a3b8;
+    }
+
+    #dcAiCoachSendBtn {
+      background: linear-gradient(90deg, #d946ef 0%, #6366f1 50%, #06b6d4 100%) !important;
+      color: #ffffff !important;
+      border: none !important;
+      border-radius: 999px !important;
+      padding: 0 18px !important;
+      height: 36px !important;
+      font-size: 12px !important;
+      font-weight: 500 !important;
+      cursor: pointer;
     }
 
     #dc-user-email-bar { display: none !important; }
@@ -461,8 +482,8 @@
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
       <span class="dc-brand-mark">D</span>
       <div>
-        <div style="font-size:11px;font-weight:700;letter-spacing:0.06em;color:var(--brand-orange);text-transform:uppercase;">Acceso Exclusivo Admin</div>
-        <h2 style="margin:0;font-size:20px;font-weight:700;color:var(--ink-primary);">DareCore Console</h2>
+        <div style="font-size:10.5px;font-weight:600;letter-spacing:0.06em;color:var(--brand-orange);text-transform:uppercase;">Acceso Exclusivo Admin</div>
+        <h2 style="margin:0;font-size:19px;">DareCore Console</h2>
       </div>
     </div>
     <p style="font-size:13px;color:var(--ink-secondary);margin:0 0 20px;line-height:1.5;">
@@ -477,7 +498,7 @@
         <label for="adminPass">Contraseña</label>
         <input type="password" id="adminPass" class="form-control" placeholder="••••••••••••" autocomplete="current-password" required />
       </div>
-      <p id="loginError" style="color:#dc2626;font-size:12px;font-weight:600;margin:0 0 12px;display:none;">Acceso denegado. Verifica usuario y contraseña.</p>
+      <p id="loginError" style="color:#dc2626;font-size:12px;font-weight:500;margin:0 0 12px;display:none;">Acceso denegado. Verifica usuario y contraseña.</p>
       <button type="submit" class="btn-primary" style="width:100%;">Entrar al Panel</button>
     </form>
   </div>
@@ -489,8 +510,8 @@
           <div class="dc-brand-box">
             <span class="dc-brand-mark">D</span>
             <div>
-              <div style="font-size:16px;font-weight:700;letter-spacing:-0.02em;">DareCore</div>
-              <div style="font-size:11px;color:var(--ink-muted);font-weight:600;">Admin Workspace</div>
+              <div style="font-size:15px;font-weight:600;">DareCore</div>
+              <div style="font-size:11px;color:var(--ink-muted);">Admin Workspace</div>
             </div>
           </div>
 
@@ -516,11 +537,11 @@
         </div>
 
         <div class="dc-promo-card">
-          <div style="font-size:12.5px;font-weight:700;margin-bottom:4px;">Registros Persistentes</div>
+          <div style="font-size:12px;font-weight:600;margin-bottom:4px;">Registros Persistentes</div>
           <p style="font-size:11px;color:var(--ink-secondary);margin:0 0 8px;line-height:1.45;">
-            Clientes, pedidos y personalizados se conservan al cerrar sesión.
+            Clientes, pedidos y personalizados se conservan al recargar o cerrar sesión.
           </p>
-          <span style="display:inline-block;font-size:10.5px;font-weight:700;background:#ffffff;border:1px solid var(--line-subtle);padding:4px 9px;border-radius:999px;">Modo Seguro</span>
+          <span style="display:inline-block;font-size:10.5px;font-weight:500;background:#ffffff;border:1px solid var(--line-subtle);padding:3px 9px;border-radius:999px;">Modo Seguro</span>
         </div>
       </aside>
 
@@ -533,6 +554,7 @@
 
           <div class="dc-topbar-pills">
             <button type="button" data-dc-tab="sec-catalogo" class="dc-pill-btn active">Catálogo</button>
+            <button type="button" data-dc-tab="sec-bases" class="dc-pill-btn">Bases Lab</button>
             <button type="button" data-dc-tab="sec-pedidos" class="dc-pill-btn">Pedidos</button>
             <button type="button" data-dc-tab="sec-darelab" class="dc-pill-btn">Dare Lab</button>
             <button type="button" data-dc-tab="sec-entregados" class="dc-pill-btn">Entregados</button>
@@ -573,7 +595,7 @@
         <!-- PANEL 1: CATÁLOGO -->
         <section id="sec-catalogo" class="dc-tab-panel is-visible" data-dc-label="Dashboard • Catálogo">
           <div class="panel-box">
-            <h3 id="formTitle" style="font-size:15px;font-weight:700;color:var(--ink-primary);margin:0 0 14px;">+ Nueva Prenda</h3>
+            <h3 id="formTitle" style="font-size:15px;margin:0 0 14px;">+ Nueva Prenda</h3>
             <form id="addProductForm">
               <input type="hidden" id="editingProductId" value="" />
 
@@ -622,8 +644,8 @@
 
           <div class="panel-box">
             <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;">
-              <h3 style="font-size:15px;font-weight:700;margin:0;">Prendas Publicadas en Tienda</h3>
-              <span style="font-size:11.5px;color:var(--ink-muted);font-weight:600;">Sincronizado</span>
+              <h3 style="font-size:15px;margin:0;">Prendas Publicadas en Tienda</h3>
+              <span style="font-size:11.5px;color:var(--ink-muted);">Sincronizado</span>
             </div>
             <div id="adminProductList" style="display:flex;flex-direction:column;gap:10px;"></div>
           </div>
@@ -631,28 +653,28 @@
 
         <!-- PANEL 2: BASES DARE LAB -->
         <section id="sec-bases" class="dc-tab-panel panel-box" data-dc-label="Bases Dare Lab">
-          <h3 style="font-size:15px;font-weight:700;margin:0 0 4px;">Editar Bases & Gramajes (Dare Lab Personalizado)</h3>
+          <h3 style="font-size:15px;margin:0 0 4px;">Editar Bases & Gramajes (Dare Lab Personalizado)</h3>
           <p style="font-size:12px;color:var(--ink-secondary);margin:0 0 14px;">Modifica aquí los nombres, descripciones y precios base que verán los clientes en Personalizar.</p>
           <div id="adminCustomBasesList" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;"></div>
         </section>
 
         <!-- PANEL 3: PEDIDOS DEL CARRITO -->
         <section id="sec-pedidos" class="dc-tab-panel panel-box" data-dc-label="Pedidos del Carrito">
-          <h3 style="font-size:15px;font-weight:700;margin:0 0 14px;">Compras del Carrito</h3>
+          <h3 style="font-size:15px;margin:0 0 14px;">Compras del Carrito</h3>
           <div id="adminOrdersList" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:14px;"></div>
         </section>
 
         <!-- PANEL 4: SOLICITUDES DARE LAB -->
         <section id="sec-darelab" class="dc-tab-panel panel-box" data-dc-label="Solicitudes Dare Lab">
-          <h3 style="font-size:15px;font-weight:700;margin:0 0 14px;">Solicitudes Dare Lab // Fotos y Diseños</h3>
+          <h3 style="font-size:15px;margin:0 0 14px;">Solicitudes Dare Lab // Fotos y Diseños</h3>
           <div id="adminDareLabList" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;"></div>
         </section>
 
         <!-- PANEL 5: PEDIDOS ENTREGADOS -->
         <section id="sec-entregados" class="dc-tab-panel panel-box" data-dc-label="Pedidos Entregados">
           <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;flex-wrap:wrap;">
-            <h3 style="font-size:15px;font-weight:700;margin:0;">Pedidos Entregados (<span id="deliveredOrdersCount">0</span>)</h3>
-            <span style="font-size:11.5px;color:#15803d;font-weight:700;">Historial de entregas</span>
+            <h3 style="font-size:15px;margin:0;">Pedidos Entregados (<span id="deliveredOrdersCount">0</span>)</h3>
+            <span style="font-size:11.5px;color:#15803d;font-weight:500;">Historial de entregas</span>
           </div>
           <div id="adminDeliveredOrdersList" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:14px;"></div>
         </section>
@@ -661,20 +683,20 @@
         <section id="sec-medidas" class="dc-tab-panel panel-box" data-dc-label="Tabla de Medidas">
           <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px;flex-wrap:wrap;">
             <div>
-              <h3 style="font-size:15px;font-weight:700;margin:0;">Tabla de Medidas Editable</h3>
+              <h3 style="font-size:15px;margin:0;">Tabla de Medidas Editable</h3>
               <p style="font-size:12px;color:var(--ink-secondary);margin:3px 0 0;">Edita las medidas de cada talla y guarda los cambios para la tienda y la IA.</p>
             </div>
             <button type="button" id="saveSizeTableBtn" class="btn-primary">Guardar Tabla de Medidas</button>
           </div>
-          <div id="dcSizeTableStatus" style="font-size:12px;color:#15803d;font-weight:600;min-height:18px;margin-bottom:10px;"></div>
+          <div id="dcSizeTableStatus" style="font-size:12px;color:#15803d;font-weight:500;min-height:18px;margin-bottom:10px;"></div>
           <div style="overflow-x:auto;">
             <table id="dcEditableSizeTable" style="width:100%;border-collapse:collapse;font-size:12.5px;">
               <thead>
                 <tr style="background:#f4f4f5;text-align:left;">
-                  <th style="padding:10px 12px;border-bottom:1px solid #e4e4e7;">Talla</th>
-                  <th style="padding:10px 12px;border-bottom:1px solid #e4e4e7;">Ancho / Pecho (cm)</th>
-                  <th style="padding:10px 12px;border-bottom:1px solid #e4e4e7;">Largo (cm)</th>
-                  <th style="padding:10px 12px;border-bottom:1px solid #e4e4e7;">Manga / Hombro (cm)</th>
+                  <th style="padding:10px 12px;border-bottom:1px solid #e4e4e7;font-weight:600;">Talla</th>
+                  <th style="padding:10px 12px;border-bottom:1px solid #e4e4e7;font-weight:600;">Ancho / Pecho (cm)</th>
+                  <th style="padding:10px 12px;border-bottom:1px solid #e4e4e7;font-weight:600;">Largo (cm)</th>
+                  <th style="padding:10px 12px;border-bottom:1px solid #e4e4e7;font-weight:600;">Manga / Hombro (cm)</th>
                 </tr>
               </thead>
               <tbody id="dcSizeTableBody"></tbody>
@@ -684,48 +706,32 @@
 
         <!-- PANEL 7: CLIENTES REGISTRADOS -->
         <section id="sec-clientes" class="dc-tab-panel panel-box" data-dc-label="Cuentas y Clientes Registrados">
-          <h3 style="font-size:15px;font-weight:700;margin:0 0 14px;">Clientes y Cuentas Registradas</h3>
+          <h3 style="font-size:15px;margin:0 0 14px;">Clientes y Cuentas Registradas</h3>
           <div id="adminUsersList" style="display:flex;flex-direction:column;gap:9px;max-height:480px;overflow-y:auto;"></div>
         </section>
 
-        <!-- PANEL 8: MODIFICACIÓN DE IA CON ESFERA DE FLUJO ANIMADA + MEMORIA INTERACTIVA -->
+        <!-- PANEL 8: MODIFICACIÓN DE IA (UN SOLO PANEL TRASLÚCIDO SOBRE LA ESFERA ANIMADA) -->
         <section id="sec-ia" class="dc-tab-panel" data-dc-label="Modificación de IA">
           <div id="darecoreAiKnowledgeAdmin">
             <canvas id="dcAiFlowCanvas"></canvas>
 
-            <div class="dc-ai-content-layer">
-              <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:10px;">
-                <div>
-                  <h2 style="margin:0;font-size:20px;font-weight:800;letter-spacing:-0.02em;">Modificar información de la IA</h2>
-                </div>
-                <span id="darecoreAiKbStatus" style="font-size:11.5px;font-weight:700;color:#22d3ee;background:rgba(15,23,42,0.8);border:1px solid rgba(34,211,238,0.4);padding:5px 12px;border-radius:999px;">Memoria Activa</span>
+            <div class="dc-ai-top-bar">
+              <h2>DareCore Intelligence • Memoria</h2>
+              <span id="darecoreAiKbStatus" style="font-size:11px;font-weight:500;color:#22d3ee;background:rgba(15,23,42,0.72);border:1px solid rgba(34,211,238,0.35);padding:4px 11px;border-radius:999px;">Memoria Activa</span>
+            </div>
+
+            <!-- Espacio central libre para que luzca completa la esfera de flujo animada -->
+            <div class="dc-ai-spacer"></div>
+
+            <!-- Único lugar de interacción con la memoria de DareCore Intelligence -->
+            <div class="dc-ai-single-dock">
+              <div id="dcAiCoachLog" class="dc-ai-chat-log">
+                <div class="dc-ai-msg-bot">Pregúntame en qué me baso para responder o dime qué regla quieres agregar (ej. "Agrega: no hacemos reembolsos").</div>
               </div>
 
-              <p style="margin:0 0 12px;font-size:12.5px;line-height:1.5;">
-                Todo lo que esté aquí es la base de memoria que usa la IA de DareCore para responder. Puedes editarlo directo o entrenarlo por chat abajo.
-              </p>
-
-              <textarea id="darecoreAiKbTextarea" rows="7" style="width:100%;padding:12px 14px;font-size:13.5px;line-height:1.5;resize:vertical;"></textarea>
-
-              <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;align-items:center;">
-                <button type="button" id="saveDarecoreAiKbBtn">Guardar información de la IA</button>
-                <button type="button" id="resetDarecoreAiKbBtn" class="dc-pill-btn">Restaurar texto base</button>
-              </div>
-
-              <!-- Consola de entrenamiento y consulta de memoria de la IA -->
-              <div class="dc-ai-assistant-box">
-                <div style="font-size:11.5px;font-weight:700;color:#38bdf8;margin-bottom:8px;">
-                  Entrenar y consultar memoria de la IA (ej. "¿A qué te basas para responder..." o "Agrega: no hacemos reembolsos")
-                </div>
-
-                <div id="dcAiCoachLog" class="dc-ai-chat-log">
-                  <div class="dc-ai-msg-bot">Listo. Pregúntame en qué me baso para responder o dime qué regla quieres que agregue a mi memoria (por ejemplo: "Quiero que agregues: no hacemos reembolsos").</div>
-                </div>
-
-                <div style="display:flex;gap:8px;">
-                  <input type="text" id="dcAiCoachInput" class="form-control" placeholder="Escribe aquí una pregunta o una regla para agregar..." />
-                  <button type="button" id="dcAiCoachSendBtn" class="btn-primary" style="white-space:nowrap;">Enviar</button>
-                </div>
+              <div style="display:flex;gap:8px;align-items:center;">
+                <input type="text" id="dcAiCoachInput" placeholder="Pregunta en qué me baso o escribe qué agregar a la memoria..." />
+                <button type="button" id="dcAiCoachSendBtn">Enviar</button>
               </div>
             </div>
           </div>
@@ -738,7 +744,6 @@
     (function () {
       const KB_KEY = "darecore_ai_knowledge";
 
-      // Animacion circular de filamentos y particulas en degradado violeta-magenta -> azul-cian
       function startDataFlowSphereAnimation() {
         const canvas = document.getElementById("dcAiFlowCanvas");
         const container = document.getElementById("darecoreAiKnowledgeAdmin");
@@ -748,13 +753,13 @@
 
         let width = 0;
         let height = 0;
-        const strandCount = 84;
-        const particleCount = 130;
+        const strandCount = 115;
+        const particleCount = 180;
         const particles = Array.from({ length: particleCount }, (_, i) => ({
           angle: (i / particleCount) * Math.PI * 2,
-          radiusFactor: 0.22 + ((i * 37) % 72) / 100,
-          speed: 0.002 + ((i % 7) * 0.00055),
-          size: 1.1 + (i % 3) * 0.75,
+          radiusFactor: 0.25 + ((i * 37) % 70) / 100,
+          speed: 0.0024 + ((i % 7) * 0.0006),
+          size: 1.1 + (i % 3) * 0.7,
           phase: i * 0.45
         }));
 
@@ -771,7 +776,7 @@
         let t = 0;
         function renderFrame() {
           if (!width || !height) resizeCanvas();
-          t += 0.012;
+          t += 0.013;
 
           ctx.clearRect(0, 0, width || 1, height || 1);
           if (!width || !height) {
@@ -780,35 +785,35 @@
           }
 
           const cx = width * 0.5;
-          const cy = height * 0.5;
-          const baseR = Math.min(width, height) * 0.44;
+          const cy = height * 0.44;
+          const baseR = Math.min(width, height) * 0.46;
 
           for (let i = 0; i < strandCount; i++) {
             const frac = i / strandCount;
-            const a1 = frac * Math.PI * 2 + t * 0.55;
-            const a2 = a1 + Math.PI * 0.78 + Math.sin(t + frac * 6) * 0.35;
+            const a1 = frac * Math.PI * 2 + t * 0.6;
+            const a2 = a1 + Math.PI * 0.82 + Math.sin(t + frac * 6) * 0.38;
 
-            const r1 = baseR * (0.35 + 0.65 * Math.sin(frac * Math.PI));
-            const r2 = baseR * (0.45 + 0.55 * Math.cos(frac * Math.PI * 1.5 + t));
+            const r1 = baseR * (0.4 + 0.6 * Math.sin(frac * Math.PI));
+            const r2 = baseR * (0.48 + 0.52 * Math.cos(frac * Math.PI * 1.5 + t));
 
-            const x1 = cx + Math.cos(a1) * r1 * 1.25;
-            const y1 = cy + Math.sin(a1) * r1 * 0.92;
-            const x2 = cx + Math.cos(a2) * r2 * 1.25;
-            const y2 = cy + Math.sin(a2) * r2 * 0.92;
+            const x1 = cx + Math.cos(a1) * r1 * 1.28;
+            const y1 = cy + Math.sin(a1) * r1 * 0.94;
+            const x2 = cx + Math.cos(a2) * r2 * 1.28;
+            const y2 = cy + Math.sin(a2) * r2 * 0.94;
 
-            const cpx = cx + Math.cos(a1 + 0.5) * baseR * 0.65;
-            const cpy = cy + Math.sin(a2 - 0.5) * baseR * 0.55;
+            const cpx = cx + Math.cos(a1 + 0.55) * baseR * 0.62;
+            const cpy = cy + Math.sin(a2 - 0.55) * baseR * 0.52;
 
             const grad = ctx.createLinearGradient(x1, y1, x2, y2);
-            grad.addColorStop(0, "rgba(217, 70, 239, 0.34)");
-            grad.addColorStop(0.5, "rgba(99, 102, 241, 0.24)");
-            grad.addColorStop(1, "rgba(6, 182, 212, 0.36)");
+            grad.addColorStop(0, "rgba(217, 70, 239, 0.45)");
+            grad.addColorStop(0.5, "rgba(99, 102, 241, 0.34)");
+            grad.addColorStop(1, "rgba(6, 182, 212, 0.48)");
 
             ctx.beginPath();
             ctx.moveTo(x1, y1);
             ctx.quadraticCurveTo(cpx, cpy, x2, y2);
             ctx.strokeStyle = grad;
-            ctx.lineWidth = 1.05;
+            ctx.lineWidth = 1.15;
             ctx.stroke();
           }
 
@@ -817,17 +822,17 @@
             pt.angle += pt.speed;
             const wobble = Math.sin(t * 1.6 + pt.phase) * 14;
             const rad = baseR * pt.radiusFactor + wobble;
-            const px = cx + Math.cos(pt.angle) * rad * 1.25;
-            const py = cy + Math.sin(pt.angle) * rad * 0.92;
+            const px = cx + Math.cos(pt.angle) * rad * 1.28;
+            const py = cy + Math.sin(pt.angle) * rad * 0.94;
             const hueMix = (Math.cos(pt.angle) + 1) * 0.5;
 
             ctx.beginPath();
             ctx.arc(px, py, pt.size, 0, Math.PI * 2);
             ctx.fillStyle = hueMix < 0.45
-              ? "rgba(232, 121, 249, 0.85)"
+              ? "rgba(232, 121, 249, 0.9)"
               : hueMix < 0.75
-                ? "rgba(129, 140, 248, 0.85)"
-                : "rgba(34, 211, 238, 0.9)";
+                ? "rgba(129, 140, 248, 0.9)"
+                : "rgba(34, 211, 238, 0.95)";
             ctx.fill();
           }
 
@@ -839,9 +844,7 @@
 
       function persistAiKnowledgeText(newText) {
         const clean = String(newText || "").trim();
-        const ta = document.getElementById("darecoreAiKbTextarea");
         const status = document.getElementById("darecoreAiKbStatus");
-        if (ta) ta.value = clean;
         try { localStorage.setItem(KB_KEY, clean); } catch (_) {}
         if (window.db) {
           window.db.collection("settings").doc("aiKnowledge").set({
@@ -867,7 +870,6 @@
         const input = document.getElementById("dcAiCoachInput");
         const sendBtn = document.getElementById("dcAiCoachSendBtn");
         const log = document.getElementById("dcAiCoachLog");
-        const ta = document.getElementById("darecoreAiKbTextarea");
         if (!input || !sendBtn || !log) return;
 
         function appendMsg(text, isAdmin) {
@@ -884,7 +886,7 @@
           appendMsg(text, true);
           input.value = "";
 
-          const currentKb = (ta && ta.value.trim()) || localStorage.getItem(KB_KEY) || "";
+          const currentKb = (localStorage.getItem(KB_KEY) || "").trim();
           const rule = extractRuleToAdd(text);
 
           if (rule) {
@@ -895,25 +897,25 @@
             persistAiKnowledgeText(updatedKb);
             appendMsg(
               alreadyExists
-                ? `Ya tenía registrada esa información en mi memoria: "${rule}".`
-                : `Listo, agregué a mi memoria: "${rule}". A partir de ahora lo tendré en cuenta cada vez que me pregunten.`
+                ? `Ya tenía registrada esa regla en mi memoria: "${rule}".`
+                : `Listo, agregué a mi memoria: "${rule}". A partir de ahora DareCore Intelligence lo tomará en cuenta al responder.`
             );
             return;
           }
 
           if (/bas[ao]|fuente|memoria|qu[eé] sabes|respondes/i.test(text)) {
             if (!currentKb) {
-              appendMsg("Actualmente mi base de conocimiento está vacía. Dime qué quieres que agregue y lo guardo en mi memoria.");
+              appendMsg("Actualmente mi memoria está vacía. Escribe por ejemplo: 'Agrega: no hacemos reembolsos' para guardarlo.");
             } else {
-              appendMsg(`Me baso exactamente en la información guardada en este panel:\n\n${currentKb}`);
+              appendMsg(`Me baso exactamente en esta memoria:\n\n${currentKb}`);
             }
             return;
           }
 
           if (!currentKb) {
-            appendMsg("Todavía no tengo información guardada sobre ese tema. Si quieres que lo recuerde, dime: 'Agrega: ...'");
+            appendMsg("Aún no tengo información guardada sobre eso. Dime: 'Agrega: ...' y lo incorporo a mi memoria.");
           } else {
-            appendMsg(`Según mi memoria actual:\n${currentKb}\n\nSi quieres que agregue o cambie algo específico, dime: "Quiero que agregues: ...".`);
+            appendMsg(`Según mi memoria actual:\n${currentKb}\n\nSi quieres agregar otra regla, escribe: "Agrega: ...".`);
           }
         }
 
@@ -959,16 +961,9 @@
 
         if (target.id === "sec-ia") {
           const kbBox = document.getElementById("darecoreAiKnowledgeAdmin");
-          const kbArea = document.getElementById("darecoreAiKbTextarea");
           if (kbBox) {
             kbBox.classList.remove("hidden");
-            kbBox.style.display = "block";
-          }
-          if (kbArea && !kbArea.value.trim()) {
-            try {
-              const savedKb = localStorage.getItem("darecore_ai_knowledge");
-              if (savedKb) kbArea.value = savedKb;
-            } catch (_) {}
+            kbBox.style.display = "flex";
           }
           window.dispatchEvent(new Event("resize"));
         }
@@ -1003,7 +998,7 @@
         tbody.innerHTML = rows
           .map(
             (r, idx) => `<tr data-row-idx="${idx}">
-              <td style="padding:8px 10px;border-bottom:1px solid #f1f5f9;font-weight:700;">${r.size}</td>
+              <td style="padding:8px 10px;border-bottom:1px solid #f1f5f9;font-weight:600;">${r.size}</td>
               <td style="padding:6px 8px;border-bottom:1px solid #f1f5f9;"><input type="text" class="dc-m-chest form-control" value="${r.chest}" /></td>
               <td style="padding:6px 8px;border-bottom:1px solid #f1f5f9;"><input type="text" class="dc-m-length form-control" value="${r.length}" /></td>
               <td style="padding:6px 8px;border-bottom:1px solid #f1f5f9;"><input type="text" class="dc-m-sleeve form-control" value="${r.sleeve}" /></td>
