@@ -736,18 +736,22 @@
       display: grid;
     }
 
-    /* ANTI-HUECO BLANCO Y ESTABILIDAD DE SCROLL EN ADMIN */
+    /* ELIMINAR HUECO BLANCO SUPERIOR */
     html, body {
-      overflow-anchor: none;
+      margin-top: 0 !important;
+      padding-top: 0 !important;
+      overflow-anchor: none !important;
     }
 
     .dc-shell-outer {
-      margin-top: 12px !important;
-      padding-top: 0 !important;
+      margin-top: 0 !important;
+      padding-top: 8px !important;
     }
 
-    .dc-tab-panel:not(.is-visible) {
-      display: none !important;
+    .dc-dashboard-frame,
+    .dc-main-pane {
+      margin-top: 0 !important;
+      padding-top: 14px !important;
     }
 
     </style>
@@ -2477,18 +2481,22 @@
       display: grid;
     }
 
-    /* ANTI-HUECO BLANCO Y ESTABILIDAD DE SCROLL EN ADMIN */
+    /* ELIMINAR HUECO BLANCO SUPERIOR */
     html, body {
-      overflow-anchor: none;
+      margin-top: 0 !important;
+      padding-top: 0 !important;
+      overflow-anchor: none !important;
     }
 
     .dc-shell-outer {
-      margin-top: 12px !important;
-      padding-top: 0 !important;
+      margin-top: 0 !important;
+      padding-top: 8px !important;
     }
 
-    .dc-tab-panel:not(.is-visible) {
-      display: none !important;
+    .dc-dashboard-frame,
+    .dc-main-pane {
+      margin-top: 0 !important;
+      padding-top: 14px !important;
     }
 
     </style>
@@ -2812,72 +2820,74 @@
       });
     })();
   </script>
-<script id="dcConsoleAndCatalogFixScript">
+<script id="dcLockUserScrollScript">
     (function () {
-      // Evitar que errores de Firebase sin inicializar detengan la página o provoquen saltos
-      if (window.firebase && typeof window.firebase.firestore === "function") {
-        const origFirestore = window.firebase.firestore.bind(window.firebase);
-        window.firebase.firestore = function () {
-          try {
-            if (!window.firebase.apps || window.firebase.apps.length === 0) {
-              return null;
-            }
-            return origFirestore.apply(window.firebase, arguments);
-          } catch (_) {
-            return null;
-          }
-        };
-      }
+      let lastScrollY = window.scrollY || window.pageYOffset || 0;
+      let manualScrollActive = false;
+      let manualScrollTimer = null;
 
-      // Impedir que algún script devuelva el scroll arriba mientras el usuario está desplazándose hacia abajo
-      let lastY = window.scrollY || window.pageYOffset || 0;
-      let userScrolling = false;
-      let timer = null;
-
-      window.addEventListener("scroll", function () {
-        const currentY = window.scrollY || window.pageYOffset || 0;
-        if (Math.abs(currentY - lastY) > 2) {
-          userScrolling = true;
-          clearTimeout(timer);
-          timer = setTimeout(function () {
-            userScrolling = false;
-          }, 800);
-        }
-        lastY = currentY;
+      window.addEventListener("wheel", function () {
+        manualScrollActive = true;
+        clearTimeout(manualScrollTimer);
+        manualScrollTimer = setTimeout(function () {
+          manualScrollActive = false;
+        }, 1200);
       }, { passive: true });
 
+      window.addEventListener("touchmove", function () {
+        manualScrollActive = true;
+        clearTimeout(manualScrollTimer);
+        manualScrollTimer = setTimeout(function () {
+          manualScrollActive = false;
+        }, 1200);
+      }, { passive: true });
+
+      window.addEventListener("scroll", function () {
+        const y = window.scrollY || window.pageYOffset || 0;
+        if (y < lastScrollY - 15 && manualScrollActive) {
+          // Mantener posición si el usuario está bajando y algo tira hacia arriba
+        }
+        lastScrollY = y;
+      }, { passive: true });
+
+      // Interceptar scrollTo que intente regresar arriba mientras el usuario está desplazado
       const origScrollTo = window.scrollTo.bind(window);
       window.scrollTo = function (x, y) {
         const targetY = typeof x === "object" && x !== null ? (x.top ?? 0) : y;
-        if (userScrolling && lastY > 100 && (targetY === 0 || targetY === undefined)) {
+        const currentY = window.scrollY || window.pageYOffset || 0;
+        if (currentY > 60 && (targetY === 0 || targetY === undefined)) {
           return;
         }
         return origScrollTo.apply(window, arguments);
       };
 
-      // Ocultar bloques duplicados de Pedidos Entregados y Tablas de Medidas dentro de Catálogo
-      function cleanCatalogExtras() {
-        const cat = document.getElementById("sec-catalogo");
-        if (!cat) return;
-        cat.querySelectorAll("section, article, div").forEach(function (el) {
-          if (el === cat || el.id === "addProductForm" || el.id === "adminProductList") return;
-          if (el.querySelector("#addProductForm") || el.querySelector("#adminProductList")) return;
-          const title = (el.querySelector("h1, h2, h3, h4")?.textContent || "").toUpperCase();
-          const bodyText = (el.textContent || "").toUpperCase();
-          if (
-            title.includes("PEDIDOS ENTREGADOS") ||
-            title.includes("TABLA DE MEDIDAS") ||
-            title.includes("TABLAS DE MEDIDAS") ||
-            (bodyText.includes("PECHO/BUSTO") && bodyText.includes("CINTURA (CM)"))
-          ) {
-            el.style.display = "none";
+      // Interceptar scrollIntoView que jale la vista hacia arriba cuando ya bajaste
+      const origScrollIntoView = Element.prototype.scrollIntoView;
+      Element.prototype.scrollIntoView = function (opts) {
+        const currentY = window.scrollY || window.pageYOffset || 0;
+        if (currentY > 120) {
+          return;
+        }
+        return origScrollIntoView.call(this, opts);
+      };
+
+      // Ocultar cualquier bloque vacío de altura 0 arriba del dashboard
+      function collapseEmptyTopBlocks() {
+        const dash = document.getElementById("dashboardSection");
+        if (!dash) return;
+        Array.from(dash.children).forEach(function (child) {
+          const rect = child.getBoundingClientRect();
+          const hasText = (child.textContent || "").trim().length > 0;
+          const hasMedia = child.querySelector("img, canvas, svg, video, input, select, textarea, button, table");
+          if (rect.height === 0 && !hasText && !hasMedia) {
+            child.style.display = "none";
           }
         });
       }
 
       document.addEventListener("DOMContentLoaded", function () {
-        cleanCatalogExtras();
-        setTimeout(cleanCatalogExtras, 500);
+        collapseEmptyTopBlocks();
+        setTimeout(collapseEmptyTopBlocks, 300);
       });
     })();
   </script>
