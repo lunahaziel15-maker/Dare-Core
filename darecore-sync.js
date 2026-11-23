@@ -606,6 +606,20 @@
     const phone = window.WHATSAPP_PHONE || "5214777035509";
 
     window.openWhatsAppWithMessage = function (message) {
+  const __waEl = document.getElementById("customWhatsapp");
+  if (__waEl) {
+    const __digits = String(__waEl.value || "").replace(/\D+/g, "");
+    if (__digits.length !== 10) {
+      const __m = "Debes escribir tu número de WhatsApp de 10 dígitos para solicitar tu mockup digital.";
+      if (typeof window.showFloatingToast === "function") { try { window.showFloatingToast(__m); } catch (_) {} } else { alert(__m); }
+      __waEl.required = true;
+      __waEl.style.setProperty("border", "2px solid #ef4444", "important");
+      __waEl.style.setProperty("box-shadow", "0 0 0 3px rgba(239,68,68,0.28)", "important");
+      try { __waEl.scrollIntoView({ behavior: "smooth", block: "center" }); } catch (_) {}
+      try { __waEl.focus(); } catch (_) {}
+      return;
+    }
+  }
       const cleanMsg = buildShortWhatsAppMessage(message);
       const url = `https://api.whatsapp.com/send/?phone=${phone}&text=${encodeURIComponent(cleanMsg)}`;
       window.location.assign(url);
