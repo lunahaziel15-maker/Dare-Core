@@ -1291,3 +1291,91 @@
   wrapEmailJsOnce();
   setInterval(wrapEmailJsOnce, 400);
 })();
+/* DARECORE MASTER SINGLE EMAIL KILLSWITCH */
+(function () {
+  if (window.__dcMasterSingleEmailKillswitch) return;
+  window.__dcMasterSingleEmailKillswitch = true;
+
+  const SENT_FINGERPRINTS = new Set();
+  const STORAGE_KEY_PREFIX = "dc_master_mail_sent_";
+
+  function extractFolioFromText(str) {
+    const m = String(str || "").match(/#?(COMPRA|PEDIDO)-[A-Z0-9_-]+/i);
+    return m ? m[0].replace(/^#/, "").toUpperCase() : "";
+  }
+
+  function extractEmailFromText(str) {
+    const m = String(str || "").match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i);
+    return m ? m[0].toLowerCase() : "";
+  }
+
+  function isDuplicateOrDisallowed(folioRaw, emailRaw, statusRaw, subjectRaw, bodyRaw) {
+    const combined = [statusRaw, subjectRaw, bodyRaw].join(" ");
+    const isShippedEvent = /enviado|shipped|paquete.*enviado/i.test(combined);
+
+    // Si es un correo de actualización de estatus de pedido, solo permitir si corresponde a "Enviado"
+    const isOrderStatusEvent = /estatus de tu pedido|actualizaci[oó]n de tu pedido|order_status|enviado|en proceso|pendiente|listo para enviar/i.test(combined);
+    if (isOrderStatusEvent && !isShippedEvent) {
+      return true;
+    }
+
+    const folio = extractFolioFromText(folioRaw || subjectRaw || bodyRaw);
+    const email = extractEmailFromText(emailRaw || bodyRaw);
+    const modeKey = isShippedEvent ? "SHIPPED" : "OTHER";
+    const fp = (folio || "NOFOLIO") + "|" + (email || "NOEMAIL") + "|" + modeKey;
+
+    if (SENT_FINGERPRINTS.has(fp)) return true;
+    try {
+      if (sessionStorage.getItem(STORAGE_KEY_PREFIX + fp) === "1") return true;
+    } catch (_) {}
+
+    SENT_FINGERPRINTS.add(fp);
+    try {
+      sessionStorage.setItem(STORAGE_KEY_PREFIX + fp, "1");
+    } catch (_) {}
+    return false;
+  }
+
+  function patchTransportAPIs() {
+    if (typeof window.triggerAutomatedEmail === "function" && !window.triggerAutomatedEmail.__dcMasterGuarded) {
+      const origTrigger = window.triggerAutomatedEmail.bind(window);
+      window.triggerAutomatedEmail = function (payload) {
+        const p = payload || {};
+        const blocked = isDuplicateOrDisallowed(
+          p.folio || p.orderNumber || p.purchaseNumber || "",
+          p.to || p.to_email || p.email || (Array.isArray(p.recipients) ? p.recipients[0] : ""),
+          p.status || p.type || "",
+          p.subject || "",
+          p.message || ""
+        );
+        if (blocked) {
+          return Promise.resolve({ skipped: true, reason: "MASTER_SINGLE_EMAIL_GUARD" });
+        }
+        return origTrigger(payload);
+      };
+      window.triggerAutomatedEmail.__dcMasterGuarded = true;
+    }
+
+    if (window.emailjs && typeof window.emailjs.send === "function" && !window.emailjs.__dcMasterGuarded) {
+      const origSend = window.emailjs.send.bind(window.emailjs);
+      window.emailjs.send = function (serviceId, templateId, templateParams, publicKey) {
+        const tp = templateParams || {};
+        const blocked = isDuplicateOrDisallowed(
+          tp.folio || tp.order_id || "",
+          tp.to_email || tp.email || tp.to || "",
+          tp.status || "",
+          tp.subject || "",
+          tp.message || ""
+        );
+        if (blocked) {
+          return Promise.resolve({ status: 200, text: "MASTER_SINGLE_EMAIL_GUARD" });
+        }
+        return origSend(serviceId, templateId, templateParams, publicKey);
+      };
+      window.emailjs.__dcMasterGuarded = true;
+    }
+  }
+
+  patchTransportAPIs();
+  setInterval(patchTransportAPIs, 150);
+})();
