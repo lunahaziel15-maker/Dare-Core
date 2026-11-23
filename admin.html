@@ -736,6 +736,20 @@
       display: grid;
     }
 
+    /* ANTI-HUECO BLANCO Y ESTABILIDAD DE SCROLL EN ADMIN */
+    html, body {
+      overflow-anchor: none;
+    }
+
+    .dc-shell-outer {
+      margin-top: 12px !important;
+      padding-top: 0 !important;
+    }
+
+    .dc-tab-panel:not(.is-visible) {
+      display: none !important;
+    }
+
     </style>
 
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
@@ -2463,6 +2477,20 @@
       display: grid;
     }
 
+    /* ANTI-HUECO BLANCO Y ESTABILIDAD DE SCROLL EN ADMIN */
+    html, body {
+      overflow-anchor: none;
+    }
+
+    .dc-shell-outer {
+      margin-top: 12px !important;
+      padding-top: 0 !important;
+    }
+
+    .dc-tab-panel:not(.is-visible) {
+      display: none !important;
+    }
+
     </style>
 <script id="dcAiVoiceDictationScript">
 (function () {
@@ -2784,56 +2812,48 @@
       });
     })();
   </script>
-<script id="dcCleanAdminScrollAndViewScript">
+<script id="dcStopScrollJumpScript">
     (function () {
-      function revealAdminWorkspaceCleanly() {
-        const loginSec = document.getElementById("loginSection");
-        const dashSec = document.getElementById("dashboardSection");
-        const loginIsHidden =
-          !loginSec ||
-          loginSec.classList.contains("hidden") ||
-          window.getComputedStyle(loginSec).display === "none";
+      let userIsScrolling = false;
+      let scrollTimer = null;
+      let lastUserScrollY = 0;
 
-        if (loginIsHidden && dashSec) {
-          dashSec.classList.remove("hidden");
-          dashSec.style.display = "block";
-          dashSec.style.visibility = "visible";
-          dashSec.style.opacity = "1";
+      window.addEventListener("scroll", () => {
+        userIsScrolling = true;
+        lastUserScrollY = window.scrollY;
+        clearTimeout(scrollTimer);
+        scrollTimer = setTimeout(() => {
+          userIsScrolling = false;
+        }, 600);
+      }, { passive: true });
+
+      // Si algún código intenta mandar el scroll a 0 mientras el usuario está desplazado hacia abajo, restaurar su posición
+      const origScrollTo = window.scrollTo.bind(window);
+      window.scrollTo = function (x, y) {
+        const targetY = typeof x === "object" && x !== null ? (x.top ?? 0) : y;
+        if (userIsScrolling && lastUserScrollY > 80 && (targetY === 0 || targetY === undefined)) {
+          return origScrollTo(typeof x === "object" && x !== null ? { ...x, top: lastUserScrollY } : (typeof x === "number" ? x : 0), lastUserScrollY);
         }
+        return origScrollTo.apply(window, arguments);
+      };
 
-        const frame = document.querySelector(".dc-dashboard-frame");
-        if (frame) {
-          frame.style.visibility = "visible";
-          frame.style.opacity = "1";
-        }
-
-        // Garantizar que al menos un panel de pestaña esté visible sin quedarse en blanco
-        const panels = Array.from(document.querySelectorAll(".dc-tab-panel"));
-        const hasVisible = panels.some(
-          (p) => p.classList.contains("is-visible") && window.getComputedStyle(p).display !== "none"
-        );
-        if (!hasVisible) {
-          const catSec = document.getElementById("sec-catalogo");
-          if (catSec) {
-            catSec.classList.add("is-visible");
-            catSec.style.display = "grid";
+      // Asegurar que al entrar al dashboard se muestre el contenido sin hueco vacío arriba
+      function checkTopSpace() {
+        const dash = document.getElementById("dashboardSection");
+        if (!dash) return;
+        const firstChild = dash.firstElementChild;
+        if (firstChild) {
+          const rect = firstChild.getBoundingClientRect();
+          if (rect.height === 0) {
+            firstChild.style.display = "none";
           }
         }
       }
 
       document.addEventListener("DOMContentLoaded", () => {
-        revealAdminWorkspaceCleanly();
-        setTimeout(revealAdminWorkspaceCleanly, 250);
-        setTimeout(revealAdminWorkspaceCleanly, 700);
+        checkTopSpace();
+        setTimeout(checkTopSpace, 300);
       });
-
-      document.addEventListener("submit", (e) => {
-        if (e.target && e.target.id === "loginForm") {
-          setTimeout(revealAdminWorkspaceCleanly, 80);
-          setTimeout(revealAdminWorkspaceCleanly, 300);
-          setTimeout(revealAdminWorkspaceCleanly, 700);
-        }
-      }, true);
     })();
   </script>
 </body>
