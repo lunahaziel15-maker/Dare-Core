@@ -704,28 +704,26 @@
       }
     }
 
-    /* CENTRADO LIMPIO DEL PANEL DE INICIO DE SESIÓN */
-    #adminLoginBox,
-    .dc-login-card,
-    .login-card,
-    #loginBox {
-      max-width: 440px !important;
+    /* COMPACTAR Y CENTRAR LA TARJETA DE INICIO DE SESIÓN */
+    .dc-login-compact-box {
+      max-width: 420px !important;
       width: 92% !important;
       margin: 0 auto !important;
-      padding: 32px 30px !important;
+      padding: 32px 28px !important;
       border-radius: 20px !important;
+      background: #ffffff !important;
+      border: 1px solid #e5e7eb !important;
       box-shadow: 0 24px 60px -15px rgba(15, 23, 42, 0.14) !important;
     }
 
-    body:has(#adminLoginBox:not([style*="display: none"])) .dc-shell-outer,
-    body:has(#loginBox:not([style*="display: none"])) .dc-shell-outer,
-    .dc-login-wrap {
+    .dc-login-compact-stage {
       min-height: 100vh !important;
+      width: 100% !important;
       display: flex !important;
       align-items: center !important;
       justify-content: center !important;
-      margin: 0 auto !important;
-      padding: 24px !important;
+      padding: 24px 16px !important;
+      box-sizing: border-box !important;
     }
 
     </style>
@@ -2421,28 +2419,26 @@
       }
     }
 
-    /* CENTRADO LIMPIO DEL PANEL DE INICIO DE SESIÓN */
-    #adminLoginBox,
-    .dc-login-card,
-    .login-card,
-    #loginBox {
-      max-width: 440px !important;
+    /* COMPACTAR Y CENTRAR LA TARJETA DE INICIO DE SESIÓN */
+    .dc-login-compact-box {
+      max-width: 420px !important;
       width: 92% !important;
       margin: 0 auto !important;
-      padding: 32px 30px !important;
+      padding: 32px 28px !important;
       border-radius: 20px !important;
+      background: #ffffff !important;
+      border: 1px solid #e5e7eb !important;
       box-shadow: 0 24px 60px -15px rgba(15, 23, 42, 0.14) !important;
     }
 
-    body:has(#adminLoginBox:not([style*="display: none"])) .dc-shell-outer,
-    body:has(#loginBox:not([style*="display: none"])) .dc-shell-outer,
-    .dc-login-wrap {
+    .dc-login-compact-stage {
       min-height: 100vh !important;
+      width: 100% !important;
       display: flex !important;
       align-items: center !important;
       justify-content: center !important;
-      margin: 0 auto !important;
-      padding: 24px !important;
+      padding: 24px 16px !important;
+      box-sizing: border-box !important;
     }
 
     </style>
@@ -2711,6 +2707,39 @@
         restoreFullWidthWorkspace();
         setTimeout(restoreFullWidthWorkspace, 200);
       });
+    })();
+  </script>
+<script id="dcCenterLoginExactScript">
+    (function () {
+      function centerCompactLoginCard() {
+        // Localizar el botón "ENTRAR AL PANEL" o el input de contraseña
+        const passInput = document.querySelector('input[type="password"]');
+        if (!passInput) return;
+
+        // Subir hasta encontrar la tarjeta blanca principal del login (antes de body)
+        let card = passInput.parentElement;
+        while (card && card.parentElement && card.parentElement !== document.body) {
+          const style = window.getComputedStyle(card);
+          const hasBg = style.backgroundColor && style.backgroundColor !== "rgba(0, 0, 0, 0)" && style.backgroundColor !== "transparent";
+          const hasRadius = parseFloat(style.borderRadius) > 0;
+          if (hasBg && hasRadius) break;
+          card = card.parentElement;
+        }
+
+        if (card && card !== document.body) {
+          card.classList.add("dc-login-compact-box");
+          if (card.parentElement && card.parentElement !== document.body) {
+            card.parentElement.classList.add("dc-login-compact-stage");
+          } else {
+            document.body.style.minHeight = "100vh";
+            document.body.style.display = "flex";
+            document.body.style.alignItems = "center";
+            document.body.style.justifyContent = "center";
+          }
+        }
+      }
+
+      window.addEventListener("DOMContentLoaded", centerCompactLoginCard);
     })();
   </script>
 </body>
