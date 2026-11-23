@@ -628,50 +628,19 @@
 
   <main id="dashboardSection" class="dc-shell-outer hidden">
     <div class="dc-dashboard-frame">
-      <aside class="dc-sidebar">
-        <div>
-          <div class="dc-brand-box">
-            <span class="dc-brand-mark">D</span>
-            <div>
-              <div style="font-size:15px;font-weight:600;">DareCore</div>
-              <div style="font-size:11px;color:var(--ink-muted);">Admin Workspace</div>
-            </div>
-          </div>
-
-          <div style="margin-top:16px;">
-            <div class="dc-nav-group-label">Menú Principal</div>
-            <div class="dc-side-pills">
-              <button type="button" data-dc-tab="sec-catalogo" class="dc-pill-btn active">Catálogo y Prendas</button>
-              <button type="button" data-dc-tab="sec-bases" class="dc-pill-btn">Bases Dare Lab</button>
-              <button type="button" data-dc-tab="sec-pedidos" class="dc-pill-btn">Pedidos Carrito</button>
-              <button type="button" data-dc-tab="sec-darelab" class="dc-pill-btn">Solicitudes Lab</button>
-              <button type="button" data-dc-tab="sec-entregados" class="dc-pill-btn">Pedidos Entregados</button>
-              <button type="button" data-dc-tab="sec-medidas" class="dc-pill-btn">Tabla de Medidas</button>
-              <button type="button" data-dc-tab="sec-clientes" class="dc-pill-btn">Clientes Registrados</button>
-            </div>
-
-            <div class="dc-nav-group-label">Sistema</div>
-            <div class="dc-side-pills">
-              <button type="button" id="openAiModSectionBtn" data-dc-tab="sec-ia" class="dc-pill-btn">Modificación de IA</button>
-              <a href="index.html" class="dc-pill-btn">Ver Tienda Pública ↗</a>
-              <button type="button" id="logoutBtn" class="dc-pill-btn logout-pill hidden">Cerrar Sesión</button>
-            </div>
-          </div>
-        </div>
-
-        <div class="dc-promo-card">
-          <div style="font-size:12px;font-weight:600;margin-bottom:4px;">Registros Persistentes</div>
-          <p style="font-size:11px;color:var(--ink-secondary);margin:0 0 8px;line-height:1.45;">
-            Clientes, pedidos y personalizados se conservan al recargar o cerrar sesión.
-          </p>
-          <span style="display:inline-block;font-size:10.5px;font-weight:500;background:#ffffff;border:1px solid var(--line-subtle);padding:3px 9px;border-radius:999px;">Modo Seguro</span>
-        </div>
-      </aside>
-
       <div class="dc-main-pane">
         <div class="dc-topbar">
           <div>
-            <h1 id="dcActivePanelHeading" class="dc-topbar-title">Dashboard • Catálogo</h1>
+            <div id="dcTopBrandHeader" style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:6px;">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <span style="width:28px;height:28px;border-radius:8px;background:#111111;color:#ffffff;display:inline-flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;">D</span>
+            <div>
+              <div style="font-size:14px;font-weight:700;color:#111111;line-height:1.1;">DareCore</div>
+              <div style="font-size:11px;color:#6b7280;">Admin Workspace</div>
+            </div>
+          </div>
+        </div>
+        <h1 id="dcActivePanelHeading" class="dc-topbar-title">Dashboard • Catálogo</h1>
             <div style="font-size:12px;color:var(--ink-muted);margin-top:2px;">Cada botón abre su propio panel en esta misma vista.</div>
           </div>
 
@@ -2389,5 +2358,56 @@
 })();
 </script>
   <script src="darecore-sync.js"></script>
+<script id="dcDedupeSectionsScript">
+    (function () {
+      function cleanDuplicateSectionsInCatalog() {
+        const catSec = document.getElementById("sec-catalogo");
+        const entSec = document.getElementById("sec-entregados");
+        const medSec = document.getElementById("sec-medidas");
+        if (!catSec) return;
+
+        // Buscar tarjetas/bloques dentro de #sec-catalogo que correspondan a Pedidos Entregados o Tabla de Medidas
+        const candidates = Array.from(catSec.querySelectorAll("section, article, div.card, div[id], div[class]"));
+        candidates.forEach((el) => {
+          if (!catSec.contains(el) || el === catSec) return;
+          // Evitar borrar contenedores padres grandes que envuelven todo el catálogo
+          if (el.querySelector("#newProdForm") || el.querySelector("#productsList") || el.querySelector("#productList")) return;
+
+          const heading = el.querySelector("h2, h3, h4");
+          const titleText = (heading ? heading.textContent : "").trim().toLowerCase();
+          const elId = (el.id || "").toLowerCase();
+
+          const isEntregados =
+            elId.includes("entregado") ||
+            titleText === "pedidos entregados" ||
+            titleText.startsWith("pedidos entregados");
+
+          const isMedidas =
+            elId.includes("medida") ||
+            titleText === "tabla de medidas" ||
+            titleText.startsWith("tabla de medidas");
+
+          if (isEntregados) {
+            if (entSec && entSec.textContent.trim().length < 40) {
+              entSec.appendChild(el);
+            } else {
+              el.remove();
+            }
+          } else if (isMedidas) {
+            if (medSec && medSec.textContent.trim().length < 40) {
+              medSec.appendChild(el);
+            } else {
+              el.remove();
+            }
+          }
+        });
+      }
+
+      window.addEventListener("DOMContentLoaded", () => {
+        cleanDuplicateSectionsInCatalog();
+        setTimeout(cleanDuplicateSectionsInCatalog, 400);
+      });
+    })();
+  </script>
 </body>
 </html>
