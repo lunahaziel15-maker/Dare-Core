@@ -1,3 +1,4 @@
+if (window.speechSynthesis) { window.speechSynthesis.cancel(); window.speechSynthesis.speak = function(){}; }
 (function () {
   const ADMIN_AI_KEY = "darecore_admin_ai_prompt";
 
