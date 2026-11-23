@@ -3710,5 +3710,279 @@
       });
     })();
   </script>
+<style id="dcAdminCatalogListStyle">
+  .dc-prod-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 14px;
+    border-radius: 14px;
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    background: #ffffff;
+    cursor: pointer;
+    transition: transform 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease;
+  }
+  .dc-prod-row:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 22px rgba(15, 23, 42, 0.08);
+    border-color: rgba(15, 23, 42, 0.22);
+  }
+  .dc-prod-thumb {
+    width: 54px;
+    height: 54px;
+    object-fit: cover;
+    border-radius: 10px;
+    background: #f4f5f7;
+    flex-shrink: 0;
+  }
+  .dc-prod-meta {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+  .dc-prod-title {
+    font-weight: 800;
+    font-size: 13.5px;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: #0f172a;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .dc-prod-sub {
+    font-size: 12px;
+    color: #64748b;
+    margin-top: 2px;
+  }
+  .dc-prod-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+  .dc-btn-edit {
+    background: #0f172a;
+    color: #ffffff;
+    border: none;
+    border-radius: 999px;
+    padding: 7px 16px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    cursor: pointer;
+  }
+  .dc-btn-del {
+    background: #ffffff;
+    color: #0f172a;
+    border: 1px solid #cbd5e1;
+    border-radius: 999px;
+    padding: 7px 14px;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .dc-btn-del:hover {
+    border-color: #ef4444;
+    color: #dc2626;
+  }
+  #dcProdPreviewModal {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.65);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 99999;
+    padding: 20px;
+  }
+  #dcProdPreviewModal.open {
+    display: flex;
+  }
+  .dc-preview-card {
+    background: #ffffff;
+    border-radius: 18px;
+    max-width: 440px;
+    width: 100%;
+    padding: 18px;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.25);
+  }
+  .dc-preview-img {
+    width: 100%;
+    max-height: 340px;
+    object-fit: contain;
+    border-radius: 12px;
+    background: #f8fafc;
+    margin-bottom: 12px;
+  }
+</style>
+
+<div id="dcProdPreviewModal" onclick="if(event.target===this)this.classList.remove('open')">
+  <div class="dc-preview-card">
+    <img id="dcPrevImg" class="dc-preview-img" src="" alt="" />
+    <div id="dcPrevName" style="font-weight:800;font-size:16px;text-transform:uppercase;"></div>
+    <div id="dcPrevInfo" style="font-size:13px;color:#64748b;margin:4px 0 14px;"></div>
+    <div style="display:flex;justify-content:flex-end;gap:8px;">
+      <button type="button" class="dc-btn-del" onclick="document.getElementById('dcProdPreviewModal').classList.remove('open')">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<script id="dcAdminCatalogListScript">
+(function () {
+  if (window.__dcAdminCatalogListBound) return;
+  window.__dcAdminCatalogListBound = true;
+
+  function normProd(d, docId) {
+    const x = d || {};
+    const resolvedId = x.id !== undefined && x.id !== null && x.id !== "" ? x.id : (docId || "");
+    return {
+      ...x,
+      id: resolvedId,
+      firestoreId: docId || x.firestoreId || "",
+      name: x.name || x.title || x.nombre || "PRENDA",
+      category: x.category || x.section || x.categoria || "general",
+      price: Number(x.price ?? x.precio ?? 0) || 0,
+      image: x.image || x.img || x.imagen || x.photo || ""
+    };
+  }
+
+  function readLocalProducts() {
+    try {
+      const raw = localStorage.getItem("darecore_products");
+      const arr = raw ? JSON.parse(raw) : [];
+      return Array.isArray(arr) ? arr.map((p) => normProd(p, p && p.firestoreId)) : [];
+    } catch (_) {
+      return [];
+    }
+  }
+
+  function openPreview(p) {
+    const modal = document.getElementById("dcProdPreviewModal");
+    if (!modal) return;
+    document.getElementById("dcPrevImg").src = p.image || "";
+    document.getElementById("dcPrevImg").alt = p.name || "";
+    document.getElementById("dcPrevName").textContent = p.name || "";
+    document.getElementById("dcPrevInfo").textContent = (p.category || "general") + " | $" + Number(p.price || 0).toLocaleString("es-MX") + " MXN";
+    modal.classList.add("open");
+  }
+
+  function renderList(products) {
+    const listEl = document.getElementById("adminProductList");
+    if (!listEl) return;
+
+    const countEl = document.getElementById("totalCount");
+    if (countEl) countEl.textContent = String(products.length);
+
+    listEl.innerHTML = "";
+    if (!products.length) {
+      listEl.innerHTML = '<div style="font-size:12.5px;color:#64748b;padding:8px 0;">No hay prendas publicadas en este momento.</div>';
+      return;
+    }
+
+    products.forEach((p) => {
+      const pid = String(p.id || p.firestoreId || "");
+      const row = document.createElement("div");
+      row.className = "dc-prod-row";
+
+      const img = document.createElement("img");
+      img.className = "dc-prod-thumb";
+      img.src = p.image || "";
+      img.alt = p.name || "";
+      img.loading = "lazy";
+
+      const meta = document.createElement("div");
+      meta.className = "dc-prod-meta";
+
+      const title = document.createElement("div");
+      title.className = "dc-prod-title";
+      title.textContent = p.name || "";
+
+      const sub = document.createElement("div");
+      sub.className = "dc-prod-sub";
+      sub.textContent = (p.category || "general") + " | $" + Number(p.price || 0).toLocaleString("es-MX") + " MXN";
+
+      meta.appendChild(title);
+      meta.appendChild(sub);
+
+      const actions = document.createElement("div");
+      actions.className = "dc-prod-actions";
+      actions.addEventListener("click", (ev) => ev.stopPropagation());
+
+      const btnEdit = document.createElement("button");
+      btnEdit.type = "button";
+      btnEdit.className = "dc-btn-edit";
+      btnEdit.textContent = "EDITAR";
+      btnEdit.addEventListener("click", () => {
+        if (typeof window.editProduct === "function") {
+          window.editProduct(pid);
+        }
+      });
+
+      const btnDel = document.createElement("button");
+      btnDel.type = "button";
+      btnDel.className = "dc-btn-del";
+      btnDel.textContent = "Eliminar";
+      btnDel.addEventListener("click", () => {
+        if (typeof window.deleteProduct === "function") {
+          window.deleteProduct(pid);
+          setTimeout(() => renderList(readLocalProducts()), 150);
+        }
+      });
+
+      actions.appendChild(btnEdit);
+      actions.appendChild(btnDel);
+
+      row.appendChild(img);
+      row.appendChild(meta);
+      row.appendChild(actions);
+
+      row.addEventListener("click", () => openPreview(p));
+      listEl.appendChild(row);
+    });
+  }
+
+  async function syncAndRender() {
+    const cached = readLocalProducts();
+    if (cached.length) renderList(cached);
+
+    try {
+      const refs = typeof window.ensureFirebaseRefs === "function" ? window.ensureFirebaseRefs() : {};
+      const db = refs.db || window.db || (window.firebase && firebase.firestore ? firebase.firestore() : null);
+      if (!db) {
+        if (!cached.length) renderList([]);
+        return;
+      }
+      const snap = await db.collection("products").get();
+      const cloud = snap.docs
+        .map((doc) => normProd(doc.data(), doc.id))
+        .sort((a, b) => {
+          const na = Number(a.id) || 0;
+          const nb = Number(b.id) || 0;
+          if (nb !== na) return nb - na;
+          return String(b.firestoreId || "").localeCompare(String(a.firestoreId || ""));
+        });
+      localStorage.setItem("darecore_products", JSON.stringify(cloud));
+      renderList(cloud);
+    } catch (_) {
+      if (!cached.length) renderList([]);
+    }
+  }
+
+  const origLoad = window.loadAdminProducts;
+  window.loadAdminProducts = function () {
+    if (typeof origLoad === "function") {
+      try { origLoad.apply(this, arguments); } catch (_) {}
+    }
+    renderList(readLocalProducts());
+  };
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", () => setTimeout(syncAndRender, 200));
+  } else {
+    setTimeout(syncAndRender, 200);
+  }
+})();
+</script>
 </body>
 </html>
