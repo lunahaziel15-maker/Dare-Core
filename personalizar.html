@@ -727,5 +727,111 @@
   } catch (_) {}
 })();
 </script>
+<script id="dcIroncladMockupWhatsappGuard">
+(function () {
+  if (window.__dcIroncladMockupWhatsappGuard) return;
+  window.__dcIroncladMockupWhatsappGuard = true;
+
+  function isAIElement(el) {
+    if (!el) return false;
+    if (typeof window.__dcIsInsideDareCoreAI === "function" && window.__dcIsInsideDareCoreAI(el)) return true;
+    let cur = el;
+    for (let i = 0; i < 14 && cur; i++) {
+      const id = String(cur.id || "").toLowerCase();
+      const cls = String(cur.className || "").toLowerCase();
+      if (/darecore\s*intelligence|ai\s*assistant|groq|chat.*ai|ai.*chat/i.test(id + " " + cls)) return true;
+      cur = cur.parentElement;
+    }
+    return false;
+  }
+
+  function getWhatsappInput() {
+    return document.getElementById("customWhatsapp") ||
+      Array.from(document.querySelectorAll("input, tel")).find(function (el) {
+        if (isAIElement(el)) return false;
+        const txt = ((el.id || "") + " " + (el.name || "") + " " + (el.placeholder || "")).toLowerCase();
+        return /whatsapp|wa|tel|phone|celular/.test(txt);
+      }) || null;
+  }
+
+  function hasTenDigits() {
+    const inp = getWhatsappInput();
+    if (!inp) return true;
+    return String(inp.value || "").replace(/\D+/g, "").length === 10;
+  }
+
+  function blockActionAndFocus(e) {
+    if (e) {
+      try { e.preventDefault(); } catch (_) {}
+      try { e.stopPropagation(); } catch (_) {}
+      if (typeof e.stopImmediatePropagation === "function") {
+        try { e.stopImmediatePropagation(); } catch (_) {}
+      }
+    }
+    window.__dcBlockWaUntil = Date.now() + 8000;
+
+    const msg = "Debes escribir tu número de WhatsApp de 10 dígitos para solicitar tu mockup digital.";
+    if (typeof window.showFloatingToast === "function") {
+      try { window.showFloatingToast(msg); } catch (_) {}
+    } else {
+      alert(msg);
+    }
+
+    const inp = getWhatsappInput();
+    if (inp) {
+      inp.required = true;
+      inp.setAttribute("aria-invalid", "true");
+      inp.style.setProperty("border", "2px solid #ef4444", "important");
+      inp.style.setProperty("box-shadow", "0 0 0 3px rgba(239, 68, 68, 0.28)", "important");
+      try { inp.scrollIntoView({ behavior: "smooth", block: "center" }); } catch (_) {}
+      try { inp.focus(); } catch (_) {}
+    }
+    return false;
+  }
+
+  function isWhatsappLink(u) {
+    return /(?:wa\.me|api\.whatsapp\.com|whatsapp:\/\/)/i.test(String(u || ""));
+  }
+
+  // 1. Interceptar clic en #requestMockupBtn o botones/enlaces de mockup/whatsapp en fase de captura
+  document.addEventListener("click", function (e) {
+    const el = e.target && e.target.closest ? e.target.closest("#requestMockupBtn, button, a, input[type='submit'], [role='button']") : null;
+    if (!el || isAIElement(el)) return;
+
+    const href = el.getAttribute ? (el.getAttribute("href") || "") : "";
+    const label = ((el.textContent || "") + " " + (el.value || "") + " " + href).toLowerCase();
+    const isTrigger = el.id === "requestMockupBtn" || /solicitar\s*mockup|mockup\s*digital|wa\.me|api\.whatsapp|whatsapp/i.test(label);
+
+    if (isTrigger && !hasTenDigits()) {
+      blockActionAndFocus(e);
+      return false;
+    }
+  }, true);
+
+  // 2. Interceptar window.open si va a WhatsApp sin 10 dígitos
+  const nativeOpen = window.open.bind(window);
+  window.open = function (url) {
+    if (isWhatsappLink(url) && (!hasTenDigits() || (window.__dcBlockWaUntil && Date.now() < window.__dcBlockWaUntil))) {
+      blockActionAndFocus(null);
+      return null;
+    }
+    return nativeOpen.apply(window, arguments);
+  };
+
+  // 3. Interceptar a.click() si un script crea un enlace <a> a wa.me / api.whatsapp.com y lo dispara programáticamente
+  if (typeof HTMLAnchorElement !== "undefined" && HTMLAnchorElement.prototype && !HTMLAnchorElement.prototype.__dcWaClickGuarded) {
+    const nativeAnchorClick = HTMLAnchorElement.prototype.click;
+    HTMLAnchorElement.prototype.click = function () {
+      const targetHref = this.href || this.getAttribute("href") || "";
+      if (isWhatsappLink(targetHref) && (!hasTenDigits() || (window.__dcBlockWaUntil && Date.now() < window.__dcBlockWaUntil))) {
+        blockActionAndFocus(null);
+        return;
+      }
+      return nativeAnchorClick.apply(this, arguments);
+    };
+    HTMLAnchorElement.prototype.__dcWaClickGuarded = true;
+  }
+})();
+</script>
 </body>
 </html>
