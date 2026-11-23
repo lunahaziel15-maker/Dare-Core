@@ -9,6 +9,90 @@
   const EMAILJS_SERVICE_ID = "";
   const EMAILJS_TEMPLATE_ID = "";
 
+  const FALLBACK_PRODUCTS = [
+    {
+      id: "p-aro-front",
+      name: "ARO FRONT",
+      price: 650,
+      category: "oversize",
+      badge: "NEW",
+      desc: "Oversize para cualquier deporte",
+      image: "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=800&q=80"
+    },
+    {
+      id: "p-focus",
+      name: "FOCUS",
+      price: 680,
+      category: "hombre",
+      badge: "PIEZA UNICA",
+      desc: "Corte estructurado de alto gramaje",
+      image: "https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?auto=format&fit=crop&w=800&q=80"
+    },
+    {
+      id: "p-gymbro",
+      name: "GYMBRO",
+      price: 740,
+      category: "hombre",
+      badge: "NEW",
+      desc: "Perfecta para entrenar cualquier deporte",
+      image: "https://images.unsplash.com/photo-1503341504253-dff4815485f1?auto=format&fit=crop&w=800&q=80"
+    },
+    {
+      id: "p-motor",
+      name: "MOTOR",
+      price: 720,
+      category: "oversize",
+      badge: "NEW",
+      desc: "Inspiración motorsport y paddock",
+      image: "https://images.unsplash.com/photo-1576566588028-4147f3842f27?auto=format&fit=crop&w=800&q=80"
+    },
+    {
+      id: "p-strong",
+      name: "STRONG",
+      price: 690,
+      category: "hombre",
+      badge: "PIEZA UNICA",
+      desc: "Diseño de alto impacto para entrenamiento",
+      image: "https://images.unsplash.com/photo-1618354691373-d851c5c3a990?auto=format&fit=crop&w=800&q=80"
+    },
+    {
+      id: "p-overbola",
+      name: "OVERBOLA",
+      price: 710,
+      category: "oversize",
+      badge: "NEW",
+      desc: "Silueta amplia con caída pesada",
+      image: "https://images.unsplash.com/photo-1562157873-818bc0726f68?auto=format&fit=crop&w=800&q=80"
+    },
+    {
+      id: "p-car",
+      name: "CAR",
+      price: 730,
+      category: "oversize",
+      badge: "NEW",
+      desc: "Estética automotriz callejera",
+      image: "https://images.unsplash.com/photo-1529374255404-311a2a4f1fd9?auto=format&fit=crop&w=800&q=80"
+    },
+    {
+      id: "p-apex-top",
+      name: "TOP DEPORTIVO 'APEX CORE'",
+      price: 540,
+      category: "mujer",
+      badge: "NEW",
+      desc: "Ajuste firme y transpirable para gym",
+      image: "https://images.unsplash.com/photo-1506629082955-511b1aa562c8?auto=format&fit=crop&w=800&q=80"
+    },
+    {
+      id: "p-aro-back",
+      name: "ARO BACK",
+      price: 880,
+      category: "oversize",
+      badge: "NEW",
+      desc: "Ideal para la cancha y gym",
+      image: "https://images.unsplash.com/photo-1622445275463-afa2ab738c34?auto=format&fit=crop&w=800&q=80"
+    }
+  ];
+
   const FALLBACK_BASES = [
     { id: "b1", name: "BOXY TEE 240G", price: 580, desc: "Camisa / playera algodón peinado pesado", garmentType: "camisa" },
     { id: "b2", name: "HEAVY HOODIE 400G", price: 1099, desc: "Sudadera / hoodie felpa francesa alto gramaje", garmentType: "sudadera" },
@@ -40,7 +124,7 @@
     ["\u00C3\u2030", "\u00C9"], ["\u00C3\u008D", "\u00CD"], ["\u00C3\u201C", "\u00D3"],
     ["\u00C3\u0161", "\u00DA"], ["\u00C3\u00B1", "\u00F1"], ["\u00C3\u2018", "\u00D1"],
     ["\u00C3\u00BC", "\u00FC"], ["\u00C3\u0153", "\u00DC"], ["\u00E2\u20AC\u00A2", "\u2022"],
-    ["\u00E2\u20AC\u201D", "\u2014"], ["\u00E2\u20AC\u201C", "\u2013"], ["\u00E2\u20AC\u02DC", "\u2018"],
+    ["\u00E2\u20AC\u009D", "\u2014"], ["\u00E2\u20AC\u009C", "\u2013"], ["\u00E2\u20AC\u02DC", "\u2018"],
     ["\u00E2\u20AC\u2122", "\u2019"], ["\u00E2\u20AC\u0153", "\u201C"], ["\u00E2\u20AC\u009D", "\u201D"],
     ["\u00C2\u00BF", "\u00BF"], ["\u00C2\u00A1", "\u00A1"], ["\u00C2\u00B0", "\u00B0"],
     ["\u00C2\u00B7", "\u00B7"]
@@ -82,7 +166,6 @@
     });
   }
 
-  // Ocultar automaticamente cualquier toast / banner verde tras 3.5 segundos
   function autoDismissToasts() {
     const candidates = Array.from(document.querySelectorAll("div, span, p"));
     candidates.forEach((el) => {
@@ -109,8 +192,34 @@
     });
   }
 
-  // Sincronizar catalogos (productos y bases Dare Lab) entre Firestore y cualquier navegador/cuenta
+  function ensureLocalCatalogAndRefresh(productsList) {
+    const list = Array.isArray(productsList) && productsList.length > 0 ? productsList : FALLBACK_PRODUCTS;
+    localStorage.setItem(PRODUCTS_KEY, JSON.stringify(list));
+
+    const grid = document.getElementById("productGrid") || document.querySelector(".product-grid");
+    const gridText = grid ? (grid.textContent || "") : "";
+    if (grid && (/no hay prendas registradas/i.test(gridText) || !grid.children.length)) {
+      if (typeof window.initStore === "function") {
+        window.initStore();
+      }
+      if (typeof window.renderHeroSlide === "function") {
+        window.renderHeroSlide(0);
+      }
+    }
+  }
+
   async function syncCatalogAcrossAccounts() {
+    let currentLocal = [];
+    try {
+      const parsed = JSON.parse(localStorage.getItem(PRODUCTS_KEY) || "[]");
+      if (Array.isArray(parsed) && parsed.length > 0) currentLocal = parsed;
+    } catch (_) {}
+
+    if (currentLocal.length === 0) {
+      ensureLocalCatalogAndRefresh(FALLBACK_PRODUCTS);
+      currentLocal = FALLBACK_PRODUCTS;
+    }
+
     const db = getDb();
     if (!db) return;
 
@@ -118,26 +227,11 @@
       const snap = await db.collection("products").get();
       if (!snap.empty) {
         const cloudProds = snap.docs.map((d) => ({ ...d.data(), firestoreId: d.id }));
-        localStorage.setItem(PRODUCTS_KEY, JSON.stringify(cloudProds));
-        if (typeof window.initStore === "function" && !window.__dcInitialStoreRendered) {
-          window.__dcInitialStoreRendered = true;
-          window.initStore();
-          if (typeof window.renderHeroSlide === "function") {
-            window.renderHeroSlide(0);
-          }
-        }
+        ensureLocalCatalogAndRefresh(cloudProds);
       } else {
-        // Si Firestore esta vacio pero este navegador tiene productos cargados, subirlos a Firestore para que todos los vean
-        const localRaw = localStorage.getItem(PRODUCTS_KEY);
-        if (localRaw) {
-          const parsed = JSON.parse(localRaw);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            for (const item of parsed) {
-              if (!item.firestoreId) {
-                await db.collection("products").add(item).catch(() => {});
-              }
-            }
-          }
+        for (const item of currentLocal) {
+          const docId = item.id || ("prod_" + Math.random().toString(36).slice(2, 9));
+          await db.collection("products").doc(docId).set({ ...item, id: docId }, { merge: true }).catch(() => {});
         }
       }
     } catch (_) {}
@@ -151,6 +245,7 @@
         }
       } else if (!localStorage.getItem(BASES_KEY)) {
         localStorage.setItem(BASES_KEY, JSON.stringify(FALLBACK_BASES));
+        await db.collection("settings").doc("customBases").set({ items: FALLBACK_BASES }, { merge: true }).catch(() => {});
       }
     } catch (_) {}
   }
@@ -344,7 +439,6 @@
     true
   );
 
-  // Cerrar sesion limpio en UN SOLO CLIC en cualquier pagina
   function handleOneClickLogout(e) {
     const target = e.target.closest("#dc-logout-email-btn, button, a");
     if (!target) return;
@@ -571,9 +665,14 @@
   function periodicSweep() {
     if (document.body) scrubDomMojibake(document.body);
     autoDismissToasts();
+    const grid = document.getElementById("productGrid") || document.querySelector(".product-grid");
+    if (grid && /no hay prendas registradas/i.test(grid.textContent || "")) {
+      ensureLocalCatalogAndRefresh();
+    }
   }
 
   function boot() {
+    ensureLocalCatalogAndRefresh();
     patchUserCollectionUniqueness();
     wrapAdminStatusUpdater();
     patchClientOrderLookup();
