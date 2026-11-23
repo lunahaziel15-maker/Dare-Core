@@ -736,26 +736,29 @@
       display: grid;
     }
 
-    /* ELIMINAR HUECO BLANCO SUPERIOR DE FORMA DIRECTA */
-    html, body {
-      margin: 0 !important;
-      padding: 0 !important;
+    /* EVITAR QUE .dc-login-stage-exact (100vh) EMPUJE EL DASHBOARD HACIA ABAJO */
+    .dc-login-stage-exact.is-auth-done,
+    body.dc-logged-in .dc-login-stage-exact,
+    body.dc-logged-in .dc-login-card-exact {
+      display: none !important;
+      height: 0 !important;
       min-height: 0 !important;
+      max-height: 0 !important;
+      padding: 0 !important;
+      margin: 0 !important;
+      overflow: hidden !important;
+      pointer-events: none !important;
     }
 
-    body > div:first-child,
-    body > main:first-child,
-    body > section:first-child {
+    body.dc-logged-in .dc-shell-outer,
+    body.dc-logged-in .dc-dashboard-frame,
+    body.dc-logged-in .dc-main-pane,
+    body.dc-logged-in #dashboardSection {
       margin-top: 0 !important;
-      padding-top: 0 !important;
-    }
-
-    .dc-shell-outer,
-    .dc-dashboard-frame,
-    .dc-main-pane,
-    #dashboardSection {
-      margin-top: 0 !important;
-      padding-top: 0 !important;
+      padding-top: 12px !important;
+      display: block !important;
+      visibility: visible !important;
+      opacity: 1 !important;
     }
 
     </style>
@@ -2485,26 +2488,29 @@
       display: grid;
     }
 
-    /* ELIMINAR HUECO BLANCO SUPERIOR DE FORMA DIRECTA */
-    html, body {
-      margin: 0 !important;
-      padding: 0 !important;
+    /* EVITAR QUE .dc-login-stage-exact (100vh) EMPUJE EL DASHBOARD HACIA ABAJO */
+    .dc-login-stage-exact.is-auth-done,
+    body.dc-logged-in .dc-login-stage-exact,
+    body.dc-logged-in .dc-login-card-exact {
+      display: none !important;
+      height: 0 !important;
       min-height: 0 !important;
+      max-height: 0 !important;
+      padding: 0 !important;
+      margin: 0 !important;
+      overflow: hidden !important;
+      pointer-events: none !important;
     }
 
-    body > div:first-child,
-    body > main:first-child,
-    body > section:first-child {
+    body.dc-logged-in .dc-shell-outer,
+    body.dc-logged-in .dc-dashboard-frame,
+    body.dc-logged-in .dc-main-pane,
+    body.dc-logged-in #dashboardSection {
       margin-top: 0 !important;
-      padding-top: 0 !important;
-    }
-
-    .dc-shell-outer,
-    .dc-dashboard-frame,
-    .dc-main-pane,
-    #dashboardSection {
-      margin-top: 0 !important;
-      padding-top: 0 !important;
+      padding-top: 12px !important;
+      display: block !important;
+      visibility: visible !important;
+      opacity: 1 !important;
     }
 
     </style>
@@ -2899,48 +2905,66 @@
       });
     })();
   </script>
-<script id="dcKillWhiteGapScript">
+<script id="dcCollapseLoginStageOnAuthScript">
     (function () {
-      function removeTopWhiteGap() {
-        // Quitar márgenes/rellenos grandes arriba de los primeros hijos directos de body o del dashboard
-        const targets = [
-          document.body,
-          ...Array.from(document.body ? document.body.children : []),
-          document.querySelector(".dc-shell-outer"),
-          document.querySelector(".dc-dashboard-frame"),
-          document.querySelector(".dc-main-pane"),
-          document.getElementById("dashboardSection")
-        ].filter(Boolean);
+      function syncLoginAndDashboardState() {
+        const stage = document.querySelector(".dc-login-stage-exact");
+        const card = document.querySelector(".dc-login-card-exact");
+        const dash = document.getElementById("dashboardSection");
+        const frame = document.querySelector(".dc-dashboard-frame");
+        const passInput = document.querySelector('input[type="password"]');
 
-        targets.forEach(function (el) {
-          if (el.tagName === "SCRIPT" || el.tagName === "STYLE") return;
-          const cs = window.getComputedStyle(el);
-          if (parseFloat(cs.marginTop) > 16) {
-            el.style.marginTop = "0px";
+        const cardHidden =
+          !card ||
+          card.classList.contains("hidden") ||
+          window.getComputedStyle(card).display === "none" ||
+          window.getComputedStyle(card).visibility === "hidden";
+
+        const passHidden =
+          !passInput ||
+          window.getComputedStyle(passInput).display === "none" ||
+          !passInput.offsetParent;
+
+        const dashActive =
+          dash &&
+          !dash.classList.contains("hidden") &&
+          window.getComputedStyle(dash).display !== "none";
+
+        if (dashActive || (cardHidden && passHidden)) {
+          document.body.classList.add("dc-logged-in");
+          if (stage) {
+            stage.classList.add("is-auth-done");
+            stage.style.setProperty("display", "none", "important");
+            stage.style.setProperty("height", "0px", "important");
+            stage.style.setProperty("min-height", "0px", "important");
+            stage.style.setProperty("padding", "0px", "important");
+            stage.style.setProperty("margin", "0px", "important");
           }
-          if (parseFloat(cs.paddingTop) > 24 && el !== document.body) {
-            el.style.paddingTop = "8px";
+          if (frame) {
+            frame.style.setProperty("margin-top", "0px", "important");
+            frame.style.setProperty("visibility", "visible", "important");
+            frame.style.setProperty("opacity", "1", "important");
           }
-          // Si un elemento visible antes del contenido principal no tiene contenido real pero ocupa altura, colapsarlo
-          const rect = el.getBoundingClientRect();
-          const hasContent =
-            (el.innerText || "").trim().length > 0 ||
-            el.querySelector("img, canvas, svg, video, input, select, textarea, button, table, form");
-          if (!hasContent && rect.height > 20 && rect.top < 350) {
-            el.style.minHeight = "0px";
-            el.style.height = "0px";
-            el.style.padding = "0px";
-            el.style.margin = "0px";
-            el.style.overflow = "hidden";
-          }
-        });
+        }
       }
 
       document.addEventListener("DOMContentLoaded", function () {
-        removeTopWhiteGap();
-        setTimeout(removeTopWhiteGap, 300);
-        setTimeout(removeTopWhiteGap, 900);
+        syncLoginAndDashboardState();
+        setTimeout(syncLoginAndDashboardState, 150);
+        setTimeout(syncLoginAndDashboardState, 500);
+        setTimeout(syncLoginAndDashboardState, 1200);
       });
+
+      document.addEventListener("submit", function () {
+        setTimeout(syncLoginAndDashboardState, 50);
+        setTimeout(syncLoginAndDashboardState, 250);
+        setTimeout(syncLoginAndDashboardState, 700);
+      }, true);
+
+      document.addEventListener("click", function () {
+        setTimeout(syncLoginAndDashboardState, 80);
+        setTimeout(syncLoginAndDashboardState, 350);
+      }, true);
     })();
   </script>
 </body>
