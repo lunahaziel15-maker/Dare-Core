@@ -55,7 +55,7 @@
 
     .dc-shell-outer {
       max-width: 1380px;
-      margin: 20px auto 48px;
+      margin: 12px auto 16px;
       padding: 0 16px;
     }
 
@@ -67,7 +67,7 @@
       border-radius: var(--radius-shell);
       box-shadow: var(--shadow-shell);
       overflow: hidden;
-      min-height: 760px;
+      min-height: calc(100vh - 28px);
       animation: dcPanelReveal 0.4s var(--ease-smooth) both;
     }
 
@@ -178,10 +178,10 @@
     }
 
     .dc-main-pane {
-      padding: 22px 26px 34px;
+      padding: 16px 22px 18px;
       display: flex;
       flex-direction: column;
-      gap: 18px;
+      gap: 12px;
       min-width: 0;
     }
 
@@ -274,7 +274,7 @@
     #sec-catalogo.dc-tab-panel.is-visible {
       display: grid !important;
       grid-template-columns: minmax(320px, 430px) minmax(0, 1fr);
-      gap: 18px;
+      gap: 12px;
       align-items: start;
     }
 
@@ -332,22 +332,24 @@
       transform: translateY(-1px);
     }
 
-    /* PANEL MODIFICACIÓN DE IA: Vórtice neón de fibras cósmicas en movimiento sobre negro puro */
+    /* PANEL MODIFICACIÓN DE IA: Imagen exacta Vórtice neón animada en tiempo real */
     #darecoreAiKnowledgeAdmin {
       display: flex !important;
       visibility: visible !important;
       opacity: 1 !important;
       position: relative;
       overflow: hidden;
-      min-height: 620px;
+      height: calc(100vh - 210px);
+      min-height: 410px;
+      max-height: 540px;
       background: #000000 !important;
       color: #f8fafc !important;
       border: 1px solid #18181b !important;
-      border-radius: 22px !important;
-      box-shadow: 0 28px 65px -20px rgba(0, 0, 0, 0.9) !important;
-      padding: 20px 22px !important;
+      border-radius: 20px !important;
+      box-shadow: 0 20px 50px -20px rgba(0, 0, 0, 0.85) !important;
+      padding: 16px 18px !important;
       flex-direction: column;
-      justify-content: space-between;
+      justify-content: flex-end;
     }
 
     #dcAiFlowCanvas {
@@ -359,53 +361,32 @@
       z-index: 0;
     }
 
-    .dc-ai-top-bar {
-      position: relative;
-      z-index: 1;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      pointer-events: none;
-    }
-
-    .dc-ai-top-bar h2 {
-      margin: 0;
-      font-size: 14px !important;
-      font-weight: 500 !important;
-      color: rgba(255, 255, 255, 0.72) !important;
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
-    }
-
     .dc-ai-spacer {
-      flex: 1;
-      min-height: 360px;
-      pointer-events: none;
+      display: none !important;
     }
 
     .dc-ai-single-dock {
       position: relative;
       z-index: 1;
-      max-width: 680px;
+      max-width: 640px;
       width: 100%;
       margin: 0 auto;
-      background: rgba(0, 0, 0, 0.45);
+      background: rgba(0, 0, 0, 0.52);
       backdrop-filter: blur(8px);
       -webkit-backdrop-filter: blur(8px);
-      border: 1px solid rgba(255, 255, 255, 0.14);
-      border-radius: 18px;
-      padding: 10px 12px;
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: 16px;
+      padding: 8px 10px;
       transition: background-color 0.25s ease, border-color 0.25s ease;
     }
 
     .dc-ai-single-dock:focus-within {
-      background: rgba(0, 0, 0, 0.76);
-      border-color: rgba(56, 189, 248, 0.45);
+      background: rgba(0, 0, 0, 0.82);
+      border-color: rgba(56, 189, 248, 0.5);
     }
 
     .dc-ai-chat-log {
-      max-height: 125px;
+      max-height: 110px;
       overflow-y: auto;
       display: flex;
       flex-direction: column;
@@ -422,7 +403,7 @@
     .dc-ai-msg-admin {
       align-self: flex-end;
       max-width: 82%;
-      background: rgba(217, 70, 239, 0.22);
+      background: rgba(217, 70, 239, 0.24);
       border: 1px solid rgba(217, 70, 239, 0.42);
       color: #ffffff;
       padding: 6px 11px;
@@ -435,10 +416,10 @@
     .dc-ai-msg-bot {
       align-self: flex-start;
       max-width: 92%;
-      background: rgba(9, 13, 28, 0.82);
-      border: 1px solid rgba(34, 211, 238, 0.34);
+      background: rgba(9, 13, 28, 0.85);
+      border: 1px solid rgba(34, 211, 238, 0.35);
       color: #e2e8f0;
-      padding: 8px 12px;
+      padding: 7px 12px;
       border-radius: 12px 12px 12px 3px;
       font-size: 12px;
       font-weight: 400;
@@ -447,16 +428,16 @@
     }
 
     #dcAiCoachInput {
-      background: rgba(255, 255, 255, 0.06) !important;
+      background: rgba(255, 255, 255, 0.07) !important;
       color: #ffffff !important;
       border: 1px solid rgba(255, 255, 255, 0.16) !important;
       border-radius: 999px !important;
-      padding: 8px 14px !important;
+      padding: 7px 14px !important;
       font-size: 12.5px !important;
     }
 
     #dcAiCoachInput::placeholder {
-      color: rgba(226, 232, 240, 0.62);
+      color: rgba(226, 232, 240, 0.65);
     }
 
     #dcAiCoachSendBtn {
@@ -465,7 +446,7 @@
       border: none !important;
       border-radius: 999px !important;
       padding: 0 18px !important;
-      height: 34px !important;
+      height: 32px !important;
       font-size: 12px !important;
       font-weight: 500 !important;
       cursor: pointer;
@@ -754,282 +735,153 @@
     (function () {
       const KB_KEY = "darecore_ai_knowledge";
 
-      function cosmicFiberColor(normX, alpha) {
-        const x = Math.max(0, Math.min(1, normX));
-        let r, g, b;
-        if (x < 0.26) {
-          const k = x / 0.26;
-          r = Math.round(248 - k * 68);   // 248 -> 180 (magenta eléctrico)
-          g = Math.round(28 + k * 14);    // 28 -> 42
-          b = Math.round(242 + k * 13);   // 242 -> 255
-        } else if (x < 0.52) {
-          const k = (x - 0.26) / 0.26;
-          r = Math.round(180 - k * 162);  // 180 -> 18 (violeta -> azul cobalto)
-          g = Math.round(42 + k * 68);    // 42 -> 110
-          b = 255;
-        } else if (x < 0.78) {
-          const k = (x - 0.52) / 0.26;
-          r = Math.round(18 - k * 10);    // 18 -> 8 (azul -> turquesa)
-          g = Math.round(110 + k * 115);  // 110 -> 225
-          b = Math.round(255 - k * 15);   // 255 -> 240
-        } else {
-          const k = (x - 0.78) / 0.22;
-          r = Math.round(8 + k * 75);     // 8 -> 83 (cian luminoso en puntas derechas)
-          g = Math.round(225 + k * 28);   // 225 -> 253
-          b = Math.round(240 + k * 12);   // 240 -> 252
-        }
-        return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-      }
-
       function startDataFlowSphereAnimation() {
         const canvas = document.getElementById("dcAiFlowCanvas");
         const container = document.getElementById("darecoreAiKnowledgeAdmin");
         if (!canvas || !container) return;
-        const ctx = canvas.getContext("2d");
-        if (!ctx) return;
 
-        let width = 0;
-        let height = 0;
-
-        // 1. Cerdas/pelos radiales salientes en todo el perímetro (característica clave de la referencia)
-        const outerBristles = Array.from({ length: 920 }, (_, i) => {
-          const ang = (i / 920) * Math.PI * 2;
-          const sideBoost = Math.pow(Math.abs(Math.cos(ang)), 0.7);
-          return {
-            angle: ang,
-            rStart: 0.80 + ((i * 19) % 15) / 100,
-            rEnd: 0.96 + sideBoost * (0.06 + ((i * 31) % 9) / 100),
-            bend: (((i % 2 === 0 ? 1 : -1) * (0.05 + ((i * 17) % 14) / 100))),
-            phase: i * 0.19,
-            hasTipDot: i % 3 === 0
-          };
-        });
-
-        // 2. Anillo denso de arcos entrelazados en el borde interno/medio
-        const rimArcs = Array.from({ length: 520 }, (_, i) => ({
-          a1: (i / 520) * Math.PI * 2,
-          span: 0.28 + ((i * 23) % 45) / 100,
-          r1: 0.74 + ((i * 13) % 21) / 100,
-          r2: 0.78 + ((i * 29) % 20) / 100,
-          curl: ((i % 2 === 0 ? 1 : -1) * (0.06 + ((i * 11) % 10) / 100)),
-          phase: i * 0.23
-        }));
-
-        // 3. Fibras radiales curvas desde el centro hacia todo el perímetro
-        const centerWeb = Array.from({ length: 240 }, (_, i) => ({
-          angle: (i / 240) * Math.PI * 2,
-          bend: ((i * 37) % 100 - 50) / 160,
-          rEnd: 0.86 + ((i * 17) % 12) / 100,
-          phase: i * 0.31
-        }));
-
-        // 4. Tres ríos curvos de fibras paralelas desde el nodo a las 10 en punto (upper node)
-        const upperRivers = Array.from({ length: 210 }, (_, i) => {
-          const branch = i % 3; // 0: río superior hacia la derecha, 1: río diagonal hacia centro-derecha, 2: arco inferior izquierdo
-          const spread = ((i / 210) - 0.5) * 0.24;
-          return {
-            branch,
-            spread,
-            phase: i * 0.17
-          };
-        });
-
-        // 5. Micro-partículas blancas nítidas distribuidas por toda la esfera
-        const microDots = Array.from({ length: 580 }, (_, i) => ({
-          angle: (i * 2.399963) % (Math.PI * 2),
-          rFactor: i < 410
-            ? 0.74 + ((i * 43) % 26) / 100
-            : 0.06 + ((i * 53) % 68) / 100,
-          speed: (i % 2 === 0 ? 1 : -1) * (0.0008 + (i % 7) * 0.00018),
-          size: i % 11 === 0 ? 1.45 : (0.65 + (i % 3) * 0.25),
-          phase: i * 0.41
-        }));
+        const img = new Image();
+        img.src = "vortice-ia.png?v=1";
 
         function resizeCanvas() {
           const rect = container.getBoundingClientRect();
           if (!rect.width || !rect.height) return;
           const dpr = Math.min(window.devicePixelRatio || 1, 2);
-          width = Math.floor(rect.width);
-          height = Math.floor(rect.height);
-          canvas.width = Math.floor(width * dpr);
-          canvas.height = Math.floor(height * dpr);
-          ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+          canvas.width = Math.floor(rect.width * dpr);
+          canvas.height = Math.floor(rect.height * dpr);
         }
 
         resizeCanvas();
         window.addEventListener("resize", resizeCanvas);
 
-        let t = 0;
-        function renderFrame() {
-          if (!width || !height) resizeCanvas();
-          t += 0.009;
+        // Intentar shader WebGL para ondular fluidamente la textura exacta vortice-ia.png
+        const gl = canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
 
-          ctx.globalCompositeOperation = "source-over";
-          ctx.fillStyle = "#000000";
-          ctx.fillRect(0, 0, width || 1, height || 1);
+        img.onload = function () {
+          if (gl) {
+            const vsSource = `
+              attribute vec2 a_pos;
+              varying vec2 v_uv;
+              void main() {
+                v_uv = a_pos * 0.5 + 0.5;
+                v_uv.y = 1.0 - v_uv.y;
+                gl_Position = vec4(a_pos, 0.0, 1.0);
+              }
+            `;
+            const fsSource = `
+              precision mediump float;
+              varying vec2 v_uv;
+              uniform sampler2D u_tex;
+              uniform float u_time;
+              uniform vec2 u_res;
+              uniform vec2 u_imgRes;
 
-          if (!width || !height) {
-            requestAnimationFrame(renderFrame);
+              void main() {
+                // Ajuste contain centrado sobre fondo negro puro
+                float canvasAspect = u_res.x / max(u_res.y, 1.0);
+                float imgAspect = u_imgRes.x / max(u_imgRes.y, 1.0);
+                vec2 uv = v_uv - 0.5;
+                if (canvasAspect > imgAspect) {
+                  uv.x *= canvasAspect / imgAspect;
+                } else {
+                  uv.y *= imgAspect / canvasAspect;
+                }
+                uv *= 1.03;
+
+                float dist = length(uv);
+                float angle = atan(uv.y, uv.x);
+
+                // Movimiento fluido continuo de fibras y pulso sutil
+                float wave1 = sin(dist * 18.0 - u_time * 1.9 + angle * 3.0) * 0.0055;
+                float wave2 = cos(angle * 5.0 + u_time * 1.3 - dist * 10.0) * 0.0042;
+                float mask = smoothstep(0.02, 0.14, dist) * (1.0 - smoothstep(0.47, 0.56, dist));
+
+                float rot = sin(u_time * 0.45) * 0.045;
+                float cs = cos(rot);
+                float sn = sin(rot);
+                vec2 rotUv = mat2(cs, -sn, sn, cs) * uv;
+
+                vec2 finalUv = rotUv + vec2(wave1, wave2) * mask + 0.5;
+
+                if (finalUv.x < 0.0 || finalUv.x > 1.0 || finalUv.y < 0.0 || finalUv.y > 1.0) {
+                  gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
+                  return;
+                }
+
+                vec4 texCol = texture2D(u_tex, finalUv);
+                float pulse = 1.0 + 0.08 * sin(u_time * 2.2 - dist * 12.0);
+                gl_FragColor = vec4(texCol.rgb * pulse, 1.0);
+              }
+            `;
+
+            function compile(type, src) {
+              const sh = gl.createShader(type);
+              gl.shaderSource(sh, src);
+              gl.compileShader(sh);
+              return sh;
+            }
+
+            const prog = gl.createProgram();
+            gl.attachShader(prog, compile(gl.VERTEX_SHADER, vsSource));
+            gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, fsSource));
+            gl.linkProgram(prog);
+            gl.useProgram(prog);
+
+            const buf = gl.createBuffer();
+            gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
+            const aPos = gl.getAttribLocation(prog, "a_pos");
+            gl.enableVertexAttribArray(aPos);
+            gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
+
+            const tex = gl.createTexture();
+            gl.bindTexture(gl.TEXTURE_2D, tex);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
+
+            const uTime = gl.getUniformLocation(prog, "u_time");
+            const uRes = gl.getUniformLocation(prog, "u_res");
+            const uImgRes = gl.getUniformLocation(prog, "u_imgRes");
+
+            const start = performance.now();
+            function loopWebGL(now) {
+              resizeCanvas();
+              gl.viewport(0, 0, canvas.width, canvas.height);
+              gl.uniform1f(uTime, (now - start) * 0.001);
+              gl.uniform2f(uRes, canvas.width, canvas.height);
+              gl.uniform2f(uImgRes, img.naturalWidth || 1200, img.naturalHeight || 800);
+              gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+              requestAnimationFrame(loopWebGL);
+            }
+            requestAnimationFrame(loopWebGL);
             return;
           }
 
-          ctx.globalCompositeOperation = "lighter";
-
-          const cx = width * 0.5;
-          const cy = height * 0.49;
-          const R = Math.min(width * 0.46, height * 0.47);
-          const rot = t * 0.16;
-
-          // Nodo a las 10 en punto (sin halo artificial, solo punto de convergencia de fibras)
-          const uAng = -Math.PI * 0.79 + rot * 0.35 + Math.sin(t * 0.7) * 0.04;
-          const ux = cx + Math.cos(uAng) * (R * 0.68);
-          const uy = cy + Math.sin(uAng) * (R * 0.68);
-
-          // Centro ligeramente desplazado hacia abajo-izquierda como en la imagen
-          const kx = cx - R * 0.04 + Math.cos(t * 0.6) * 3;
-          const ky = cy + R * 0.03 + Math.sin(t * 0.7) * 3;
-
-          // A) Red radial curva desde el nodo central
-          ctx.lineWidth = 0.55;
-          for (let i = 0; i < centerWeb.length; i++) {
-            const w = centerWeb[i];
-            const a = w.angle + rot * 0.5;
-            const ex = cx + Math.cos(a) * (R * w.rEnd);
-            const ey = cy + Math.sin(a) * (R * w.rEnd);
-            const midA = a + w.bend + Math.sin(t + w.phase) * 0.09;
-            const cpx = kx + Math.cos(midA) * (R * 0.46);
-            const cpy = ky + Math.sin(midA) * (R * 0.46);
-
-            const n1 = (kx - (cx - R)) / (2 * R);
-            const n2 = (ex - (cx - R)) / (2 * R);
-            const g = ctx.createLinearGradient(kx, ky, ex, ey);
-            g.addColorStop(0, cosmicFiberColor(n1, 0.24));
-            g.addColorStop(1, cosmicFiberColor(n2, 0.22));
-
-            ctx.beginPath();
-            ctx.moveTo(kx, ky);
-            ctx.quadraticCurveTo(cpx, cpy, ex, ey);
-            ctx.strokeStyle = g;
-            ctx.stroke();
+          // Fallback 2D si WebGL no esta disponible
+          const ctx = canvas.getContext("2d");
+          let t = 0;
+          function loop2D() {
+            resizeCanvas();
+            t += 0.015;
+            const w = canvas.width;
+            const h = canvas.height;
+            ctx.fillStyle = "#000000";
+            ctx.fillRect(0, 0, w, h);
+            const scale = Math.min(w / img.naturalWidth, h / img.naturalHeight) * (0.96 + Math.sin(t) * 0.015);
+            const dw = img.naturalWidth * scale;
+            const dh = img.naturalHeight * scale;
+            ctx.save();
+            ctx.translate(w * 0.5, h * 0.5);
+            ctx.rotate(Math.sin(t * 0.5) * 0.03);
+            ctx.drawImage(img, -dw * 0.5, -dh * 0.5, dw, dh);
+            ctx.restore();
+            requestAnimationFrame(loop2D);
           }
-
-          // B) Tres ríos curvos desde el nodo superior izquierdo (10 en punto)
-          ctx.lineWidth = 0.62;
-          for (let i = 0; i < upperRivers.length; i++) {
-            const rv = upperRivers[i];
-            const wave = Math.sin(t * 1.1 + rv.phase) * 0.04;
-            let endAng, cp1x, cp1y, cp2x, cp2y;
-
-            if (rv.branch === 0) {
-              // Río superior que cruza en arco hacia el cuadrante superior derecho
-              endAng = -Math.PI * 0.18 + rv.spread + rot * 0.35;
-              cp1x = cx - R * 0.25;
-              cp1y = cy - R * (0.28 + wave);
-              cp2x = cx + R * 0.22;
-              cp2y = cy - R * (0.48 - wave);
-            } else if (rv.branch === 1) {
-              // Río diagonal central desde las 10 hacia las 3-4 en punto
-              endAng = Math.PI * 0.14 + rv.spread * 1.1 + rot * 0.35;
-              cp1x = cx - R * 0.24;
-              cp1y = cy - R * 0.12;
-              cp2x = cx + R * 0.26;
-              cp2y = cy - R * (0.04 + wave);
-            } else {
-              // Arco envolvente hacia abajo a la izquierda (7-8 en punto)
-              endAng = Math.PI * 0.66 + rv.spread * 1.2 + rot * 0.35;
-              cp1x = cx - R * (0.44 + wave);
-              cp1y = cy - R * 0.05;
-              cp2x = cx - R * 0.42;
-              cp2y = cy + R * 0.38;
-            }
-
-            const ex = cx + Math.cos(endAng) * (R * 0.88);
-            const ey = cy + Math.sin(endAng) * (R * 0.88);
-            const n1 = (ux - (cx - R)) / (2 * R);
-            const n2 = (ex - (cx - R)) / (2 * R);
-            const g = ctx.createLinearGradient(ux, uy, ex, ey);
-            g.addColorStop(0, cosmicFiberColor(n1, 0.34));
-            g.addColorStop(1, cosmicFiberColor(n2, 0.26));
-
-            ctx.beginPath();
-            ctx.moveTo(ux, uy);
-            ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, ex, ey);
-            ctx.strokeStyle = g;
-            ctx.stroke();
-          }
-
-          // C) Malla circular entrelazada del anillo
-          ctx.lineWidth = 0.58;
-          for (let i = 0; i < rimArcs.length; i++) {
-            const a = rimArcs[i];
-            const ang1 = a.a1 + rot;
-            const ang2 = ang1 + a.span + Math.sin(t * 0.8 + a.phase) * 0.06;
-            const x1 = cx + Math.cos(ang1) * (R * a.r1);
-            const y1 = cy + Math.sin(ang1) * (R * a.r1);
-            const x2 = cx + Math.cos(ang2) * (R * a.r2);
-            const y2 = cy + Math.sin(ang2) * (R * a.r2);
-
-            const midA = (ang1 + ang2) * 0.5;
-            const ctrlR = R * (0.86 + a.curl * Math.cos(t + a.phase));
-            const cpx = cx + Math.cos(midA) * ctrlR;
-            const cpy = cy + Math.sin(midA) * ctrlR;
-
-            const norm = (x1 - (cx - R)) / (2 * R);
-            ctx.beginPath();
-            ctx.moveTo(x1, y1);
-            ctx.quadraticCurveTo(cpx, cpy, x2, y2);
-            ctx.strokeStyle = cosmicFiberColor(norm, 0.32);
-            ctx.stroke();
-          }
-
-          // D) Cerdas radiales finas en todo el borde exterior de la esfera
-          ctx.lineWidth = 0.55;
-          for (let i = 0; i < outerBristles.length; i++) {
-            const b = outerBristles[i];
-            const a1 = b.angle + rot * 0.65;
-            const sway = Math.sin(t * 1.6 + b.phase) * 0.025;
-            const a2 = a1 + b.bend + sway;
-
-            const x1 = cx + Math.cos(a1) * (R * b.rStart);
-            const y1 = cy + Math.sin(a1) * (R * b.rStart);
-            const x2 = cx + Math.cos(a2) * (R * b.rEnd);
-            const y2 = cy + Math.sin(a2) * (R * b.rEnd);
-
-            const cpx = cx + Math.cos(a1 + b.bend * 0.4) * (R * ((b.rStart + b.rEnd) * 0.5));
-            const cpy = cy + Math.sin(a1 + b.bend * 0.4) * (R * ((b.rStart + b.rEnd) * 0.5));
-
-            const norm = (x2 - (cx - R)) / (2 * R);
-            ctx.beginPath();
-            ctx.moveTo(x1, y1);
-            ctx.quadraticCurveTo(cpx, cpy, x2, y2);
-            ctx.strokeStyle = cosmicFiberColor(norm, 0.44);
-            ctx.stroke();
-
-            if (b.hasTipDot) {
-              ctx.fillStyle = "rgba(255, 255, 255, 0.55)";
-              ctx.fillRect(x2, y2, 1, 1);
-            }
-          }
-
-          // E) Micro-partículas estelares blancas salpicadas por toda la estructura
-          for (let p = 0; p < microDots.length; p++) {
-            const d = microDots[p];
-            d.angle += d.speed;
-            const rad = R * d.rFactor + Math.sin(t * 1.4 + d.phase) * 3;
-            const px = cx + Math.cos(d.angle) * rad;
-            const py = cy + Math.sin(d.angle) * rad;
-            const alpha = 0.55 + 0.45 * Math.sin(t * 2.5 + d.phase);
-
-            ctx.beginPath();
-            ctx.arc(px, py, d.size, 0, Math.PI * 2);
-            ctx.fillStyle = `rgba(255, 255, 255, ${alpha.toFixed(2)})`;
-            ctx.fill();
-          }
-
-          requestAnimationFrame(renderFrame);
-        }
-
-        requestAnimationFrame(renderFrame);
+          requestAnimationFrame(loop2D);
+        };
       }
 
       function persistAiKnowledgeText(newText) {
