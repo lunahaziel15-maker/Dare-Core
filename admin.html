@@ -2987,90 +2987,127 @@
   </script>
 <script id="dcLogoutButtonScript">
     (function () {
-      function performAdminLogout() {
+      function clearSessionKeys() {
+        try {
+          const keys = Object.keys(sessionStorage);
+          keys.forEach(function (k) {
+            if (/auth|admin|login|user|session|darecore/i.test(k)) {
+              sessionStorage.removeItem(k);
+            }
+          });
+        } catch (_) {}
+
+        try {
+          const lkeys = Object.keys(localStorage);
+          lkeys.forEach(function (k) {
+            if (/auth|admin|login|session|darecore_admin/i.test(k)) {
+              localStorage.removeItem(k);
+            }
+          });
+        } catch (_) {}
+      }
+
+      function showLoginScreenCleanly() {
+        clearSessionKeys();
+
         try {
           if (window.firebase && typeof window.firebase.auth === "function" && window.firebase.apps && window.firebase.apps.length) {
             window.firebase.auth().signOut().catch(function () {});
           }
         } catch (_) {}
 
-        try {
-          ["dc_admin_auth", "darecore_admin_auth", "adminAuth", "isAdminLoggedIn"].forEach(function (k) {
-            sessionStorage.removeItem(k);
-            localStorage.removeItem(k);
-          });
-        } catch (_) {}
-
         document.body.classList.remove("dc-logged-in");
 
+        // Ocultar dashboard y secciones internas
         const dash = document.getElementById("dashboardSection");
         if (dash) {
           dash.classList.add("hidden");
-          dash.style.display = "none";
+          dash.style.setProperty("display", "none", "important");
         }
 
+        const frame = document.querySelector(".dc-dashboard-frame");
+        if (frame && (!document.getElementById("loginSection") || !frame.contains(document.getElementById("loginSection")))) {
+          frame.style.setProperty("display", "none", "important");
+        }
+
+        // Mostrar contenedor y tarjeta de login
         const stage = document.querySelector(".dc-login-stage-exact");
         const card = document.querySelector(".dc-login-card-exact");
         const loginSec = document.getElementById("loginSection");
 
         if (stage) {
-          stage.classList.remove("is-auth-done");
+          stage.classList.remove("is-auth-done", "hidden");
           stage.style.setProperty("display", "flex", "important");
           stage.style.setProperty("height", "auto", "important");
           stage.style.setProperty("min-height", "100vh", "important");
           stage.style.setProperty("padding", "24px 16px", "important");
           stage.style.setProperty("margin", "0 auto", "important");
+          stage.style.setProperty("visibility", "visible", "important");
+          stage.style.setProperty("opacity", "1", "important");
         }
+
         if (card) {
           card.classList.remove("hidden");
           card.style.setProperty("display", "block", "important");
           card.style.setProperty("visibility", "visible", "important");
           card.style.setProperty("opacity", "1", "important");
         }
+
         if (loginSec) {
           loginSec.classList.remove("hidden");
           loginSec.style.setProperty("display", "block", "important");
+          loginSec.style.setProperty("visibility", "visible", "important");
+          loginSec.style.setProperty("opacity", "1", "important");
         }
 
-        window.scrollTo(0, 0);
+        // Limpiar campos si se desea reingresar limpio
+        const userInput = document.querySelector('input[type="text"], input[type="email"]');
+        const passInput = document.querySelector('input[type="password"]');
+        if (passInput) passInput.value = "";
+        if (userInput && /admin|usuario|correo/i.test((userInput.placeholder || "") + (userInput.name || "") + (userInput.id || ""))) {
+          userInput.value = "";
+          userInput.focus();
+        }
+
+        // Usar scrollTo nativo para subir al inicio al cerrar sesión
+        if (typeof window.scrollTo === "function") {
+          window.scrollTo(0, 0);
+        }
       }
 
-      function ensureLogoutButton() {
-        let logoutBtn = document.getElementById("dcLogoutBtn") || document.getElementById("logoutBtn");
-
-        if (!logoutBtn) {
-          const pillsContainer =
-            document.querySelector(".dc-topbar-pills") ||
-            Array.from(document.querySelectorAll("button, a")).find(function (el) {
-              return /tienda/i.test((el.textContent || "").trim());
-            })?.parentElement;
-
-          if (!pillsContainer) return;
-
-          const referenceBtn = pillsContainer.querySelector("button, a");
-          logoutBtn = document.createElement("button");
-          logoutBtn.type = "button";
-          logoutBtn.id = "dcLogoutBtn";
-          logoutBtn.textContent = "Cerrar Sesión";
-          if (referenceBtn && referenceBtn.className) {
-            logoutBtn.className = referenceBtn.className.replace(/\bis-active\b|\bactive\b/g, "").trim();
+      function bindLogoutButtons() {
+        const candidates = Array.from(document.querySelectorAll("button, a"));
+        candidates.forEach(function (btn) {
+          const label = (btn.textContent || "").trim().toLowerCase();
+          if (label === "cerrar sesión" || label === "cerrar sesion" || btn.id === "dcLogoutBtn" || btn.id === "logoutBtn") {
+            if (!btn.dataset.dcLogoutBound) {
+              btn.dataset.dcLogoutBound = "1";
+              btn.addEventListener("click", function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                showLoginScreenCleanly();
+              }, true);
+            }
           }
-          pillsContainer.appendChild(logoutBtn);
-        }
-
-        if (!logoutBtn.dataset.dcBound) {
-          logoutBtn.dataset.dcBound = "1";
-          logoutBtn.addEventListener("click", function (ev) {
-            ev.preventDefault();
-            performAdminLogout();
-          });
-        }
+        });
       }
+
+      // Delegación global por si el botón se renderiza tarde
+      document.addEventListener("click", function (e) {
+        const target = e.target && e.target.closest ? e.target.closest("button, a") : null;
+        if (!target) return;
+        const label = (target.textContent || "").trim().toLowerCase();
+        if (label === "cerrar sesión" || label === "cerrar sesion" || target.id === "dcLogoutBtn" || target.id === "logoutBtn") {
+          e.preventDefault();
+          e.stopPropagation();
+          showLoginScreenCleanly();
+        }
+      }, true);
 
       document.addEventListener("DOMContentLoaded", function () {
-        ensureLogoutButton();
-        setTimeout(ensureLogoutButton, 300);
-        setTimeout(ensureLogoutButton, 900);
+        bindLogoutButtons();
+        setTimeout(bindLogoutButtons, 300);
+        setTimeout(bindLogoutButtons, 1000);
       });
     })();
   </script>
