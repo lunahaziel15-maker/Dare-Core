@@ -637,43 +637,6 @@ Estilo de atención (obligatorio):
     stopBtn.style.display = isPlaying ? "inline-flex" : "none";
   }
 
-  function pickFemaleSpanishVoice() {
-    if (!synth || !synth.getVoices) return null;
-    const voices = synth.getVoices() || [];
-    const esVoices = voices.filter(v => /^es([-_]|$)/i.test(v.lang || ""));
-    if (!esVoices.length) return null;
-
-    const femaleKeywords = /dalia|paulina|sabina|helena|laura|elvira|monica|mónica|sofia|sofía|camila|valeria|lucia|lucía|marisol|ximena|fernanda|ana|maria|maría|female|mujer/i;
-    const maleKeywords = /jorge|alonso|raul|raúl|pablo|antonio|diego|carlos|enrique|miguel|alejandro|juan|mateo|male|hombre/i;
-
-    const ranked = esVoices.map(v => {
-      const name = (v.name || "").toLowerCase();
-      const lang = (v.lang || "").toLowerCase();
-      let score = 0;
-      if (maleKeywords.test(name)) score -= 300;
-      if (femaleKeywords.test(name)) score += 180;
-      if (/natural|neural|online|premium|enhanced/i.test(name)) score += 90;
-      if (/google español|google us español/i.test(name)) score += 60;
-      if (/es-mx|es-419|es-us/i.test(lang)) score += 35;
-      return { voice: v, score };
-    });
-
-    ranked.sort((a, b) => b.score - a.score);
-    return ranked[0] && ranked[0].score > -100 ? ranked[0].voice : null;
-  }
-
-  function unlockMobileSpeech() {
-    if (!synth) return;
-    try {
-      if (synth.paused) synth.resume();
-      if (synth.getVoices) synth.getVoices();
-      const ping = new SpeechSynthesisUtterance(" ");
-      ping.volume = 0;
-      ping.rate = 1;
-      synth.speak(ping);
-    } catch (_) {}
-  }
-
   function speakTextSimultaneously(text) {
     if (!synth || !text) return;
     const clean = String(text)
@@ -688,55 +651,34 @@ Estilo de atención (obligatorio):
     speakingActive = true;
     updateStopIcon();
 
-    const launchUtterance = () => {
-      try {
-        if (synth.paused) synth.resume();
-        const utter = new SpeechSynthesisUtterance(clean);
-        const femaleVoice = pickFemaleSpanishVoice();
-        utter.lang = (femaleVoice && femaleVoice.lang) ? femaleVoice.lang : "es-MX";
-        if (femaleVoice) utter.voice = femaleVoice;
-        utter.rate = 0.98;
-        utter.pitch = 1.06;
-        utter.volume = 1.0;
+    try {
+      const utter = new SpeechSynthesisUtterance(clean);
+      utter.lang = "es-MX";
+      utter.rate = 1.0;
+      utter.pitch = 1.0;
 
-        utter.onend = utter.onerror = () => {
-          speakingActive = false;
-          if (speakWatchdog) {
-            clearInterval(speakWatchdog);
-            speakWatchdog = null;
-          }
-          updateStopIcon();
-        };
+      const voices = synth.getVoices ? synth.getVoices() : [];
+      const esVoice = voices.find(v => /es-MX/i.test(v.lang)) || voices.find(v => /^es/i.test(v.lang));
+      if (esVoice) utter.voice = esVoice;
 
-        synth.speak(utter);
-        if (synth.paused) synth.resume();
-      } catch (_) {
+      utter.onend = utter.onerror = () => {
         speakingActive = false;
+        if (speakWatchdog) {
+          clearInterval(speakWatchdog);
+          speakWatchdog = null;
+        }
         updateStopIcon();
-      }
-    };
-
-    if (synth.getVoices && synth.getVoices().length === 0 && "onvoiceschanged" in synth) {
-      const prevHandler = synth.onvoiceschanged;
-      let fired = false;
-      synth.onvoiceschanged = function () {
-        if (typeof prevHandler === "function") prevHandler.apply(this, arguments);
-        if (!fired) {
-          fired = true;
-          launchUtterance();
-        }
       };
-      setTimeout(() => {
-        if (!fired) {
-          fired = true;
-          launchUtterance();
-        }
-      }, 250);
-    } else {
-      setTimeout(launchUtterance, 60);
+
+      synth.speak(utter);
+      if (synth.paused) synth.resume();
+    } catch (_) {
+      speakingActive = false;
+      updateStopIcon();
+      return;
     }
 
-    const maxEnd = Date.now() + Math.min(45000, Math.max(2500, clean.length * 85));
+    const maxEnd = Date.now() + Math.min(45000, Math.max(2500, clean.length * 80));
     speakWatchdog = setInterval(() => {
       if (synth && synth.paused) {
         try { synth.resume(); } catch (_) {}
@@ -744,6 +686,9 @@ Estilo de atención (obligatorio):
       const stillSpeaking = synth && (synth.speaking || synth.pending);
       if (!stillSpeaking && Date.now() > maxEnd) {
         speakingActive = false;
+        clearInterval(speakWatchdog);
+        speakWatchdog = null;
+      } else if (!stillSpeaking && Date.now() > maxEnd - 1500 && !speakingActive) {
         clearInterval(speakWatchdog);
         speakWatchdog = null;
       }
@@ -868,7 +813,6 @@ Estilo de atención (obligatorio):
       micBtn.addEventListener("click", (e) => {
         e.preventDefault();
         e.stopPropagation();
-        unlockMobileSpeech();
         stopVoiceNow();
         if (!listening) {
           alreadySubmitted = false;
