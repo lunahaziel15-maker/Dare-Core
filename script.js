@@ -1,3 +1,85 @@
+/* DARECORE STRICT PHONE BEFORE WHATSAPP */
+(function () {
+  if (window.__dcStrictPhoneBeforeWa) return;
+  window.__dcStrictPhoneBeforeWa = true;
+
+  function findPhoneInput() {
+    const candidates = Array.from(document.querySelectorAll("input, tel"));
+    return candidates.find(function (el) {
+      const idn = ((el.id || "") + " " + (el.name || "") + " " + (el.placeholder || "") + " " + (el.getAttribute("aria-label") || "")).toLowerCase();
+      if (/whatsapp|tel[eé]fono|telefono|celular|phone|477/i.test(idn)) return true;
+      const parentTxt = (el.parentElement && el.parentElement.textContent || "").toLowerCase();
+      return /whatsapp|tel[eé]fono|telefono|celular/i.test(parentTxt);
+    }) || null;
+  }
+
+  function hasValidPhone() {
+    const inp = findPhoneInput();
+    if (!inp) return true;
+    const digits = String(inp.value || "").replace(/\D+/g, "");
+    return digits.length >= 10;
+  }
+
+  function alertPhoneRequired() {
+    const msg = "Primero debes ingresar tu número de teléfono / WhatsApp (10 dígitos) antes de enviar o ir a WhatsApp.";
+    if (typeof window.showFloatingToast === "function") {
+      try { window.showFloatingToast(msg); } catch (_) {}
+    } else {
+      alert(msg);
+    }
+    const inp = findPhoneInput();
+    if (inp) {
+      inp.style.setProperty("border", "2px solid #ef4444", "important");
+      inp.focus();
+      setTimeout(function () { inp.style.border = ""; }, 3000);
+    }
+  }
+
+  // Interceptar clics en botones de Dare Lab antes de cualquier otro handler
+  document.addEventListener("click", function (e) {
+    const btn = e.target && e.target.closest ? e.target.closest("button, a, input[type='submit']") : null;
+    if (!btn) return;
+    const txt = ((btn.textContent || "") + " " + (btn.value || "")).trim().toLowerCase();
+    const isDareLabBtn = /mockup|estimado|cotizar|personalizar|whatsapp/i.test(txt);
+    const isPersonalizarPage = /personalizar/i.test(window.location.pathname || "");
+
+    if ((isDareLabBtn || isPersonalizarPage) && /solicitar|estimado|cotizar|enviar|whatsapp/i.test(txt)) {
+      if (!hasValidPhone()) {
+        e.preventDefault();
+        e.stopPropagation();
+        if (typeof e.stopImmediatePropagation === "function") e.stopImmediatePropagation();
+        window.__dcBlockWaUntil = Date.now() + 3000;
+        alertPhoneRequired();
+      }
+    }
+  }, true);
+
+  // Interceptar envío de formularios en personalizar.html si falta teléfono
+  document.addEventListener("submit", function (e) {
+    const isPersonalizarPage = /personalizar/i.test(window.location.pathname || "");
+    if (isPersonalizarPage && !hasValidPhone()) {
+      e.preventDefault();
+      e.stopPropagation();
+      if (typeof e.stopImmediatePropagation === "function") e.stopImmediatePropagation();
+      window.__dcBlockWaUntil = Date.now() + 3000;
+      alertPhoneRequired();
+    }
+  }, true);
+
+  // Bloquear apertura de WhatsApp si el usuario no llenó el teléfono
+  const origWinOpen = window.open.bind(window);
+  window.open = function (url) {
+    const u = String(url || "");
+    if (/whatsapp\.com|wa\.me|api\.whatsapp/i.test(u)) {
+      const blockedWindow = window.__dcBlockWaUntil && Date.now() < window.__dcBlockWaUntil;
+      if (blockedWindow || !hasValidPhone()) {
+        alertPhoneRequired();
+        return null;
+      }
+    }
+    return origWinOpen.apply(window, arguments);
+  };
+})();
 /* ==========================================
    DARECORE - SCRIPT MAESTRO COMPLETO
    ========================================== */

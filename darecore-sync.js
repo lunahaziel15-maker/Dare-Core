@@ -1,3 +1,71 @@
+/* DARECORE HARD ONE-SHOT EMAIL GUARD */
+(function () {
+  if (window.__dcHardOneShotEmailGuard) return;
+  window.__dcHardOneShotEmailGuard = true;
+
+  const DONE_KEYS = new Set();
+
+  function makeMailKey(folio, email, status) {
+    const f = String(folio || "").replace(/^#/, "").trim().toUpperCase();
+    const e = String(email || "").trim().toLowerCase();
+    const s = String(status || "").trim().toLowerCase();
+    return (f || "ORDER") + "::" + (e || "MAIL") + "::" + (s || "STATUS");
+  }
+
+  function isAlreadyDone(key) {
+    if (DONE_KEYS.has(key)) return true;
+    try {
+      if (sessionStorage.getItem("dc_oneshot_" + key) === "1") return true;
+    } catch (_) {}
+    DONE_KEYS.add(key);
+    try {
+      sessionStorage.setItem("dc_oneshot_" + key, "1");
+    } catch (_) {}
+    return false;
+  }
+
+  function hookTransport() {
+    if (typeof window.triggerAutomatedEmail === "function" && !window.triggerAutomatedEmail.__dcOneShot) {
+      const prevFn = window.triggerAutomatedEmail;
+      window.triggerAutomatedEmail = function (data) {
+        const d = data || {};
+        const txt = String(d.status || d.subject || d.message || "");
+        const isOrderMail = /estatus de tu pedido|actualizaci[oó]n de tu pedido|enviado|en proceso|pendiente|listo para enviar|paquete/i.test(txt);
+        if (isOrderMail && !/enviado|shipped|paquete.*enviado/i.test(txt)) {
+          return Promise.resolve({ blocked: true, reason: "NOT_SHIPPED" });
+        }
+        const k = makeMailKey(d.folio || d.orderNumber || d.purchaseNumber, d.to || d.to_email || d.email, "enviado");
+        if (isAlreadyDone(k)) {
+          return Promise.resolve({ blocked: true, reason: "ALREADY_SENT_ONCE" });
+        }
+        return prevFn.apply(this, arguments);
+      };
+      window.triggerAutomatedEmail.__dcOneShot = true;
+    }
+
+    if (window.emailjs && typeof window.emailjs.send === "function" && !window.emailjs.__dcOneShot) {
+      const prevSend = window.emailjs.send.bind(window.emailjs);
+      window.emailjs.send = function (serviceId, templateId, templateParams, publicKey) {
+        const tp = templateParams || {};
+        const txt = String(tp.status || tp.subject || tp.message || "");
+        const isOrderMail = /estatus de tu pedido|actualizaci[oó]n de tu pedido|enviado|en proceso|pendiente|listo para enviar|paquete/i.test(txt);
+        if (isOrderMail && !/enviado|shipped|paquete.*enviado/i.test(txt)) {
+          return Promise.resolve({ status: 200, text: "BLOCKED_NOT_SHIPPED" });
+        }
+        const k = makeMailKey(tp.folio || tp.order_id, tp.to_email || tp.email || tp.to, "enviado");
+        if (isAlreadyDone(k)) {
+          return Promise.resolve({ status: 200, text: "BLOCKED_DUPLICATE" });
+        }
+        return prevSend(serviceId, templateId, templateParams, publicKey);
+      };
+      window.emailjs.__dcOneShot = true;
+    }
+  }
+
+  hookTransport();
+  const poll = setInterval(hookTransport, 50);
+  setTimeout(function () { clearInterval(poll); }, 10000);
+})();
 (function () {
   const AI_KB_KEY = "darecore_ai_knowledge";
   const GUEST_EMAIL_KEY = "darecore_guest_email";
