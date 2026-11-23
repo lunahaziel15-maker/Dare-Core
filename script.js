@@ -3748,3 +3748,221 @@ window.addEventListener('click', function(e) {
         };
     }
 })();
+/* DARECORE LIVE CLIENT ORDER & STATUS GUARD */
+(function () {
+  if (window.__dcLiveClientOrderGuardInstalled) return;
+  window.__dcLiveClientOrderGuardInstalled = true;
+
+  const ORDERS_KEY = "darecore_orders";
+  const DELIVERED_KEY = "darecore_delivered_orders";
+  const bc = (typeof BroadcastChannel !== "undefined") ? new BroadcastChannel("darecore_orders_sync") : null;
+
+  function safeParseArray(raw) {
+    if (!raw) return [];
+    try {
+      const p = JSON.parse(raw);
+      return Array.isArray(p) ? p : (p && typeof p === "object" ? Object.values(p) : []);
+    } catch (_) {
+      return [];
+    }
+  }
+
+  function loadOrders() {
+    const merged = new Map();
+    ["darecore_orders", "dc_orders", "orders"].forEach(function (k) {
+      try {
+        safeParseArray(localStorage.getItem(k)).forEach(function (item) {
+          if (!item || typeof item !== "object") return;
+          const folio = String(item.id || item.folio || item.purchaseNumber || item.orderNumber || "").replace(/^#/, "").trim();
+          if (!folio) return;
+          const prev = merged.get(folio) || {};
+          merged.set(folio, Object.assign({}, prev, item, {
+            id: folio,
+            folio: folio,
+            status: item.status || item.estado || prev.status || prev.estado || "Pendiente",
+            estado: item.estado || item.status || prev.estado || prev.status || "Pendiente",
+            updatedAt: item.updatedAt || prev.updatedAt || new Date().toISOString()
+          }));
+        });
+      } catch (_) {}
+    });
+    return Array.from(merged.values());
+  }
+
+  function saveOrders(list, meta) {
+    try {
+      const s = JSON.stringify(list);
+      localStorage.setItem(ORDERS_KEY, s);
+      localStorage.setItem("dc_orders", s);
+    } catch (_) {}
+    try {
+      if (bc) bc.postMessage({ type: "orders_sync", orders: list, meta: meta || null, ts: Date.now() });
+    } catch (_) {}
+    try {
+      window.dispatchEvent(new CustomEvent("darecore:orders:updated", { detail: { orders: list, meta: meta || null } }));
+    } catch (_) {}
+  }
+
+  function upsertOrder(folio, patch) {
+    const cleanFolio = String(folio || "").replace(/^#/, "").trim();
+    if (!cleanFolio) return;
+    const list = loadOrders();
+    let idx = list.findIndex(function (o) {
+      return String(o.id || o.folio || "").replace(/^#/, "").toUpperCase() === cleanFolio.toUpperCase();
+    });
+    const nowIso = new Date().toISOString();
+    if (idx >= 0) {
+      list[idx] = Object.assign({}, list[idx], patch, {
+        id: cleanFolio,
+        folio: cleanFolio,
+        status: (patch && (patch.status || patch.estado)) || list[idx].status || list[idx].estado || "Pendiente",
+        estado: (patch && (patch.estado || patch.status)) || list[idx].estado || list[idx].status || "Pendiente",
+        updatedAt: nowIso
+      });
+    } else {
+      list.unshift(Object.assign({
+        id: cleanFolio,
+        folio: cleanFolio,
+        status: "Pendiente",
+        estado: "Pendiente",
+        createdAt: nowIso,
+        updatedAt: nowIso
+      }, patch || {}));
+    }
+    saveOrders(list, { folio: cleanFolio, status: (patch && (patch.status || patch.estado)) || "Pendiente" });
+  }
+
+  function notifyClient(msg) {
+    if (!msg) return;
+    if (typeof window.showFloatingToast === "function") {
+      try {
+        window.showFloatingToast(msg);
+        return;
+      } catch (_) {}
+    }
+    let box = document.getElementById("dcLiveOrderBanner");
+    if (!box) {
+      box = document.createElement("div");
+      box.id = "dcLiveOrderBanner";
+      box.style.cssText = "position:fixed;bottom:20px;right:20px;z-index:99999;background:#111827;color:#fff;padding:12px 16px;border-radius:10px;font-size:13px;font-weight:600;box-shadow:0 8px 24px rgba(0,0,0,0.25);";
+      document.body.appendChild(box);
+    }
+    box.textContent = msg;
+    box.style.display = "block";
+    clearTimeout(box._t);
+    box._t = setTimeout(function () { box.style.display = "none"; }, 3600);
+  }
+
+  function renderClientOrdersListIfNeeded() {
+    const orders = loadOrders();
+    if (!orders.length) return;
+
+    // Si hay algún contenedor con "Aún no tienes pedidos registrados aquí", mostrar los pedidos guardados con su estatus actual
+    const emptyMsgs = Array.from(document.querySelectorAll("p, div, span")).filter(function (el) {
+      return /a[uú]n no tienes pedidos registrados aqu[ií]/i.test((el.textContent || "").trim());
+    });
+
+    emptyMsgs.forEach(function (el) {
+      const container = el.parentElement;
+      if (!container) return;
+      if (container.querySelector("[data-dc-client-orders-list='1']")) return;
+      el.style.display = "none";
+
+      const listBox = document.createElement("div");
+      listBox.setAttribute("data-dc-client-orders-list", "1");
+      listBox.style.cssText = "display:grid;gap:10px;padding:12px 4px;";
+      listBox.innerHTML = orders.map(function (o) {
+        const st = o.status || o.estado || "Pendiente";
+        const f = String(o.id || o.folio || "").replace(/^#/, "");
+        return '<div style="padding:12px 14px;border-radius:12px;border:1px solid rgba(255,255,255,0.14);background:rgba(255,255,255,0.04);display:flex;justify-content:space-between;align-items:center;gap:10px;">' +
+          '<div><div style="font-weight:700;color:#fff;">Pedido #' + f + '</div>' +
+          (o.total ? '<div style="font-size:12px;color:#d1d5db;">Total: ' + o.total + '</div>' : '') + '</div>' +
+          '<span style="padding:5px 10px;border-radius:999px;font-size:12px;font-weight:700;background:#1f2937;color:#34d399;border:1px solid rgba(52,211,153,0.35);">' + st + '</span>' +
+          '</div>';
+      }).join("");
+      container.appendChild(listBox);
+    });
+
+    // Actualizar badges o textos de estatus en tarjetas existentes de pedidos
+    const byFolio = new Map(orders.map(function (o) {
+      return [String(o.id || o.folio || "").replace(/^#/, "").toUpperCase(), o];
+    }));
+
+    document.querySelectorAll("article, section, div, tr, li").forEach(function (card) {
+      if (card.children.length > 14) return;
+      const m = (card.textContent || "").match(/#(COMPRA|PEDIDO)-[A-Z0-9_-]+/i);
+      if (!m) return;
+      const clean = m[0].replace(/^#/, "").toUpperCase();
+      const found = byFolio.get(clean);
+      if (!found) return;
+      const st = found.status || found.estado || "Pendiente";
+      let tag = card.querySelector("[data-dc-status-tag='1']");
+      if (!tag) {
+        tag = document.createElement("span");
+        tag.setAttribute("data-dc-status-tag", "1");
+        tag.style.cssText = "display:inline-block;margin-left:8px;padding:3px 9px;border-radius:999px;font-size:11px;font-weight:700;background:#065f46;color:#ecfdf5;";
+        card.appendChild(tag);
+      }
+      tag.textContent = "Estatus: " + st;
+    });
+  }
+
+  // Capturar cuando el cliente procesa pago hacia WhatsApp para registrar el pedido al instante
+  document.addEventListener("click", function (e) {
+    const btn = e.target && e.target.closest ? e.target.closest("button, a") : null;
+    if (!btn) return;
+    const txt = (btn.textContent || "").trim().toLowerCase();
+
+    if (/procesar\s*pago|enviar\s*pedido|whatsapp/i.test(txt)) {
+      setTimeout(function () {
+        const bodyTxt = document.body ? (document.body.innerText || "") : "";
+        const m = bodyTxt.match(/#(COMPRA|PEDIDO)-[A-Z0-9_-]+/i);
+        if (m) {
+          const folio = m[0].replace(/^#/, "");
+          upsertOrder(folio, {
+            status: "Pedido pendiente",
+            estado: "Pedido pendiente"
+          });
+          notifyClient("Pedido #" + folio + " enviado a WhatsApp — Estatus: Pedido pendiente");
+          renderClientOrdersListIfNeeded();
+        }
+      }, 150);
+    }
+
+    if (/actualizar\s*estatus|actualizar\s*estado/i.test(txt)) {
+      setTimeout(function () {
+        renderClientOrdersListIfNeeded();
+        const orders = loadOrders();
+        if (orders.length > 0) {
+          const latest = orders[0];
+          const f = String(latest.id || latest.folio || "").replace(/^#/, "");
+          const st = latest.status || latest.estado || "Pendiente";
+          notifyClient("Estatus actualizado — Pedido #" + f + ": " + st);
+        }
+      }, 120);
+    }
+  }, true);
+
+  window.addEventListener("storage", function (e) {
+    if (!e || !e.key || /order|pedido|compra|darecore/i.test(e.key)) {
+      renderClientOrdersListIfNeeded();
+    }
+  });
+
+  if (bc) {
+    bc.onmessage = function (ev) {
+      if (ev && ev.data && ev.data.type === "orders_sync") {
+        renderClientOrdersListIfNeeded();
+        if (ev.data.meta && ev.data.meta.folio) {
+          notifyClient("Pedido #" + String(ev.data.meta.folio).replace(/^#/, "") + " actualizado a: " + ev.data.meta.status);
+        }
+      }
+    };
+  }
+
+  document.addEventListener("DOMContentLoaded", function () {
+    renderClientOrdersListIfNeeded();
+    setTimeout(renderClientOrdersListIfNeeded, 400);
+    setTimeout(renderClientOrdersListIfNeeded, 1200);
+  });
+})();

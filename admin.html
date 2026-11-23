@@ -3505,5 +3505,158 @@
       });
     })();
   </script>
+<script id="dcDeliverQuickButtonScript">
+    (function () {
+      const ORDERS_KEY = "darecore_orders";
+      const DELIVERED_KEY = "darecore_delivered_orders";
+      const bc = (typeof BroadcastChannel !== "undefined") ? new BroadcastChannel("darecore_orders_sync") : null;
+
+      function isoDay(d) {
+        const dt = d ? new Date(d) : new Date();
+        if (isNaN(dt.getTime())) return new Date().toISOString().slice(0, 10);
+        return dt.getFullYear() + "-" + String(dt.getMonth() + 1).padStart(2, "0") + "-" + String(dt.getDate()).padStart(2, "0");
+      }
+
+      function getDelivered() {
+        try {
+          const r = localStorage.getItem(DELIVERED_KEY);
+          const p = r ? JSON.parse(r) : [];
+          return Array.isArray(p) ? p : [];
+        } catch (_) {
+          return [];
+        }
+      }
+
+      function saveDelivered(arr) {
+        try {
+          localStorage.setItem(DELIVERED_KEY, JSON.stringify(arr));
+        } catch (_) {}
+      }
+
+      function getOrders() {
+        try {
+          const r = localStorage.getItem(ORDERS_KEY);
+          const p = r ? JSON.parse(r) : [];
+          return Array.isArray(p) ? p : [];
+        } catch (_) {
+          return [];
+        }
+      }
+
+      function saveOrders(arr, meta) {
+        try {
+          const s = JSON.stringify(arr);
+          localStorage.setItem(ORDERS_KEY, s);
+          localStorage.setItem("dc_orders", s);
+        } catch (_) {}
+        try {
+          if (bc) bc.postMessage({ type: "orders_sync", orders: arr, meta: meta || null, ts: Date.now() });
+        } catch (_) {}
+        try {
+          window.dispatchEvent(new CustomEvent("darecore:orders:updated", { detail: { orders: arr, meta: meta || null } }));
+        } catch (_) {}
+      }
+
+      function moveOrderToDelivered(folio, extraText) {
+        const cleanFolio = String(folio || "").replace(/^#/, "").trim();
+        if (!cleanFolio) return;
+        const today = isoDay(new Date());
+        const orders = getOrders();
+        let matched = null;
+
+        const nextOrders = orders.map(function (o) {
+          const f = String(o.id || o.folio || "").replace(/^#/, "");
+          if (f.toUpperCase() === cleanFolio.toUpperCase()) {
+            matched = Object.assign({}, o, {
+              id: cleanFolio,
+              folio: cleanFolio,
+              status: "Entregado",
+              estado: "Entregado",
+              deliveredAt: o.deliveredAt || today,
+              updatedAt: new Date().toISOString()
+            });
+            return matched;
+          }
+          return o;
+        });
+
+        if (!matched) {
+          matched = {
+            id: cleanFolio,
+            folio: cleanFolio,
+            status: "Entregado",
+            estado: "Entregado",
+            summary: extraText || "",
+            deliveredAt: today,
+            updatedAt: new Date().toISOString()
+          };
+          nextOrders.unshift(matched);
+        }
+
+        const delivered = getDelivered();
+        const idx = delivered.findIndex(function (d) {
+          return String(d.id || d.folio || "").replace(/^#/, "").toUpperCase() === cleanFolio.toUpperCase();
+        });
+        if (idx >= 0) {
+          delivered[idx] = Object.assign({}, delivered[idx], matched);
+        } else {
+          delivered.unshift(matched);
+        }
+
+        saveOrders(nextOrders, { folio: cleanFolio, status: "Entregado" });
+        saveDelivered(delivered);
+
+        const countEl = document.getElementById("deliveredCount");
+        if (countEl) {
+          countEl.textContent = String(delivered.length);
+        }
+
+        if (typeof window.renderDeliveredPanelAndCalendar === "function") {
+          window.renderDeliveredPanelAndCalendar();
+        }
+      }
+
+      function injectDeliverButtons() {
+        document.querySelectorAll("select").forEach(function (sel) {
+          const opts = Array.from(sel.options || []).map(function (o) { return (o.textContent || o.value || "").trim().toLowerCase(); });
+          const isStatusSelect = opts.some(function (t) { return /enviado|en proceso|pendiente|entregado/i.test(t); });
+          if (!isStatusSelect) return;
+
+          const parent = sel.parentElement;
+          if (!parent || parent.querySelector("[data-dc-deliver-btn='1']")) return;
+
+          const card = sel.closest("article, section, div, tr, li");
+          const cardText = card ? (card.textContent || "") : "";
+          const folioMatch = cardText.match(/#(COMPRA|PEDIDO)-[A-Z0-9_-]+/i);
+          if (!folioMatch) return;
+
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.setAttribute("data-dc-deliver-btn", "1");
+          btn.textContent = "Marcar como Entregado";
+          btn.style.cssText = "margin-left:8px;padding:6px 12px;border-radius:8px;border:none;background:#059669;color:#ffffff;font-size:12px;font-weight:700;cursor:pointer;";
+
+          btn.addEventListener("click", function (ev) {
+            ev.preventDefault();
+            ev.stopPropagation();
+            const entOpt = Array.from(sel.options || []).find(function (o) { return /entregado/i.test(o.value || o.textContent || ""); });
+            if (entOpt) {
+              sel.value = entOpt.value;
+              sel.dispatchEvent(new Event("change", { bubbles: true }));
+            }
+            moveOrderToDelivered(folioMatch[0], cardText.slice(0, 120));
+          });
+
+          parent.appendChild(btn);
+        });
+      }
+
+      document.addEventListener("DOMContentLoaded", function () {
+        injectDeliverButtons();
+        setTimeout(injectDeliverButtons, 500);
+        setTimeout(injectDeliverButtons, 1400);
+      });
+    })();
+  </script>
 </body>
 </html>
