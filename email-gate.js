@@ -1,12 +1,15 @@
-﻿(function () {
+(function () {
   const EMAIL_KEY = "darecore_customer_email";
   const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const isAdminPage = /admin\.html/i.test(window.location.pathname || "");
 
   function getSavedEmail() {
+    if (isAdminPage) return "";
     const firebaseMail = window.auth && window.auth.currentUser && window.auth.currentUser.email;
     if (firebaseMail && EMAIL_REGEX.test(firebaseMail)) {
-      localStorage.setItem(EMAIL_KEY, firebaseMail.trim().toLowerCase());
-      return firebaseMail.trim().toLowerCase();
+      const clean = firebaseMail.trim().toLowerCase();
+      localStorage.setItem(EMAIL_KEY, clean);
+      return clean;
     }
     const mail = (localStorage.getItem(EMAIL_KEY) || "").trim().toLowerCase();
     return EMAIL_REGEX.test(mail) ? mail : "";
@@ -14,7 +17,7 @@
 
   function cleanGhostOrders() {
     const mail = getSavedEmail();
-    const hasFirebaseUser = window.auth && window.auth.currentUser;
+    const hasFirebaseUser = !isAdminPage && window.auth && window.auth.currentUser;
     if (!mail && !hasFirebaseUser) {
       Object.keys(localStorage).forEach((k) => {
         if (/pedido|order|pending/i.test(k)) {
@@ -35,7 +38,7 @@
   }
 
   function ensureEmailModal() {
-    if (document.getElementById("dc-email-gate-modal")) return;
+    if (isAdminPage || document.getElementById("dc-email-gate-modal")) return;
     const modal = document.createElement("div");
     modal.id = "dc-email-gate-modal";
     modal.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,0.82);display:none;align-items:center;justify-content:center;z-index:999999;padding:20px;font-family:inherit;";
@@ -118,6 +121,7 @@
   }
 
   function requestEmailThen(callback) {
+    if (isAdminPage) return;
     if (getSavedEmail()) {
       callback();
       return;
@@ -126,12 +130,17 @@
     window.__dcPendingAction = callback;
     const modal = document.getElementById("dc-email-gate-modal");
     const input = document.getElementById("dc-email-gate-input");
+    if (!modal) return;
     modal.style.display = "flex";
     setTimeout(() => input && input.focus(), 50);
   }
 
   function renderEmailBadge() {
     let badge = document.getElementById("dc-user-email-bar");
+    if (isAdminPage) {
+      if (badge) badge.remove();
+      return;
+    }
     const mail = getSavedEmail();
     if (!mail) {
       if (badge) badge.remove();
@@ -178,6 +187,7 @@
   }
 
   document.addEventListener("click", function (e) {
+    if (isAdminPage) return;
     const btn = e.target.closest("button, a");
     if (!btn) return;
     if (btn.closest("#dc-email-gate-modal") || btn.id === "dc-logout-email-btn") return;
@@ -195,12 +205,16 @@
   window.addEventListener("DOMContentLoaded", () => {
     hideCartGoogleButton();
     renderEmailBadge();
-    if (window.auth && window.auth.onAuthStateChanged) {
+    if (!isAdminPage && window.auth && window.auth.onAuthStateChanged) {
       window.auth.onAuthStateChanged(() => renderEmailBadge());
     }
     const observer = new MutationObserver(() => {
       hideCartGoogleButton();
       cleanGhostOrders();
+      if (isAdminPage) {
+        const stray = document.getElementById("dc-user-email-bar");
+        if (stray) stray.remove();
+      }
     });
     observer.observe(document.body, { childList: true, subtree: true });
   });
