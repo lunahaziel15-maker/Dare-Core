@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DARECORE // Dare Lab - Crea tu prenda a medida</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Grotesk:wght@400;500;600;700&display=block" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.5.0/model-viewer.min.js"></script>
+    <style>
+        .lab-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 30px;
+            margin-bottom: 60px;
+        }
+        .lab-box {
+            background: #ffffff;
+            border: 1px solid rgba(11, 11, 14, 0.1);
+            border-radius: 26px;
+            padding: 28px;
+            margin-bottom: 22px;
+            box-shadow: 0 12px 30px rgba(11, 11, 14, 0.05);
+        }
+        .lab-step-title {
+            font-size: 14px;
+            font-weight: 800;
+            margin-bottom: 16px;
+            color: #ff2a00;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+        }
+        .options-row {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+        .option-card {
+            border: 1.5px solid rgba(11, 11, 14, 0.12);
+            border-radius: 18px;
+            padding: 15px;
+            cursor: pointer;
+            background: #ffffff;
+            transition: all 0.2s ease;
+        }
+        .option-card:hover, .option-card.selected {
+            border-color: #ff2a00 !important;
+            box-shadow: 0 6px 18px rgba(255, 42, 0, 0.12);
+        }
+        .form-input {
+            width: 100%;
+            border: 1.5px solid #ff2a00;
+            border-radius: 16px;
+            padding: 11px 15px;
+            margin-top: 8px;
+            margin-bottom: 16px;
+            font-size: 13px;
+            background: #ffffff;
+            color: #0b0b0e;
+        }
+        @media(max-width: 900px) {
+            .lab-grid { grid-template-columns: 1fr; }
+            .options-row { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="nav-container">
+            <a href="index.html" class="logo">DARE<span>CORE</span></a>
+            <ul class="nav-links">
+                <li><a href="index.html">INICIO</a></li>
+                <li><a href="hombre.html">HOMBRE</a></li>
+                <li><a href="mujer.html">MUJER</a></li>
+                <li><a href="oversize.html">OVERSIZE</a></li>
+                <li><a href="personalizar.html" class="active">PERSONALIZAR</a></li>
+            </ul>
+            <div class="nav-actions">
+                <input type="text" class="search-box" placeholder="Buscar en lab...">
+                <button class="cart-btn" type="button" aria-label="Carrito de compras">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <circle cx="9" cy="21" r="1"></circle>
+                        <circle cx="20" cy="21" r="1"></circle>
+                        <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                    </svg>
+                    <span class="cart-badge">0</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <section class="hero">
+        <div class="hero-content">
+            <span style="color: #ff2a00; font-size: 11px; font-weight: 800; letter-spacing: 1px;">DARE LAB // CUSTOM STUDIO</span>
+            <h1>DARE LAB // CREA TU PRENDA A MEDIDA</h1>
+        </div>
+    </section>
+
+    <main class="container">
+        <div class="lab-grid">
+            <div>
+                <div class="lab-box">
+                    <div class="lab-step-title">01. Selecciona Base & Gramaje</div>
+                    <div class="options-row" id="customBasesContainer"></div>
+                </div>
+
+                <div class="lab-box">
+                    <div class="lab-step-title">02. Técnica, Posición & Detalles de tu Diseño</div>
+
+                    <label style="font-size: 12px; color: #52525b; font-weight: 600;">Técnica de estampado</label>
+                    <select class="form-input" id="customTechniqueSelect">
+                        <option value="Serigrafía HD" data-extra="120">Serigrafía HD (Alta Densidad) (+ $120 MXN)</option>
+                        <option value="Bordado 3D Relieve" data-extra="180">Bordado 3D Relieve (+ $180 MXN)</option>
+                        <option value="DTF Textil Ultrafino" data-extra="100">DTF Textil Ultrafino (+ $100 MXN)</option>
+                    </select>
+
+                    <label style="font-size: 12px; color: #52525b; font-weight: 600;">Dónde va el estampado</label>
+                    <select class="form-input" id="customPlacementSelect">
+                        <option value="Pecho Izquierdo" data-extra="0">Pecho Izquierdo (+ $0 MXN)</option>
+                        <option value="Espalda Completa" data-extra="80">Espalda Completa (+ $80 MXN)</option>
+                        <option value="Pecho + Espalda" data-extra="140">Pecho + Espalda (+ $140 MXN)</option>
+                        <option value="Manga / Detalle" data-extra="60">Manga / Detalle (+ $60 MXN)</option>
+                    </select>
+
+                    <label style="font-size: 12px; color: #52525b; font-weight: 600;">Sube tu archivo o logotipo (PNG, AI, PDF)</label>
+                    <input type="file" class="form-input" id="customDesignFile">
+
+                    <label style="font-size: 12px; color: #52525b; font-weight: 600;">Instrucciones adicionales</label>
+                    <textarea class="form-input" id="customNotes" rows="3" placeholder="Ej: Logo en pecho izquierdo de 10cm y diseño grande en espalda..."></textarea>
+
+                    <label style="font-size: 12px; color: #52525b; font-weight: 600;">Número de WhatsApp</label>
+                    <input type="tel" class="form-input" id="customWhatsapp" placeholder="Ej: 477 123 4567">
+                </div>
+            </div>
+
+            <div>
+                <div class="lab-box" style="position: sticky; top: 90px;">
+                    <div class="lab-step-title">Resumen de Cotización</div>
+                    <p style="font-size: 13px; color: #52525b; margin-bottom: 15px;">Configuración estimada para 1 pieza personalizada:</p>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 13px;">
+                        <span>Prenda Base:</span>
+                        <strong id="summaryBaseName">Boxy Tee 240G</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 13px;">
+                        <span>Estampado:</span>
+                        <strong id="summaryTechName">Serigrafía HD • Pecho Izquierdo</strong>
+                    </div>
+                    <hr style="border-color: rgba(11, 11, 14, 0.1); margin: 15px 0;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <span>Total Estimado:</span>
+                        <span id="summaryTotalPrice" style="font-size: 26px; font-weight: 900; color: #0b0b0e;">$700 MXN</span>
+                    </div>
+                    <button type="button" class="btn-primary" id="requestMockupBtn" style="width: 100%; text-align: center;">SOLICITAR MOCKUP DIGITAL</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="footer-container">
+            <div class="footer-col">
+                <h4>DARE<span style="color:#ff4d1a;">CORE</span></h4>
+                <p>Tu estilo. Tus reglas. Prendas creadas con actitud, motorsport vibes y calidad premium desde León, Gto.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+    <script>
+        const firebaseConfig = {
+  apiKey: "AIzaSyDW2RFAShT6tnKV-tPMaSmE_DtjvHoGPRI",
+  authDomain: "dare-core-web.firebaseapp.com",
+  databaseURL: "https://dare-core-web-default-rtdb.firebaseio.com",
+  projectId: "dare-core-web",
+  storageBucket: "dare-core-web.firebasestorage.app",
+  messagingSenderId: "160010293216",
+  appId: "1:160010293216:web:3babdae0e3e80f18dfe585",
+  measurementId: "G-LESMYFSKDH"
+};
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        window.db = firebase.firestore();
+        window.auth = firebase.auth();
+    </script>
+    <script src="script.js"></script>
+    <script src="smooth-nav.js"></script>
+
+    <!-- ACTUALIZACIÓN EN TIEMPO REAL DEL RESUMEN DE COTIZACIÓN (DARE LAB) -->
+    <script>
+    (function () {
+        function getBasePrice() {
+            const baseContainer = document.getElementById('customBasesContainer');
+            if (!baseContainer) return 580;
+
+            const baseSelect = baseContainer.querySelector('select');
+            if (baseSelect && baseSelect.selectedOptions[0]) {
+                const opt = baseSelect.selectedOptions[0];
+                if (opt.dataset && opt.dataset.price) return parseFloat(opt.dataset.price) || 580;
+                const m = (opt.textContent || '').match(/\$\s*(\d+(?:[.,]\d+)?)/);
+                if (m) return parseFloat(m[1].replace(',', ''));
+            }
+
+            const selectedCard = baseContainer.querySelector('.option-card.selected');
+            if (selectedCard) {
+                if (selectedCard.dataset && selectedCard.dataset.price) return parseFloat(selectedCard.dataset.price) || 580;
+                const m = (selectedCard.textContent || '').match(/\$\s*(\d+(?:[.,]\d+)?)/);
+                if (m) return parseFloat(m[1].replace(',', ''));
+            }
+
+            const priceMatch = (baseContainer.textContent || '').match(/\$\s*(\d+(?:[.,]\d+)?)\s*MXN/i);
+            return priceMatch ? parseFloat(priceMatch[1].replace(',', '')) : 580;
+        }
+
+        function updateQuoteSummary() {
+            const techSelect = document.getElementById('customTechniqueSelect');
+            const placeSelect = document.getElementById('customPlacementSelect');
+            const summaryTechEl = document.getElementById('summaryTechName');
+            const summaryTotalEl = document.getElementById('summaryTotalPrice');
+
+            if (!techSelect || !placeSelect || !summaryTotalEl) return;
+
+            const techOpt = techSelect.selectedOptions[0];
+            const placeOpt = placeSelect.selectedOptions[0];
+
+            const basePrice = getBasePrice();
+            const techExtra = techOpt ? parseFloat(techOpt.dataset.extra || '0') : 0;
+            const placeExtra = placeOpt ? parseFloat(placeOpt.dataset.extra || '0') : 0;
+            const total = basePrice + techExtra + placeExtra;
+
+            if (summaryTechEl && techOpt && placeOpt) {
+                summaryTechEl.textContent = `${techOpt.value} • ${placeOpt.value}`;
+            }
+            summaryTotalEl.textContent = `$${total.toLocaleString('es-MX')} MXN`;
+        }
+
+        document.addEventListener('change', function (e) {
+            if (
+                e.target.id === 'customTechniqueSelect' ||
+                e.target.id === 'customPlacementSelect' ||
+                e.target.closest('#customBasesContainer')
+            ) {
+                setTimeout(updateQuoteSummary, 15);
+            }
+        });
+
+        document.addEventListener('click', function (e) {
+            if (e.target.closest('#customBasesContainer')) {
+                setTimeout(updateQuoteSummary, 20);
+            }
+        });
+
+        window.addEventListener('DOMContentLoaded', () => setTimeout(updateQuoteSummary, 150));
+        setTimeout(updateQuoteSummary, 350);
+    })();
+    </script>
+    <script type="module" src="tts-config.js"></script>
+<script src="darecore-ai.js"></script>
+</body>
+</html>

@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
@@ -141,20 +141,20 @@
       <span>DARE</span><span class="red">CORE</span><span class="admin-tag">ADMIN</span>
     </a>
     <nav class="dc-nav">
-      <a href="index.html">VER TIENDA PÚBLICA ↗</a>
-      <button type="button" id="logoutAiPageBtn">CERRAR SESIÓN</button>
+      <a href="index.html">VER TIENDA PÃšBLICA â†—</a>
+      <button type="button" id="logoutAiPageBtn">CERRAR SESIÃ“N</button>
     </nav>
   </header>
 
   <section id="darecoreAiKnowledgeAdmin">
     <div class="dc-ai-head">
-      <h2 class="dc-ai-heading">DARECORE INTELLIGENCE • INFORMACIÓN PARA LA IA</h2>
+      <h2 class="dc-ai-heading">DARECORE INTELLIGENCE â€¢ INFORMACIÃ“N PARA LA IA</h2>
       <span class="dc-ai-status" id="darecoreAiKbStatus">Listo</span>
     </div>
-    <p class="dc-ai-desc">Escribe aquí la descripción de Dare Core, tallas, envíos, tiempos, formas de pago y reglas de personalización. La IA usará este texto para responder.</p>
+    <p class="dc-ai-desc">Escribe aquÃ­ la descripciÃ³n de Dare Core, tallas, envÃ­os, tiempos, formas de pago y reglas de personalizaciÃ³n. La IA usarÃ¡ este texto para responder.</p>
     <textarea id="darecoreAiKbTextarea" rows="10"></textarea>
     <div class="dc-ai-actions">
-      <button type="button" id="saveDarecoreAiKbBtn">Guardar información de la IA</button>
+      <button type="button" id="saveDarecoreAiKbBtn">Guardar informaciÃ³n de la IA</button>
       <button type="button" id="resetDarecoreAiKbBtn">Restaurar texto base</button>
     </div>
   </section>
@@ -162,7 +162,7 @@
   <script>
     (function () {
       const STORAGE_KEY = "darecore_ai_knowledge";
-      const DEFAULT_TEXT = "Dare Core es una marca local en León, Guanajuato, dedicada a la creación y venta de ropa urbana y playeras personalizadas 100 % de algodón.\n\nLo que ofrecen:\n- Prendas básicas y estilo urbano: fabrican playeras (incluyendo cortes oversize y sin mangas) elaboradas en algodón suave.\n- Personalización completa: estampan diseños exclusivos, frases o detalles a petición del cliente.";
+      const DEFAULT_TEXT = "Dare Core es una marca local en LeÃ³n, Guanajuato, dedicada a la creaciÃ³n y venta de ropa urbana y playeras personalizadas 100 % de algodÃ³n.\n\nLo que ofrecen:\n- Prendas bÃ¡sicas y estilo urbano: fabrican playeras (incluyendo cortes oversize y sin mangas) elaboradas en algodÃ³n suave.\n- PersonalizaciÃ³n completa: estampan diseÃ±os exclusivos, frases o detalles a peticiÃ³n del cliente.";
 
       const textarea = document.getElementById("darecoreAiKbTextarea");
       const saveBtn = document.getElementById("saveDarecoreAiKbBtn");
@@ -178,7 +178,7 @@
       saveBtn?.addEventListener("click", function () {
         const val = (textarea?.value || "").trim();
         if (!val) {
-          if (statusEl) statusEl.textContent = "Escribe información antes de guardar.";
+          if (statusEl) statusEl.textContent = "Escribe informaciÃ³n antes de guardar.";
           return;
         }
         localStorage.setItem(STORAGE_KEY, val);
@@ -266,7 +266,7 @@
     const saveBtn =
       document.getElementById("saveDarecoreAiKbBtn") ||
       Array.from(document.querySelectorAll("button")).find(b =>
-        (b.textContent || "").toLowerCase().includes("guardar información")
+        (b.textContent || "").toLowerCase().includes("guardar informaciÃ³n")
       );
     if (saveBtn && saveBtn.parentElement) return saveBtn.parentElement;
     return textarea ? textarea.parentElement : null;
@@ -282,8 +282,8 @@
     const micBtn = document.createElement("button");
     micBtn.type = "button";
     micBtn.id = "dcAiMicDictateBtn";
-    micBtn.setAttribute("aria-label", "Micrófono");
-    micBtn.title = "Micrófono";
+    micBtn.setAttribute("aria-label", "MicrÃ³fono");
+    micBtn.title = "MicrÃ³fono";
     micBtn.innerHTML = GEMINI_MIC_SVG;
 
     const applyIdleStyle = () => {
@@ -378,7 +378,7 @@
     recognition.onerror = function (ev) {
       setListeningState(false);
       if (statusEl) {
-        statusEl.textContent = "Micrófono: " + (ev.error || "error");
+        statusEl.textContent = "MicrÃ³fono: " + (ev.error || "error");
       }
     };
 
@@ -424,5 +424,6 @@
   setInterval(mountGeminiMic, 500);
 })();
 </script>
+  <script src="email-gate.js"></script>
 </body>
 </html>

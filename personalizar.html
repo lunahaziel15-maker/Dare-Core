@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -107,16 +107,16 @@
                 </div>
 
                 <div class="lab-box">
-                    <div class="lab-step-title">02. Técnica, Posición & Detalles de tu Diseño</div>
+                    <div class="lab-step-title">02. TÃ©cnica, PosiciÃ³n & Detalles de tu DiseÃ±o</div>
 
-                    <label style="font-size: 12px; color: #52525b; font-weight: 600;">Técnica de estampado</label>
+                    <label style="font-size: 12px; color: #52525b; font-weight: 600;">TÃ©cnica de estampado</label>
                     <select class="form-input" id="customTechniqueSelect">
-                        <option value="Serigrafía HD" data-extra="120">Serigrafía HD (Alta Densidad) (+ $120 MXN)</option>
+                        <option value="SerigrafÃ­a HD" data-extra="120">SerigrafÃ­a HD (Alta Densidad) (+ $120 MXN)</option>
                         <option value="Bordado 3D Relieve" data-extra="180">Bordado 3D Relieve (+ $180 MXN)</option>
                         <option value="DTF Textil Ultrafino" data-extra="100">DTF Textil Ultrafino (+ $100 MXN)</option>
                     </select>
 
-                    <label style="font-size: 12px; color: #52525b; font-weight: 600;">Dónde va el estampado</label>
+                    <label style="font-size: 12px; color: #52525b; font-weight: 600;">DÃ³nde va el estampado</label>
                     <select class="form-input" id="customPlacementSelect">
                         <option value="Pecho Izquierdo" data-extra="0">Pecho Izquierdo (+ $0 MXN)</option>
                         <option value="Espalda Completa" data-extra="80">Espalda Completa (+ $80 MXN)</option>
@@ -128,24 +128,24 @@
                     <input type="file" class="form-input" id="customDesignFile">
 
                     <label style="font-size: 12px; color: #52525b; font-weight: 600;">Instrucciones adicionales</label>
-                    <textarea class="form-input" id="customNotes" rows="3" placeholder="Ej: Logo en pecho izquierdo de 10cm y diseño grande en espalda..."></textarea>
+                    <textarea class="form-input" id="customNotes" rows="3" placeholder="Ej: Logo en pecho izquierdo de 10cm y diseÃ±o grande en espalda..."></textarea>
 
-                    <label style="font-size: 12px; color: #52525b; font-weight: 600;">Número de WhatsApp</label>
+                    <label style="font-size: 12px; color: #52525b; font-weight: 600;">NÃºmero de WhatsApp</label>
                     <input type="tel" class="form-input" id="customWhatsapp" placeholder="Ej: 477 123 4567">
                 </div>
             </div>
 
             <div>
                 <div class="lab-box" style="position: sticky; top: 90px;">
-                    <div class="lab-step-title">Resumen de Cotización</div>
-                    <p style="font-size: 13px; color: #52525b; margin-bottom: 15px;">Configuración estimada para 1 pieza personalizada:</p>
+                    <div class="lab-step-title">Resumen de CotizaciÃ³n</div>
+                    <p style="font-size: 13px; color: #52525b; margin-bottom: 15px;">ConfiguraciÃ³n estimada para 1 pieza personalizada:</p>
                     <div style="display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 13px;">
                         <span>Prenda Base:</span>
                         <strong id="summaryBaseName">Boxy Tee 240G</strong>
                     </div>
                     <div style="display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 13px;">
                         <span>Estampado:</span>
-                        <strong id="summaryTechName">Serigrafía HD • Pecho Izquierdo</strong>
+                        <strong id="summaryTechName">SerigrafÃ­a HD â€¢ Pecho Izquierdo</strong>
                     </div>
                     <hr style="border-color: rgba(11, 11, 14, 0.1); margin: 15px 0;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
@@ -162,7 +162,7 @@
         <div class="footer-container">
             <div class="footer-col">
                 <h4>DARE<span style="color:#ff4d1a;">CORE</span></h4>
-                <p>Tu estilo. Tus reglas. Prendas creadas con actitud, motorsport vibes y calidad premium desde León, Gto.</p>
+                <p>Tu estilo. Tus reglas. Prendas creadas con actitud, motorsport vibes y calidad premium desde LeÃ³n, Gto.</p>
             </div>
         </div>
     </footer>
@@ -190,7 +190,7 @@
     <script src="script.js"></script>
     <script src="smooth-nav.js"></script>
 
-    <!-- ACTUALIZACIÓN EN TIEMPO REAL DEL RESUMEN DE COTIZACIÓN (DARE LAB) -->
+    <!-- ACTUALIZACIÃ“N EN TIEMPO REAL DEL RESUMEN DE COTIZACIÃ“N (DARE LAB) -->
     <script>
     (function () {
         function getBasePrice() {
@@ -233,7 +233,7 @@
             const total = basePrice + techExtra + placeExtra;
 
             if (summaryTechEl && techOpt && placeOpt) {
-                summaryTechEl.textContent = `${techOpt.value} • ${placeOpt.value}`;
+                summaryTechEl.textContent = `${techOpt.value} â€¢ ${placeOpt.value}`;
             }
             summaryTotalEl.textContent = `$${total.toLocaleString('es-MX')} MXN`;
         }
@@ -260,5 +260,6 @@
     </script>
     <script type="module" src="tts-config.js"></script>
 <script src="darecore-ai.js"></script>
+  <script src="email-gate.js"></script>
 </body>
 </html>

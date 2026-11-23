@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DARECORE ADMIN - Modificacion de IA</title>
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    body {
+      margin: 0;
+      background: #f4f4f6;
+      color: #111115;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    .dc-header {
+      background: #ffffff;
+      border-bottom: 1px solid #e4e4e7;
+      padding: 16px 32px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+    }
+    .dc-logo {
+      font-weight: 900;
+      font-size: 24px;
+      letter-spacing: -0.6px;
+      text-decoration: none;
+      color: #111115;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .dc-logo .red {
+      color: #ff2a00;
+    }
+    .dc-logo .admin-tag {
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: #111115;
+    }
+    .dc-nav {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+    }
+    .dc-nav a,
+    .dc-nav button {
+      background: none;
+      border: none;
+      color: #111115;
+      text-decoration: none;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.7px;
+      text-transform: uppercase;
+      cursor: pointer;
+      padding: 0;
+    }
+    #darecoreAiKnowledgeAdmin {
+      max-width: 1180px;
+      margin: 28px auto;
+      padding: 26px 28px;
+      background: #111115;
+      color: #ffffff;
+      border: 1.5px solid #ff2a00;
+      border-radius: 24px;
+      box-shadow: 0 18px 42px rgba(0, 0, 0, 0.16);
+    }
+    .dc-ai-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+    .dc-ai-heading {
+      margin: 0;
+      font-size: 20px;
+      font-weight: 900;
+      letter-spacing: 0.3px;
+      text-transform: uppercase;
+    }
+    .dc-ai-status {
+      font-size: 13px;
+      font-weight: 700;
+      color: #ff5500;
+    }
+    .dc-ai-desc {
+      margin: 0 0 16px;
+      font-size: 14px;
+      color: #c8c8d2;
+    }
+    #darecoreAiKbTextarea {
+      width: 100%;
+      box-sizing: border-box;
+      background: #09090c;
+      color: #ffffff;
+      border: 1.5px solid #ffffff;
+      border-radius: 16px;
+      padding: 16px 18px;
+      font-size: 14px;
+      line-height: 1.55;
+      resize: vertical;
+      font-family: inherit;
+    }
+    .dc-ai-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 16px;
+    }
+    #saveDarecoreAiKbBtn {
+      background: linear-gradient(135deg, #ff2a00 0%, #ff5500 100%);
+      color: #ffffff;
+      border: none;
+      border-radius: 999px;
+      padding: 12px 24px;
+      font-size: 13px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+    #resetDarecoreAiKbBtn {
+      background: #232329;
+      color: #ffffff;
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      border-radius: 999px;
+      padding: 12px 20px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <header class="dc-header">
+    <a href="admin.html" class="dc-logo">
+      <span>DARE</span><span class="red">CORE</span><span class="admin-tag">ADMIN</span>
+    </a>
+    <nav class="dc-nav">
+      <a href="index.html">VER TIENDA PÚBLICA ↗</a>
+      <button type="button" id="logoutAiPageBtn">CERRAR SESIÓN</button>
+    </nav>
+  </header>
+
+  <section id="darecoreAiKnowledgeAdmin">
+    <div class="dc-ai-head">
+      <h2 class="dc-ai-heading">DARECORE INTELLIGENCE • INFORMACIÓN PARA LA IA</h2>
+      <span class="dc-ai-status" id="darecoreAiKbStatus">Listo</span>
+    </div>
+    <p class="dc-ai-desc">Escribe aquí la descripción de Dare Core, tallas, envíos, tiempos, formas de pago y reglas de personalización. La IA usará este texto para responder.</p>
+    <textarea id="darecoreAiKbTextarea" rows="10"></textarea>
+    <div class="dc-ai-actions">
+      <button type="button" id="saveDarecoreAiKbBtn">Guardar información de la IA</button>
+      <button type="button" id="resetDarecoreAiKbBtn">Restaurar texto base</button>
+    </div>
+  </section>
+
+  <script>
+    (function () {
+      const STORAGE_KEY = "darecore_ai_knowledge";
+      const DEFAULT_TEXT = "Dare Core es una marca local en León, Guanajuato, dedicada a la creación y venta de ropa urbana y playeras personalizadas 100 % de algodón.\n\nLo que ofrecen:\n- Prendas básicas y estilo urbano: fabrican playeras (incluyendo cortes oversize y sin mangas) elaboradas en algodón suave.\n- Personalización completa: estampan diseños exclusivos, frases o detalles a petición del cliente.";
+
+      const textarea = document.getElementById("darecoreAiKbTextarea");
+      const saveBtn = document.getElementById("saveDarecoreAiKbBtn");
+      const resetBtn = document.getElementById("resetDarecoreAiKbBtn");
+      const statusEl = document.getElementById("darecoreAiKbStatus");
+      const logoutBtn = document.getElementById("logoutAiPageBtn");
+
+      if (textarea) {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        textarea.value = (saved && saved.trim()) ? saved : DEFAULT_TEXT;
+      }
+
+      saveBtn?.addEventListener("click", function () {
+        const val = (textarea?.value || "").trim();
+        if (!val) {
+          if (statusEl) statusEl.textContent = "Escribe información antes de guardar.";
+          return;
+        }
+        localStorage.setItem(STORAGE_KEY, val);
+        if (statusEl) statusEl.textContent = "Guardado (" + new Date().toLocaleTimeString() + ")";
+      });
+
+      resetBtn?.addEventListener("click", function () {
+        if (textarea) textarea.value = DEFAULT_TEXT;
+        localStorage.setItem(STORAGE_KEY, DEFAULT_TEXT);
+        if (statusEl) statusEl.textContent = "Texto base restaurado";
+      });
+
+      logoutBtn?.addEventListener("click", function () {
+        try {
+          localStorage.removeItem("darecore_admin_auth");
+          sessionStorage.removeItem("darecore_admin_auth");
+        } catch (e) {}
+        window.location.href = "index.html";
+      });
+    })();
+  </script>
+<script id="dcAdminLogoLinkFix">
+(function () {
+  function wireAdminLogo() {
+    const candidates = Array.from(document.querySelectorAll("header a, header button, header div, header span"));
+    for (const el of candidates) {
+      const text = (el.textContent || "").replace(/\s+/g, " ").trim().toUpperCase();
+      if (text === "DARECORE ADMIN" || text === "DARE CORE ADMIN") {
+        const target = el.tagName === "A" ? el : (el.closest("a") || el);
+        if (target && target.tagName === "A") {
+          target.setAttribute("href", "admin.html");
+          target.removeAttribute("target");
+        }
+        if (target && !target.dataset.dcAdminHomeWired) {
+          target.dataset.dcAdminHomeWired = "1";
+          target.addEventListener("click", function (e) {
+            if (document.body.classList.contains("dc-ai-view-active")) {
+              e.preventDefault();
+              e.stopPropagation();
+              document.body.classList.remove("dc-ai-view-active");
+              const sec = document.getElementById("darecoreAiKnowledgeAdmin");
+              if (sec) sec.style.display = "none";
+              window.scrollTo({ top: 0, behavior: "instant" });
+              return false;
+            }
+            if (target.tagName !== "A") {
+              e.preventDefault();
+              window.location.href = "admin.html";
+            }
+          }, true);
+        }
+        break;
+      }
+    }
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", wireAdminLogo);
+  } else {
+    wireAdminLogo();
+  }
+  setTimeout(wireAdminLogo, 150);
+})();
+</script>
+<script id="dcAiVoiceDictationScript">
+(function () {
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+  const GEMINI_MIC_SVG = `
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <rect x="9" y="2" width="6" height="12" rx="3"></rect>
+      <path d="M5 10v1a7 7 0 0 0 14 0v-1"></path>
+      <line x1="12" y1="18" x2="12" y2="22"></line>
+    </svg>
+  `;
+
+  function findAiTextarea() {
+    return (
+      document.getElementById("darecoreAiKbTextarea") ||
+      document.querySelector('textarea[id*="AiKb" i], textarea[id*="ai" i]')
+    );
+  }
+
+  function findActionRow(textarea) {
+    const saveBtn =
+      document.getElementById("saveDarecoreAiKbBtn") ||
+      Array.from(document.querySelectorAll("button")).find(b =>
+        (b.textContent || "").toLowerCase().includes("guardar información")
+      );
+    if (saveBtn && saveBtn.parentElement) return saveBtn.parentElement;
+    return textarea ? textarea.parentElement : null;
+  }
+
+  function mountGeminiMic() {
+    const textarea = findAiTextarea();
+    if (!textarea) return;
+    const row = findActionRow(textarea);
+    if (!row) return;
+    if (document.getElementById("dcAiMicDictateBtn")) return;
+
+    const micBtn = document.createElement("button");
+    micBtn.type = "button";
+    micBtn.id = "dcAiMicDictateBtn";
+    micBtn.setAttribute("aria-label", "Micrófono");
+    micBtn.title = "Micrófono";
+    micBtn.innerHTML = GEMINI_MIC_SVG;
+
+    const applyIdleStyle = () => {
+      micBtn.style.setProperty("width", "42px", "important");
+      micBtn.style.setProperty("height", "42px", "important");
+      micBtn.style.setProperty("min-width", "42px", "important");
+      micBtn.style.setProperty("padding", "0", "important");
+      micBtn.style.setProperty("border-radius", "999px", "important");
+      micBtn.style.setProperty("background", "#ffffff", "important");
+      micBtn.style.setProperty("background-color", "#ffffff", "important");
+      micBtn.style.setProperty("color", "#111115", "important");
+      micBtn.style.setProperty("border", "1.5px solid rgba(17, 17, 21, 0.16)", "important");
+      micBtn.style.setProperty("box-shadow", "0 2px 8px rgba(0, 0, 0, 0.08)", "important");
+      micBtn.style.setProperty("display", "inline-flex", "important");
+      micBtn.style.setProperty("align-items", "center", "important");
+      micBtn.style.setProperty("justify-content", "center", "important");
+      micBtn.style.setProperty("cursor", "pointer", "important");
+    };
+
+    const applyActiveStyle = () => {
+      micBtn.style.setProperty("width", "42px", "important");
+      micBtn.style.setProperty("height", "42px", "important");
+      micBtn.style.setProperty("min-width", "42px", "important");
+      micBtn.style.setProperty("padding", "0", "important");
+      micBtn.style.setProperty("border-radius", "999px", "important");
+      micBtn.style.setProperty("background", "#ff2a00", "important");
+      micBtn.style.setProperty("background-color", "#ff2a00", "important");
+      micBtn.style.setProperty("color", "#ffffff", "important");
+      micBtn.style.setProperty("border", "1.5px solid #ff2a00", "important");
+      micBtn.style.setProperty("box-shadow", "0 0 0 4px rgba(255, 42, 0, 0.22), 0 0 18px rgba(255, 42, 0, 0.7)", "important");
+      micBtn.style.setProperty("display", "inline-flex", "important");
+      micBtn.style.setProperty("align-items", "center", "important");
+      micBtn.style.setProperty("justify-content", "center", "important");
+      micBtn.style.setProperty("cursor", "pointer", "important");
+    };
+
+    applyIdleStyle();
+
+    const statusEl =
+      document.getElementById("darecoreAiKbStatus") ||
+      document.querySelector('[id*="AiKbStatus" i], [id*="aiKbStatus" i]');
+
+    if (!SpeechRecognition) {
+      micBtn.disabled = true;
+      micBtn.style.setProperty("opacity", "0.45", "important");
+      row.appendChild(micBtn);
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = "es-MX";
+    recognition.continuous = true;
+    recognition.interimResults = true;
+
+    let listening = false;
+    let baseText = "";
+
+    function setListeningState(active) {
+      listening = active;
+      if (active) {
+        applyActiveStyle();
+        if (statusEl) statusEl.textContent = "Escuchando...";
+      } else {
+        applyIdleStyle();
+        if (statusEl && statusEl.textContent === "Escuchando...") {
+          statusEl.textContent = "Dictado listo";
+        }
+      }
+    }
+
+    recognition.onresult = function (event) {
+      let finalTranscript = "";
+      let interimTranscript = "";
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const transcript = event.results[i][0].transcript || "";
+        if (event.results[i].isFinal) {
+          finalTranscript += transcript;
+        } else {
+          interimTranscript += transcript;
+        }
+      }
+      if (finalTranscript) {
+        const sep = baseText && !/\s$/.test(baseText) ? " " : "";
+        baseText = baseText + sep + finalTranscript.trim();
+      }
+      const livePiece = interimTranscript.trim();
+      const joiner = (baseText && livePiece && !/\s$/.test(baseText)) ? " " : "";
+      textarea.value = baseText + joiner + livePiece;
+      textarea.dispatchEvent(new Event("input", { bubbles: true }));
+    };
+
+    recognition.onerror = function (ev) {
+      setListeningState(false);
+      if (statusEl) {
+        statusEl.textContent = "Micrófono: " + (ev.error || "error");
+      }
+    };
+
+    recognition.onend = function () {
+      if (listening) {
+        try {
+          recognition.start();
+        } catch (e) {
+          setListeningState(false);
+        }
+      } else {
+        setListeningState(false);
+      }
+    };
+
+    micBtn.addEventListener("click", function (ev) {
+      ev.preventDefault();
+      ev.stopPropagation();
+      if (!listening) {
+        baseText = textarea.value || "";
+        setListeningState(true);
+        try {
+          recognition.start();
+        } catch (e) {
+          setListeningState(false);
+        }
+      } else {
+        setListeningState(false);
+        try {
+          recognition.stop();
+        } catch (e) {}
+      }
+    });
+
+    row.appendChild(micBtn);
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", mountGeminiMic);
+  } else {
+    mountGeminiMic();
+  }
+  setInterval(mountGeminiMic, 500);
+})();
+</script>
+</body>
+</html>
