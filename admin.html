@@ -2989,12 +2989,49 @@
     (function () {
       const FLAGS = ["darecore_admin_verified", "dc_admin_auth", "darecore_admin_auth", "adminAuth", "isAdminLoggedIn"];
 
-      function forceShowLoginNow() {
+      function clearFlags() {
         FLAGS.forEach(function (k) {
           try { sessionStorage.removeItem(k); } catch (_) {}
           try { localStorage.removeItem(k); } catch (_) {}
         });
+      }
 
+      function ensureLogoutButtonVisible() {
+        let btn = document.getElementById("topbarLogoutBtn") || document.getElementById("dcLogoutBtn");
+        if (!btn) {
+          const pills =
+            document.querySelector(".dc-topbar-pills") ||
+            Array.from(document.querySelectorAll("button, a")).find(function (el) {
+              return /tienda/i.test((el.textContent || "").trim());
+            })?.parentElement;
+
+          if (pills) {
+            const sample = pills.querySelector("button, a");
+            btn = document.createElement("button");
+            btn.type = "button";
+            btn.id = "topbarLogoutBtn";
+            btn.textContent = "Cerrar Sesión";
+            if (sample && sample.className) {
+              btn.className = sample.className.replace(/\bis-active\b|\bactive\b|\bhidden\b/g, "").trim();
+            }
+            pills.appendChild(btn);
+          }
+        }
+
+        if (btn) {
+          btn.classList.remove("hidden");
+          btn.hidden = false;
+          btn.style.setProperty("display", "inline-flex", "important");
+          btn.style.setProperty("align-items", "center", "important");
+          btn.style.setProperty("visibility", "visible", "important");
+          btn.style.setProperty("opacity", "1", "important");
+          btn.style.setProperty("pointer-events", "auto", "important");
+          btn.style.setProperty("cursor", "pointer", "important");
+        }
+      }
+
+      function showLoginFirst() {
+        clearFlags();
         try {
           if (window.firebase && typeof window.firebase.auth === "function" && window.firebase.apps && window.firebase.apps.length) {
             window.firebase.auth().signOut().catch(function () {});
@@ -3003,11 +3040,11 @@
 
         document.body.classList.remove("dc-logged-in");
 
-        const dashSec = document.getElementById("dashboardSection");
-        if (dashSec) {
-          dashSec.classList.add("hidden");
-          dashSec.hidden = true;
-          dashSec.style.setProperty("display", "none", "important");
+        const dash = document.getElementById("dashboardSection");
+        if (dash) {
+          dash.classList.add("hidden");
+          dash.hidden = true;
+          dash.style.setProperty("display", "none", "important");
         }
 
         const stage = document.querySelector(".dc-login-stage-exact");
@@ -3049,15 +3086,75 @@
         document.body.scrollTop = 0;
       }
 
+      function showDashboardAfterLogin() {
+        document.body.classList.add("dc-logged-in");
+
+        const stage = document.querySelector(".dc-login-stage-exact");
+        const card = document.querySelector(".dc-login-card-exact");
+        const loginSec = document.getElementById("loginSection");
+
+        if (stage) {
+          stage.classList.add("is-auth-done");
+          stage.style.setProperty("display", "none", "important");
+          stage.style.setProperty("height", "0px", "important");
+          stage.style.setProperty("min-height", "0px", "important");
+          stage.style.setProperty("padding", "0px", "important");
+          stage.style.setProperty("margin", "0px", "important");
+        }
+        if (card) {
+          card.classList.add("hidden");
+          card.style.setProperty("display", "none", "important");
+        }
+        if (loginSec) {
+          loginSec.classList.add("hidden");
+          loginSec.style.setProperty("display", "none", "important");
+        }
+
+        const dash = document.getElementById("dashboardSection");
+        if (dash) {
+          dash.classList.remove("hidden");
+          dash.hidden = false;
+          dash.style.setProperty("display", "block", "important");
+          dash.style.setProperty("visibility", "visible", "important");
+          dash.style.setProperty("opacity", "1", "important");
+        }
+
+        ensureLogoutButtonVisible();
+        document.documentElement.scrollTop = 0;
+        document.body.scrollTop = 0;
+      }
+
       document.addEventListener("click", function (e) {
-        const btn = e.target && e.target.closest ? e.target.closest("#logoutBtn, #topbarLogoutBtn, button, a") : null;
+        const btn = e.target && e.target.closest ? e.target.closest("#topbarLogoutBtn, #dcLogoutBtn, #logoutBtn, button, a") : null;
         if (!btn) return;
-        const label = (btn.textContent || "").trim().toLowerCase();
-        if (btn.id === "logoutBtn" || btn.id === "topbarLogoutBtn" || label === "cerrar sesión" || label === "cerrar sesion") {
+        const txt = (btn.textContent || "").trim().toLowerCase();
+        if (btn.id === "topbarLogoutBtn" || btn.id === "dcLogoutBtn" || btn.id === "logoutBtn" || txt === "cerrar sesión" || txt === "cerrar sesion") {
           e.preventDefault();
           e.stopPropagation();
           if (typeof e.stopImmediatePropagation === "function") e.stopImmediatePropagation();
-          forceShowLoginNow();
+          showLoginFirst();
+        }
+      }, true);
+
+      document.addEventListener("DOMContentLoaded", function () {
+        // Al cargar la URL de admin, arrancar en login si no hay sesión activa
+        if (sessionStorage.getItem("darecore_admin_verified") === "true") {
+          showDashboardAfterLogin();
+        } else {
+          showLoginFirst();
+        }
+        ensureLogoutButtonVisible();
+        setTimeout(ensureLogoutButtonVisible, 300);
+        setTimeout(ensureLogoutButtonVisible, 900);
+      });
+
+      document.addEventListener("submit", function (e) {
+        if (e.target && e.target.id === "loginForm") {
+          setTimeout(function () {
+            if (sessionStorage.getItem("darecore_admin_verified") === "true") {
+              showDashboardAfterLogin();
+            }
+          }, 60);
         }
       }, true);
     })();
