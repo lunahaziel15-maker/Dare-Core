@@ -339,9 +339,7 @@
       opacity: 1 !important;
       position: relative;
       overflow: hidden;
-      height: calc(100vh - 210px);
-      min-height: 410px;
-      max-height: 540px;
+      height: calc(100vh - 190px); min-height: 460px; max-height: 590px;
       background: #000000 !important;
       color: #f8fafc !important;
       border: 1px solid #18181b !important;
@@ -813,56 +811,51 @@
               void main() {
                 float canvasAspect = u_res.x / max(u_res.y, 1.0);
                 float imgAspect = u_imgRes.x / max(u_imgRes.y, 1.0);
-                vec2 uv = v_uv - 0.5;
-                if (canvasAspect > imgAspect) {
-                  uv.x *= canvasAspect / imgAspect;
-                } else {
-                  uv.y *= imgAspect / canvasAspect;
-                }
-                // Escala sutil para que los bordes superior e inferior nunca queden cortados
-                uv *= 1.14;
 
-                float dist = length(uv);
-                float angle = atan(uv.y, uv.x);
+                // Espacio cuadrado 1:1 centrado para que la esfera sea geometricamente redonda
+                vec2 p = v_uv - 0.5;
+                p.x *= canvasAspect;
+                p *= 2.15; // Radio de esfera ~0.92 dentro del alto total para que no toque bordes
 
-                // Ondulacion base suave
-                float wave1 = sin(dist * 16.0 - u_time * 1.6 + angle * 3.0) * 0.0042;
-                float wave2 = cos(angle * 4.0 + u_time * 1.2 - dist * 9.0) * 0.0032;
+                float dist = length(p);
+                float angle = atan(p.y, p.x);
 
-                // Onda tipo agua interactiva al pasar cursor o hacer scroll encima
-                vec2 mUv = u_mouse - 0.5;
-                if (canvasAspect > imgAspect) {
-                  mUv.x *= canvasAspect / imgAspect;
-                } else {
-                  mUv.y *= imgAspect / canvasAspect;
-                }
-                mUv *= 1.14;
-                vec2 toMouse = uv - mUv;
+                // Ondulacion fluida de fibras
+                float wave1 = sin(dist * 9.5 - u_time * 1.6 + angle * 3.0) * 0.008;
+                float wave2 = cos(angle * 4.0 + u_time * 1.2 - dist * 5.5) * 0.006;
+
+                // Onda tipo agua al pasar cursor o hacer scroll encima
+                vec2 mP = u_mouse - 0.5;
+                mP.x *= canvasAspect;
+                mP *= 2.15;
+                vec2 toMouse = p - mP;
                 float mDist = length(toMouse);
                 vec2 mDir = mDist > 0.0001 ? (toMouse / mDist) : vec2(0.0);
-                float waterWave = sin(mDist * 34.0 - u_time * 6.5) * exp(-mDist * 6.2) * (0.018 * u_ripple);
+                float waterWave = sin(mDist * 18.0 - u_time * 6.5) * exp(-mDist * 3.4) * (0.032 * u_ripple);
 
-                float mask = smoothstep(0.02, 0.12, dist) * (1.0 - smoothstep(0.46, 0.55, dist));
-                float rot = sin(u_time * 0.4) * 0.032;
+                float mask = smoothstep(0.04, 0.22, dist) * (1.0 - smoothstep(0.86, 1.02, dist));
+                float rot = sin(u_time * 0.4) * 0.035;
                 float cs = cos(rot);
                 float sn = sin(rot);
-                vec2 rotUv = mat2(cs, -sn, sn, cs) * uv;
+                vec2 rotP = mat2(cs, -sn, sn, cs) * p;
 
-                vec2 finalUv = rotUv + vec2(wave1, wave2) * mask + mDir * waterWave + 0.5;
+                vec2 displacedP = rotP + vec2(wave1, wave2) * mask + mDir * waterWave;
 
-                // Difuminado suave en los bordes de la textura para evitar cualquier linea recta de corte
-                float edgeFadeX = smoothstep(0.0, 0.04, finalUv.x) * smoothstep(1.0, 0.96, finalUv.x);
-                float edgeFadeY = smoothstep(0.0, 0.08, finalUv.y) * smoothstep(1.0, 0.92, finalUv.y);
-                float radialFade = 1.0 - smoothstep(0.46, 0.55, dist);
-                float totalFade = edgeFadeX * edgeFadeY * radialFade;
+                // Compensar aspect ratio de la imagen fuente para mapear el circulo sin aplastarlo
+                vec2 texUv = vec2(displacedP.x / max(imgAspect, 1.0), displacedP.y) * 0.52 + 0.5;
+
+                // Recorte esferico 1:1 perfectamente redondo
+                float sphereAlpha = 1.0 - smoothstep(0.88, 1.01, length(displacedP));
+                float boundsMask = step(0.0, texUv.x) * step(texUv.x, 1.0) * step(0.0, texUv.y) * step(texUv.y, 1.0);
+                float totalFade = sphereAlpha * boundsMask;
 
                 if (totalFade <= 0.001) {
                   gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
                   return;
                 }
 
-                vec4 texCol = texture2D(u_tex, clamp(finalUv, 0.002, 0.998));
-                float pulse = 1.0 + 0.06 * sin(u_time * 2.0 - dist * 11.0) + 0.12 * u_ripple * exp(-mDist * 5.0);
+                vec4 texCol = texture2D(u_tex, clamp(texUv, 0.002, 0.998));
+                float pulse = 1.0 + 0.06 * sin(u_time * 2.0 - dist * 6.0) + 0.14 * u_ripple * exp(-mDist * 2.8);
                 gl_FragColor = vec4(texCol.rgb * pulse * totalFade, 1.0);
               }
             `;
