@@ -952,3 +952,92 @@
   setTimeout(boot, 1200);
   setInterval(hydrateAdminRegistries, 900);
 })();
+
+
+(function () {
+  if (window.__dcOrdersFlowBridgeLoaded) return;
+  window.__dcOrdersFlowBridgeLoaded = true;
+
+  const STATUS_OPTIONS = ["En proceso", "En camino", "Enviado"];
+
+  function normalizeStatusLabel(val) {
+    const s = String(val || "").trim().toLowerCase();
+    if (s.includes("camino")) return "En camino";
+    if (s.includes("enviad")) return "Enviado";
+    return "En proceso";
+  }
+
+  function ensureSelectOptions(selectEl) {
+    if (!selectEl || selectEl.dataset.dcOptionsNormalized === "1") return;
+    const currentNorm = normalizeStatusLabel(selectEl.value);
+    selectEl.innerHTML = "";
+    STATUS_OPTIONS.forEach(function (label) {
+      const opt = document.createElement("option");
+      opt.value = label;
+      opt.textContent = label;
+      if (label === currentNorm) opt.selected = true;
+      selectEl.appendChild(opt);
+    });
+    selectEl.dataset.dcOptionsNormalized = "1";
+  }
+
+  function normalizeAllStatusSelects() {
+    document.querySelectorAll("select").forEach(function (sel) {
+      const onchangeAttr = String(sel.getAttribute("onchange") || "");
+      const hasOrderStatus =
+        /updateOrderStatus|dcChangeAdminOrderStatus/i.test(onchangeAttr) ||
+        Boolean(sel.closest("#adminOrdersList, #adminDareLabList, [id*='Order'], [id*='DareLab']"));
+      if (hasOrderStatus) {
+        ensureSelectOptions(sel);
+      }
+    });
+  }
+
+  document.addEventListener("change", function (e) {
+    const sel = e.target && e.target.closest ? e.target.closest("select") : null;
+    if (!sel) return;
+    const onchangeAttr = String(sel.getAttribute("onchange") || "");
+    if (!/updateOrderStatus|dcChangeAdminOrderStatus/i.test(onchangeAttr)) return;
+
+    const chosen = normalizeStatusLabel(sel.value);
+    sel.value = chosen;
+    if (chosen === "Enviado" && typeof window.sendOrderStatusEmail === "function") {
+      try {
+        const card = sel.closest("div[style], article, li, tr") || document.body;
+        const text = card.innerText || "";
+        const emailMatch = text.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i);
+        const folioMatch = text.match(/#?\s*(PEDIDO-[A-Z0-9-]+|\d{4,})/i);
+        window.sendOrderStatusEmail(
+          {
+            userEmail: emailMatch ? emailMatch[0] : "",
+            folio: folioMatch ? folioMatch[1] : "",
+            status: "Enviado"
+          },
+          onchangeAttr.includes("darelab_orders") ? "darelab_orders" : "orders",
+          "Enviado"
+        );
+      } catch (_) {}
+    }
+  }, true);
+
+  const origFetchClient = window.fetchClientPendingOrders;
+  if (typeof origFetchClient === "function" && !origFetchClient.__dcStatusRefreshWrapped) {
+    window.fetchClientPendingOrders = async function () {
+      const res = await origFetchClient.apply(this, arguments);
+      try {
+        if (typeof window.renderClientPendingOrders === "function") {
+          window.renderClientPendingOrders();
+        }
+      } catch (_) {}
+      return res;
+    };
+    window.fetchClientPendingOrders.__dcStatusRefreshWrapped = true;
+  }
+
+  setInterval(normalizeAllStatusSelects, 800);
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", function () { setTimeout(normalizeAllStatusSelects, 300); });
+  } else {
+    setTimeout(normalizeAllStatusSelects, 300);
+  }
+})();
