@@ -44,7 +44,7 @@
     @keyframes dcPanelReveal {
       from {
         opacity: 0;
-        transform: translateY(12px);
+        transform: translateY(10px);
       }
       to {
         opacity: 1;
@@ -52,12 +52,6 @@
       }
     }
 
-    @keyframes dcPillSlide {
-      from { transform: scale(0.96); opacity: 0.7; }
-      to { transform: scale(1); opacity: 1; }
-    }
-
-    /* Marco general estilo dashboard de la referencia */
     .dc-shell-outer {
       max-width: 1360px;
       margin: 22px auto 48px;
@@ -72,11 +66,10 @@
       border-radius: var(--radius-shell);
       box-shadow: var(--shadow-shell);
       overflow: hidden;
-      min-height: 780px;
-      animation: dcPanelReveal 0.45s var(--ease-smooth) both;
+      min-height: 760px;
+      animation: dcPanelReveal 0.4s var(--ease-smooth) both;
     }
 
-    /* Sidebar izquierdo limpio */
     .dc-sidebar {
       background: var(--card-bg);
       border-right: 1px solid var(--line-subtle);
@@ -144,8 +137,9 @@
       font-size: 13.5px;
       font-weight: 600;
       text-decoration: none;
+      text-align: left;
       cursor: pointer;
-      transition: background-color 0.22s var(--ease-smooth), color 0.22s var(--ease-smooth), transform 0.22s var(--ease-smooth);
+      transition: background-color 0.2s var(--ease-smooth), color 0.2s var(--ease-smooth), transform 0.2s var(--ease-smooth);
     }
 
     .dc-side-link:hover {
@@ -169,12 +163,11 @@
       text-align: left;
     }
 
-    /* Área principal */
     .dc-main-pane {
       padding: 24px 28px 36px;
       display: flex;
       flex-direction: column;
-      gap: 22px;
+      gap: 20px;
       min-width: 0;
     }
 
@@ -213,7 +206,7 @@
       border-radius: 999px;
       text-decoration: none;
       cursor: pointer;
-      transition: all 0.22s var(--ease-smooth);
+      transition: all 0.2s var(--ease-smooth);
     }
 
     .dc-pill-btn:hover {
@@ -222,24 +215,12 @@
       transform: translateY(-1px);
     }
 
-    .dc-pill-btn.active, .dc-pill-btn.primary {
+    .dc-pill-btn.active {
       background: var(--pill-active);
       color: #ffffff;
       border-color: var(--pill-active);
-      animation: dcPillSlide 0.25s var(--ease-smooth);
     }
 
-    .dc-pill-btn.danger {
-      background: #fff5f5;
-      color: #b91c1c;
-      border-color: #fecaca;
-    }
-
-    .dc-pill-btn.danger:hover {
-      background: #fee2e2;
-    }
-
-    /* Tarjetas de KPI tipo primera fila de la referencia */
     .dc-kpi-grid {
       display: grid;
       grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -252,8 +233,8 @@
       border-radius: var(--radius-card);
       padding: 16px 18px;
       box-shadow: var(--shadow-card);
-      transition: transform 0.28s var(--ease-smooth), box-shadow 0.28s var(--ease-smooth), border-color 0.28s var(--ease-smooth);
-      animation: dcPanelReveal 0.45s var(--ease-smooth) both;
+      cursor: pointer;
+      transition: transform 0.25s var(--ease-smooth), box-shadow 0.25s var(--ease-smooth), border-color 0.25s var(--ease-smooth);
     }
 
     .dc-kpi-card:hover {
@@ -294,7 +275,22 @@
       color: #15803d;
     }
 
-    /* Paneles / tarjetas blancas */
+    .dc-tab-panel {
+      display: none;
+      animation: dcPanelReveal 0.32s var(--ease-smooth) both;
+    }
+
+    .dc-tab-panel.is-visible {
+      display: block;
+    }
+
+    #sec-catalogo.dc-tab-panel.is-visible {
+      display: grid;
+      grid-template-columns: minmax(320px, 430px) minmax(0, 1fr);
+      gap: 18px;
+      align-items: start;
+    }
+
     .panel-box, .login-box {
       background: var(--card-bg) !important;
       color: var(--ink-primary) !important;
@@ -302,8 +298,7 @@
       border-radius: var(--radius-card) !important;
       box-shadow: var(--shadow-card) !important;
       padding: 22px 24px !important;
-      transition: transform 0.28s var(--ease-smooth), box-shadow 0.28s var(--ease-smooth), border-color 0.28s var(--ease-smooth) !important;
-      animation: dcPanelReveal 0.48s var(--ease-smooth) both;
+      transition: box-shadow 0.25s var(--ease-smooth), border-color 0.25s var(--ease-smooth) !important;
     }
 
     .panel-box:hover {
@@ -315,13 +310,6 @@
       max-width: 430px !important;
       margin: 72px auto !important;
       padding: 32px 28px !important;
-    }
-
-    .dc-two-col {
-      display: grid;
-      grid-template-columns: minmax(320px, 430px) minmax(0, 1fr);
-      gap: 18px;
-      align-items: start;
     }
 
     label {
@@ -362,7 +350,7 @@
       font-size: 13px !important;
       font-weight: 700 !important;
       cursor: pointer;
-      transition: transform 0.22s var(--ease-smooth), background-color 0.22s var(--ease-smooth), box-shadow 0.22s var(--ease-smooth) !important;
+      transition: transform 0.2s var(--ease-smooth), background-color 0.2s var(--ease-smooth), box-shadow 0.2s var(--ease-smooth) !important;
     }
 
     .btn-primary:hover, button[type="submit"]:hover {
@@ -380,7 +368,7 @@
       color: var(--ink-primary) !important;
       border: 1px solid #eceef2 !important;
       border-radius: 13px !important;
-      transition: transform 0.24s var(--ease-smooth), box-shadow 0.24s var(--ease-smooth), border-color 0.24s var(--ease-smooth) !important;
+      transition: transform 0.22s var(--ease-smooth), box-shadow 0.22s var(--ease-smooth), border-color 0.22s var(--ease-smooth) !important;
     }
 
     #adminProductList > div:hover,
@@ -400,7 +388,6 @@
       border-radius: var(--radius-card) !important;
       box-shadow: var(--shadow-card) !important;
       padding: 22px 24px !important;
-      margin-top: 22px !important;
     }
 
     #darecoreAiKbTextarea {
@@ -410,7 +397,6 @@
       border-radius: 12px !important;
     }
 
-    /* Ocultar cualquier pastilla de sesión de cliente dentro de admin.html */
     #dc-user-email-bar {
       display: none !important;
     }
@@ -418,28 +404,15 @@
     .hidden { display: none !important; }
 
     @media (max-width: 1024px) {
-      .dc-dashboard-frame {
-        grid-template-columns: 1fr;
-      }
-      .dc-sidebar {
-        border-right: none;
-        border-bottom: 1px solid var(--line-subtle);
-      }
-      .dc-kpi-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-      }
-      .dc-two-col {
-        grid-template-columns: 1fr;
-      }
+      .dc-dashboard-frame { grid-template-columns: 1fr; }
+      .dc-sidebar { border-right: none; border-bottom: 1px solid var(--line-subtle); }
+      .dc-kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      #sec-catalogo.dc-tab-panel.is-visible { grid-template-columns: 1fr; }
     }
 
     @media (max-width: 600px) {
-      .dc-kpi-grid {
-        grid-template-columns: 1fr;
-      }
-      .dc-main-pane {
-        padding: 18px 16px 28px;
-      }
+      .dc-kpi-grid { grid-template-columns: 1fr; }
+      .dc-main-pane { padding: 18px 16px 28px; }
     }
   </style>
 
@@ -449,7 +422,6 @@
   <script src="firebase-config.js"></script>
 </head>
 <body>
-  <!-- LOGIN EXCLUSIVO DEL ADMINISTRADOR (USUARIO ADMIN + CONTRASEÑA darecore2026) -->
   <div id="loginSection" class="login-box">
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
       <span class="dc-brand-mark">D</span>
@@ -475,7 +447,6 @@
     </form>
   </div>
 
-  <!-- DASHBOARD ADMINISTRATIVO -->
   <main id="dashboardSection" class="dc-shell-outer hidden">
     <div class="dc-dashboard-frame">
       <aside class="dc-sidebar">
@@ -491,16 +462,16 @@
           <div style="margin-top:18px;">
             <div class="dc-nav-group-label">Menú Principal</div>
             <ul class="dc-side-list">
-              <li><a href="#sec-catalogo" class="dc-side-link is-active">Catálogo y Prendas</a></li>
-              <li><a href="#sec-bases" class="dc-side-link">Bases Dare Lab</a></li>
-              <li><a href="#sec-pedidos" class="dc-side-link">Pedidos Carrito</a></li>
-              <li><a href="#sec-darelab" class="dc-side-link">Solicitudes Lab</a></li>
-              <li><a href="#sec-clientes" class="dc-side-link">Clientes</a></li>
+              <li><button type="button" data-dc-tab="sec-catalogo" class="dc-side-link is-active">Catálogo y Prendas</button></li>
+              <li><button type="button" data-dc-tab="sec-bases" class="dc-side-link">Bases Dare Lab</button></li>
+              <li><button type="button" data-dc-tab="sec-pedidos" class="dc-side-link">Pedidos Carrito</button></li>
+              <li><button type="button" data-dc-tab="sec-darelab" class="dc-side-link">Solicitudes Lab</button></li>
+              <li><button type="button" data-dc-tab="sec-clientes" class="dc-side-link">Clientes Registrados</button></li>
             </ul>
 
             <div class="dc-nav-group-label">Sistema</div>
             <ul class="dc-side-list">
-              <li><button type="button" id="openAiModSectionBtn" class="dc-side-link">Modificación de IA</button></li>
+              <li><button type="button" id="openAiModSectionBtn" data-dc-tab="sec-ia" class="dc-side-link">Modificación de IA</button></li>
               <li><a href="index.html" class="dc-side-link">Ver Tienda Pública ↗</a></li>
               <li><a href="#" id="logoutBtn" class="dc-side-link hidden" style="color:#b91c1c;">Cerrar Sesión</a></li>
             </ul>
@@ -508,9 +479,9 @@
         </div>
 
         <div class="dc-promo-card">
-          <div style="font-size:13px;font-weight:700;margin-bottom:4px;">Control de Acceso Activo</div>
+          <div style="font-size:13px;font-weight:700;margin-bottom:4px;">Registros Persistentes</div>
           <p style="font-size:11.5px;color:var(--ink-secondary);margin:0 0 10px;line-height:1.45;">
-            Sesión protegida exclusivamente para el administrador de DareCore.
+            Clientes, pedidos y solicitudes permanecen guardados al cerrar sesión.
           </p>
           <span style="display:inline-block;font-size:11px;font-weight:700;background:#ffffff;border:1px solid var(--line-subtle);padding:5px 10px;border-radius:999px;">Modo Seguro</span>
         </div>
@@ -519,47 +490,46 @@
       <div class="dc-main-pane">
         <div class="dc-topbar">
           <div>
-            <h1 class="dc-topbar-title">Dashboard</h1>
-            <div style="font-size:12.5px;color:var(--ink-muted);margin-top:2px;">Los productos que agregues o elimines aquí se actualizan automáticamente en la tienda pública.</div>
+            <h1 id="dcActivePanelHeading" class="dc-topbar-title">Dashboard • Catálogo</h1>
+            <div style="font-size:12.5px;color:var(--ink-muted);margin-top:2px;">Cada botón abre su propio panel en esta misma vista sin saltar hacia abajo.</div>
           </div>
 
           <div class="dc-topbar-pills">
-            <a href="#sec-catalogo" class="dc-pill-btn active">Catálogo</a>
-            <a href="#sec-pedidos" class="dc-pill-btn">Pedidos</a>
-            <a href="#sec-darelab" class="dc-pill-btn">Dare Lab</a>
-            <a href="#sec-clientes" class="dc-pill-btn">Clientes</a>
+            <button type="button" data-dc-tab="sec-catalogo" class="dc-pill-btn active">Catálogo</button>
+            <button type="button" data-dc-tab="sec-pedidos" class="dc-pill-btn">Pedidos</button>
+            <button type="button" data-dc-tab="sec-darelab" class="dc-pill-btn">Dare Lab</button>
+            <button type="button" data-dc-tab="sec-clientes" class="dc-pill-btn">Clientes</button>
           </div>
         </div>
 
-        <!-- Fila superior de métricas estilo referencia -->
         <section class="dc-kpi-grid" aria-label="Resumen operativo">
-          <div class="dc-kpi-card is-featured">
+          <div class="dc-kpi-card is-featured" data-dc-tab="sec-catalogo">
             <div class="dc-kpi-label">Prendas Publicadas</div>
             <div class="dc-kpi-value"><span id="totalCount">0</span></div>
-            <div class="dc-kpi-sub">Catálogo en vivo</div>
+            <div class="dc-kpi-sub">Abrir catálogo</div>
           </div>
 
-          <div class="dc-kpi-card">
+          <div class="dc-kpi-card" data-dc-tab="sec-pedidos">
             <div class="dc-kpi-label">Compras del Carrito</div>
             <div class="dc-kpi-value"><span id="ordersCount">0</span></div>
-            <div class="dc-kpi-sub">Órdenes registradas</div>
+            <div class="dc-kpi-sub">Abrir pedidos</div>
           </div>
 
-          <div class="dc-kpi-card">
+          <div class="dc-kpi-card" data-dc-tab="sec-darelab">
             <div class="dc-kpi-label">Solicitudes Dare Lab</div>
             <div class="dc-kpi-value"><span id="dareLabCount">0</span></div>
-            <div class="dc-kpi-sub">Diseños y cotizaciones</div>
+            <div class="dc-kpi-sub">Abrir Dare Lab</div>
           </div>
 
-          <div class="dc-kpi-card">
+          <div class="dc-kpi-card" data-dc-tab="sec-clientes">
             <div class="dc-kpi-label">Clientes Registrados</div>
             <div class="dc-kpi-value"><span id="usersCount">0</span></div>
-            <div class="dc-kpi-sub">Cuentas verificadas</div>
+            <div class="dc-kpi-sub">Abrir cuentas</div>
           </div>
         </section>
 
-        <!-- Catálogo: Formulario + Lista -->
-        <section id="sec-catalogo" class="dc-two-col">
+        <!-- PANEL 1: CATÁLOGO -->
+        <section id="sec-catalogo" class="dc-tab-panel is-visible" data-dc-label="Dashboard • Catálogo">
           <div class="panel-box">
             <h3 id="formTitle" style="font-size:15px;font-weight:700;color:var(--ink-primary);margin:0 0 16px;">+ Nueva Prenda</h3>
             <form id="addProductForm">
@@ -617,54 +587,100 @@
           </div>
         </section>
 
-        <!-- Bases Dare Lab -->
-        <section id="sec-bases" class="panel-box">
+        <!-- PANEL 2: BASES DARE LAB -->
+        <section id="sec-bases" class="dc-tab-panel panel-box" data-dc-label="Bases Dare Lab">
           <h3 style="font-size:15px;font-weight:700;margin:0 0 4px;">Editar Bases & Gramajes (Dare Lab Personalizado)</h3>
           <p style="font-size:12.5px;color:var(--ink-secondary);margin:0 0 16px;">Modifica aquí los nombres, descripciones y precios base que verán los clientes en Personalizar.</p>
           <div id="adminCustomBasesList" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;"></div>
         </section>
 
-        <!-- Pedidos del carrito -->
-        <section id="sec-pedidos" class="panel-box">
+        <!-- PANEL 3: PEDIDOS DEL CARRITO -->
+        <section id="sec-pedidos" class="dc-tab-panel panel-box" data-dc-label="Pedidos del Carrito">
           <h3 style="font-size:15px;font-weight:700;margin:0 0 14px;">Compras del Carrito</h3>
           <div id="adminOrdersList" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:14px;"></div>
         </section>
 
-        <!-- Solicitudes Dare Lab -->
-        <section id="sec-darelab" class="panel-box">
+        <!-- PANEL 4: SOLICITUDES DARE LAB -->
+        <section id="sec-darelab" class="dc-tab-panel panel-box" data-dc-label="Solicitudes Dare Lab">
           <h3 style="font-size:15px;font-weight:700;margin:0 0 14px;">Solicitudes Dare Lab // Fotos y Diseños</h3>
           <div id="adminDareLabList" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;"></div>
         </section>
 
-        <!-- Clientes registrados -->
-        <section id="sec-clientes" class="panel-box">
-          <h3 style="font-size:15px;font-weight:700;margin:0 0 14px;">Clientes Registrados</h3>
-          <div id="adminUsersList" style="display:flex;flex-direction:column;gap:9px;max-height:320px;overflow-y:auto;"></div>
+        <!-- PANEL 5: CLIENTES REGISTRADOS -->
+        <section id="sec-clientes" class="dc-tab-panel panel-box" data-dc-label="Cuentas y Clientes Registrados">
+          <h3 style="font-size:15px;font-weight:700;margin:0 0 14px;">Clientes y Cuentas Registradas</h3>
+          <div id="adminUsersList" style="display:flex;flex-direction:column;gap:9px;max-height:480px;overflow-y:auto;"></div>
         </section>
 
-        <!-- Modificación de IA -->
-        <section id="darecoreAiKnowledgeAdmin">
-          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:10px;">
-            <div>
-              <div style="font-size:11px;font-weight:700;letter-spacing:0.06em;color:var(--brand-orange);text-transform:uppercase;">DareCore Intelligence</div>
-              <h2 style="margin:2px 0 0;font-size:18px;font-weight:700;">Modificar información de la IA</h2>
+        <!-- PANEL 6: MODIFICACIÓN DE IA -->
+        <section id="sec-ia" class="dc-tab-panel" data-dc-label="Modificación de IA">
+          <div id="darecoreAiKnowledgeAdmin">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:10px;">
+              <div>
+                <div style="font-size:11px;font-weight:700;letter-spacing:0.06em;color:var(--brand-orange);text-transform:uppercase;">DareCore Intelligence</div>
+                <h2 style="margin:2px 0 0;font-size:18px;font-weight:700;">Modificar información de la IA</h2>
+              </div>
+              <span id="darecoreAiKbStatus" style="font-size:12px;font-weight:700;color:#15803d;background:#dcfce7;padding:4px 11px;border-radius:999px;">Listo</span>
             </div>
-            <span id="darecoreAiKbStatus" style="font-size:12px;font-weight:700;color:#15803d;background:#dcfce7;padding:4px 11px;border-radius:999px;">Listo</span>
-          </div>
-          <p style="margin:0 0 12px;font-size:12.5px;color:var(--ink-secondary);line-height:1.5;">
-            Escribe o edita aquí lo que debe responder la IA de DareCore sobre precios, envíos, tallas o políticas.
-          </p>
-          <textarea id="darecoreAiKbTextarea" rows="8" style="width:100%;padding:12px 14px;font-size:13.5px;line-height:1.5;resize:vertical;"></textarea>
-          <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;">
-            <button type="button" id="saveDarecoreAiKbBtn">Guardar información de la IA</button>
-            <button type="button" id="resetDarecoreAiKbBtn" class="dc-pill-btn">Restaurar texto base</button>
+            <p style="margin:0 0 12px;font-size:12.5px;color:var(--ink-secondary);line-height:1.5;">
+              Escribe o edita aquí lo que debe responder la IA de DareCore sobre precios, envíos, tallas o políticas.
+            </p>
+            <textarea id="darecoreAiKbTextarea" rows="8" style="width:100%;padding:12px 14px;font-size:13.5px;line-height:1.5;resize:vertical;"></textarea>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;">
+              <button type="button" id="saveDarecoreAiKbBtn">Guardar información de la IA</button>
+              <button type="button" id="resetDarecoreAiKbBtn" class="dc-pill-btn">Restaurar texto base</button>
+            </div>
           </div>
         </section>
       </div>
     </div>
   </main>
 
-  <!-- Candado estricto: solo usuario admin y contraseña darecore2026 -->
+  <script id="dcAdminPanelSwitcher">
+    (function () {
+      const STORAGE_TAB_KEY = "darecore_admin_active_tab";
+
+      function activateAdminPanel(tabId) {
+        const panels = Array.from(document.querySelectorAll(".dc-tab-panel"));
+        const target = document.getElementById(tabId) || document.getElementById("sec-catalogo");
+        if (!target) return;
+
+        panels.forEach((p) => p.classList.remove("is-visible"));
+        target.classList.add("is-visible");
+
+        document.querySelectorAll("[data-dc-tab]").forEach((ctrl) => {
+          const match = ctrl.getAttribute("data-dc-tab") === target.id;
+          if (ctrl.classList.contains("dc-side-link") || ctrl.classList.contains("dc-pill-btn")) {
+            ctrl.classList.toggle("active", match);
+            ctrl.classList.toggle("is-active", match);
+          }
+        });
+
+        const heading = document.getElementById("dcActivePanelHeading");
+        if (heading) {
+          heading.textContent = target.getAttribute("data-dc-label") || "Dashboard";
+        }
+
+        try { sessionStorage.setItem(STORAGE_TAB_KEY, target.id); } catch (_) {}
+      }
+
+      document.addEventListener("click", (e) => {
+        const trigger = e.target.closest("[data-dc-tab]");
+        if (!trigger) return;
+        const tabId = trigger.getAttribute("data-dc-tab");
+        if (!tabId) return;
+        e.preventDefault();
+        activateAdminPanel(tabId);
+      }, true);
+
+      window.addEventListener("DOMContentLoaded", () => {
+        let saved = "sec-catalogo";
+        try { saved = sessionStorage.getItem(STORAGE_TAB_KEY) || "sec-catalogo"; } catch (_) {}
+        activateAdminPanel(saved);
+      });
+    })();
+  </script>
+
   <script id="dcStrictAdminGuard">
     (function () {
       const ADMIN_PASS = "darecore2026";
@@ -727,6 +743,7 @@
         if (logoutBtn) {
           logoutBtn.addEventListener("click", (e) => {
             e.preventDefault();
+            // Solo cerramos la sesion admin local; nunca borramos registros de clientes, pedidos ni Dare Lab
             sessionStorage.removeItem(SESSION_FLAG);
             enforceAdminState();
             window.location.reload();

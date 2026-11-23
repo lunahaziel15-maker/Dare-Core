@@ -305,7 +305,7 @@
         "darecore_user_name",
         "darecore_guest_verified",
         "darecore_session_email",
-        "darecore_client_orders"
+        "darecore_active_client_view"
       ].forEach((key) => {
         try { localStorage.removeItem(key); } catch (_) {}
         try { sessionStorage.removeItem(key); } catch (_) {}
@@ -500,7 +500,7 @@
             });
           });
           if (list.length > 0) {
-            origSetItem("darecore_client_orders", JSON.stringify(list));
+            origSetItem("darecore_active_client_view", JSON.stringify(list));
             if (typeof window.renderClientPendingOrders === "function") {
               window.renderClientPendingOrders();
             }
@@ -520,7 +520,7 @@
       return "#" + match[1].replace(/^#+/, "");
     }
     try {
-      const orders = JSON.parse(localStorage.getItem("darecore_client_orders") || "[]");
+      const orders = JSON.parse(localStorage.getItem("darecore_active_client_view") || "[]");
       if (Array.isArray(orders) && orders[0] && orders[0].folio) {
         const f = String(orders[0].folio).trim();
         return f.startsWith("#") ? f : "#" + f;
