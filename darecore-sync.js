@@ -938,3 +938,123 @@
   setTimeout(boot, 1200);
   setInterval(hydrateAdminRegistries, 900);
 })();
+/* PUENTE EN VIVO CLIENTE <-> ADMIN (SIN BORRAR PEDIDOS AL ACTUALIZAR ESTATUS) */
+(function () {
+  if (window.__dcClientOrderBridgeInstalled) return;
+  window.__dcClientOrderBridgeInstalled = true;
+
+  const channel = (typeof BroadcastChannel !== "undefined") ? new BroadcastChannel("darecore_orders_sync") : null;
+
+  function getStoredOrders() {
+    const keys = ["darecore_orders", "dc_orders", "orders", "darecorePedidos", "dc_pedidos"];
+    const map = new Map();
+    keys.forEach(function (k) {
+      try {
+        const raw = localStorage.getItem(k);
+        if (!raw) return;
+        const parsed = JSON.parse(raw);
+        const arr = Array.isArray(parsed) ? parsed : (parsed && typeof parsed === "object" ? Object.values(parsed) : []);
+        arr.forEach(function (item) {
+          if (!item || typeof item !== "object") return;
+          const id = String(item.id || item.orderId || item.codigo || item.numero || "").trim();
+          if (!id) return;
+          const prev = map.get(id) || {};
+          map.set(id, Object.assign({}, prev, item, {
+            id: id,
+            status: item.status || item.estado || prev.status || prev.estado || "Pendiente",
+            estado: item.estado || item.status || prev.estado || prev.status || "Pendiente"
+          }));
+        });
+      } catch (_) {}
+    });
+    return Array.from(map.values());
+  }
+
+  function persistOrders(orders) {
+    try {
+      const json = JSON.stringify(orders);
+      localStorage.setItem("darecore_orders", json);
+      localStorage.setItem("dc_orders", json);
+    } catch (_) {}
+    try {
+      if (channel) channel.postMessage({ type: "orders_updated", orders: orders, ts: Date.now() });
+    } catch (_) {}
+    try {
+      window.dispatchEvent(new CustomEvent("darecore:orders:updated", { detail: { orders: orders } }));
+    } catch (_) {}
+  }
+
+  function showStatusNotice(message) {
+    if (!message) return;
+    let toast = document.getElementById("dcClientStatusToast");
+    if (!toast) {
+      toast = document.createElement("div");
+      toast.id = "dcClientStatusToast";
+      toast.style.cssText = "position:fixed;bottom:20px;right:20px;z-index:99999;background:#111827;color:#ffffff;padding:12px 16px;border-radius:10px;font-size:13px;font-weight:600;box-shadow:0 8px 24px rgba(0,0,0,0.22);";
+      document.body.appendChild(toast);
+    }
+    toast.textContent = message;
+    toast.style.display = "block";
+    clearTimeout(toast._t);
+    toast._t = setTimeout(function () {
+      toast.style.display = "none";
+    }, 3500);
+  }
+
+  function syncClientOrderBadges() {
+    const orders = getStoredOrders();
+    if (!orders.length) return;
+    const byId = new Map(orders.map(function (o) { return [String(o.id).replace(/^#/, "").toUpperCase(), o]; }));
+
+    document.querySelectorAll("article, section, div, tr, li").forEach(function (el) {
+      if (el.children.length > 12) return;
+      const txt = el.textContent || "";
+      const match = txt.match(/#(COMPRA|PEDIDO)-[A-Z0-9_-]+/i);
+      if (!match) return;
+      const cleanId = match[0].replace(/^#/, "").toUpperCase();
+      const found = byId.get(cleanId);
+      if (!found) return;
+      const currentStatus = found.status || found.estado || "Pendiente";
+      let badge = el.querySelector("[data-dc-live-status]");
+      if (!badge) {
+        badge = document.createElement("span");
+        badge.setAttribute("data-dc-live-status", "1");
+        badge.style.cssText = "display:inline-block;margin-left:8px;padding:3px 9px;border-radius:999px;font-size:12px;font-weight:700;background:#eef2ff;color:#1e1b4b;";
+        el.appendChild(badge);
+      }
+      badge.textContent = "Estatus: " + currentStatus;
+    });
+  }
+
+  document.addEventListener("click", function (e) {
+    const btn = e.target && e.target.closest ? e.target.closest("button, a") : null;
+    if (!btn) return;
+    const label = (btn.textContent || "").trim().toLowerCase();
+    if (/actualizar\s*estatus|actualizar\s*estado/i.test(label)) {
+      setTimeout(function () {
+        const orders = getStoredOrders();
+        syncClientOrderBadges();
+        if (orders.length > 0) {
+          const latest = orders[0];
+          const st = latest.status || latest.estado || "Pendiente";
+          showStatusNotice("Pedido #" + String(latest.id).replace(/^#/, "") + " — Estatus actual: " + st);
+        }
+      }, 60);
+    }
+  }, true);
+
+  window.addEventListener("storage", function () {
+    syncClientOrderBadges();
+  });
+
+  if (channel) {
+    channel.onmessage = function () {
+      syncClientOrderBadges();
+    };
+  }
+
+  document.addEventListener("DOMContentLoaded", function () {
+    syncClientOrderBadges();
+    setTimeout(syncClientOrderBadges, 400);
+  });
+})();
