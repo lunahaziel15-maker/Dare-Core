@@ -45,17 +45,6 @@
       to { opacity: 1; transform: translateY(0); }
     }
 
-    @keyframes dcAuroraShift {
-      0% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-      100% { background-position: 0% 50%; }
-    }
-
-    @keyframes dcFloatBadge {
-      0%, 100% { transform: translateY(0px); }
-      50% { transform: translateY(-3px); }
-    }
-
     .dc-shell-outer {
       max-width: 1380px;
       margin: 20px auto 48px;
@@ -74,7 +63,6 @@
       animation: dcPanelReveal 0.4s var(--ease-smooth) both;
     }
 
-    /* Sidebar limpio sin bordes rojos */
     .dc-sidebar {
       background: var(--card-bg);
       border-right: 1px solid var(--line-subtle);
@@ -127,7 +115,6 @@
       margin-bottom: 16px;
     }
 
-    /* Estilo unificado tipo pastilla limpia de la 2a imagen */
     .dc-pill-btn {
       border: 1px solid #e4e4e7 !important;
       background: #ffffff !important;
@@ -338,58 +325,61 @@
       transform: translateY(-1px);
     }
 
-    /* Panel Modificacion de IA con motion graphics y colores animados */
+    /* Panel Modificacion de IA con esfera de flujo violeta-magenta a azul-cian en movimiento */
     #darecoreAiKnowledgeAdmin {
       display: block !important;
       visibility: visible !important;
       opacity: 1 !important;
       position: relative;
       overflow: hidden;
-      background: linear-gradient(125deg, #ffffff 0%, #fff7ed 35%, #eef2ff 70%, #ffffff 100%) !important;
-      background-size: 240% 240% !important;
-      animation: dcAuroraShift 9s ease infinite !important;
-      color: var(--ink-primary) !important;
-      border: 1px solid #e2e8f0 !important;
-      border-radius: 20px !important;
-      box-shadow: 0 18px 40px -18px rgba(79, 70, 229, 0.22), 0 6px 20px -8px rgba(255, 69, 0, 0.14) !important;
+      background: #05050a !important;
+      color: #f8fafc !important;
+      border: 1px solid rgba(139, 92, 246, 0.35) !important;
+      border-radius: 22px !important;
+      box-shadow: 0 24px 55px -18px rgba(15, 23, 42, 0.65), 0 0 35px -12px rgba(217, 70, 239, 0.28) !important;
       padding: 24px 26px !important;
     }
 
-    #darecoreAiKnowledgeAdmin::before {
-      content: "";
+    #dcAiFlowCanvas {
       position: absolute;
-      inset: 0 0 auto 0;
-      height: 3px;
-      background: linear-gradient(90deg, #ff4500, #ec4899, #6366f1, #06b6d4, #ff4500);
-      background-size: 300% 100%;
-      animation: dcAuroraShift 6s linear infinite;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.92;
     }
 
-    .dc-ai-live-chip {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 11px;
-      font-weight: 700;
-      color: #047857;
-      background: rgba(16, 185, 129, 0.12);
-      border: 1px solid rgba(16, 185, 129, 0.28);
-      padding: 5px 12px;
-      border-radius: 999px;
-      animation: dcFloatBadge 3.2s ease-in-out infinite;
+    .dc-ai-content-layer {
+      position: relative;
+      z-index: 1;
+    }
+
+    #darecoreAiKnowledgeAdmin h2 {
+      color: #ffffff !important;
+    }
+
+    #darecoreAiKnowledgeAdmin p {
+      color: #cbd5e1 !important;
     }
 
     #darecoreAiKbTextarea {
-      background: rgba(255, 255, 255, 0.94) !important;
-      color: var(--ink-primary) !important;
-      border: 1.5px solid #cbd5e1 !important;
+      background: rgba(10, 12, 24, 0.78) !important;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      color: #f8fafc !important;
+      border: 1.5px solid rgba(168, 85, 247, 0.45) !important;
       border-radius: 14px !important;
     }
 
+    #darecoreAiKbTextarea:focus {
+      outline: none !important;
+      border-color: #22d3ee !important;
+      box-shadow: 0 0 0 3px rgba(34, 211, 238, 0.22) !important;
+    }
+
     #saveDarecoreAiKbBtn {
-      background: linear-gradient(135deg, #ff4500 0%, #e11d48 50%, #4f46e5 100%) !important;
-      background-size: 200% 200% !important;
-      animation: dcAuroraShift 5s ease infinite !important;
+      background: linear-gradient(90deg, #d946ef 0%, #6366f1 50%, #06b6d4 100%) !important;
       color: #ffffff !important;
       border: none !important;
       border-radius: 999px !important;
@@ -398,6 +388,51 @@
       font-size: 12px !important;
       font-weight: 700 !important;
       cursor: pointer;
+    }
+
+    .dc-ai-assistant-box {
+      margin-top: 16px;
+      padding: 16px;
+      border-radius: 16px;
+      background: rgba(11, 14, 28, 0.82);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+
+    .dc-ai-chat-log {
+      max-height: 220px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 12px;
+      padding-right: 4px;
+    }
+
+    .dc-ai-msg-admin {
+      align-self: flex-end;
+      max-width: 86%;
+      background: rgba(217, 70, 239, 0.24);
+      border: 1px solid rgba(217, 70, 239, 0.45);
+      color: #ffffff;
+      padding: 9px 13px;
+      border-radius: 14px 14px 4px 14px;
+      font-size: 12.5px;
+      line-height: 1.45;
+    }
+
+    .dc-ai-msg-bot {
+      align-self: flex-start;
+      max-width: 92%;
+      background: rgba(15, 23, 42, 0.88);
+      border: 1px solid rgba(34, 211, 238, 0.35);
+      color: #e2e8f0;
+      padding: 10px 14px;
+      border-radius: 14px 14px 14px 4px;
+      font-size: 12.5px;
+      line-height: 1.5;
+      white-space: pre-line;
     }
 
     #dc-user-email-bar { display: none !important; }
@@ -498,7 +533,6 @@
 
           <div class="dc-topbar-pills">
             <button type="button" data-dc-tab="sec-catalogo" class="dc-pill-btn active">Catálogo</button>
-            <button type="button" data-dc-tab="sec-bases" class="dc-pill-btn">Bases Lab</button>
             <button type="button" data-dc-tab="sec-pedidos" class="dc-pill-btn">Pedidos</button>
             <button type="button" data-dc-tab="sec-darelab" class="dc-pill-btn">Dare Lab</button>
             <button type="button" data-dc-tab="sec-entregados" class="dc-pill-btn">Entregados</button>
@@ -654,30 +688,250 @@
           <div id="adminUsersList" style="display:flex;flex-direction:column;gap:9px;max-height:480px;overflow-y:auto;"></div>
         </section>
 
-        <!-- PANEL 8: MODIFICACIÓN DE IA CON MOTION GRAPHICS -->
+        <!-- PANEL 8: MODIFICACIÓN DE IA CON ESFERA DE FLUJO ANIMADA + MEMORIA INTERACTIVA -->
         <section id="sec-ia" class="dc-tab-panel" data-dc-label="Modificación de IA">
           <div id="darecoreAiKnowledgeAdmin">
-            <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:10px;">
-              <div>
-                <div style="font-size:10.5px;font-weight:800;letter-spacing:0.08em;color:#ff4500;text-transform:uppercase;">DareCore Intelligence • Motor Dinámico</div>
-                <h2 style="margin:2px 0 0;font-size:19px;font-weight:800;">Modificar información de la IA</h2>
+            <canvas id="dcAiFlowCanvas"></canvas>
+
+            <div class="dc-ai-content-layer">
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:10px;">
+                <div>
+                  <h2 style="margin:0;font-size:20px;font-weight:800;letter-spacing:-0.02em;">Modificar información de la IA</h2>
+                </div>
+                <span id="darecoreAiKbStatus" style="font-size:11.5px;font-weight:700;color:#22d3ee;background:rgba(15,23,42,0.8);border:1px solid rgba(34,211,238,0.4);padding:5px 12px;border-radius:999px;">Memoria Activa</span>
               </div>
-              <span class="dc-ai-live-chip">● IA Sincronizada</span>
-              <span id="darecoreAiKbStatus" style="font-size:11.5px;font-weight:700;color:#15803d;background:#dcfce7;padding:4px 11px;border-radius:999px;">Listo</span>
-            </div>
-            <p style="margin:0 0 12px;font-size:12.5px;color:var(--ink-secondary);line-height:1.5;">
-              La IA de DareCore toma en cuenta todo lo escrito aquí sobre precios, tallas, envíos, tiempos y políticas.
-            </p>
-            <textarea id="darecoreAiKbTextarea" rows="8" style="width:100%;padding:12px 14px;font-size:13.5px;line-height:1.5;resize:vertical;"></textarea>
-            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;align-items:center;">
-              <button type="button" id="saveDarecoreAiKbBtn">Guardar información de la IA</button>
-              <button type="button" id="resetDarecoreAiKbBtn" class="dc-pill-btn">Restaurar texto base</button>
+
+              <p style="margin:0 0 12px;font-size:12.5px;line-height:1.5;">
+                Todo lo que esté aquí es la base de memoria que usa la IA de DareCore para responder. Puedes editarlo directo o entrenarlo por chat abajo.
+              </p>
+
+              <textarea id="darecoreAiKbTextarea" rows="7" style="width:100%;padding:12px 14px;font-size:13.5px;line-height:1.5;resize:vertical;"></textarea>
+
+              <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;align-items:center;">
+                <button type="button" id="saveDarecoreAiKbBtn">Guardar información de la IA</button>
+                <button type="button" id="resetDarecoreAiKbBtn" class="dc-pill-btn">Restaurar texto base</button>
+              </div>
+
+              <!-- Consola de entrenamiento y consulta de memoria de la IA -->
+              <div class="dc-ai-assistant-box">
+                <div style="font-size:11.5px;font-weight:700;color:#38bdf8;margin-bottom:8px;">
+                  Entrenar y consultar memoria de la IA (ej. "¿A qué te basas para responder..." o "Agrega: no hacemos reembolsos")
+                </div>
+
+                <div id="dcAiCoachLog" class="dc-ai-chat-log">
+                  <div class="dc-ai-msg-bot">Listo. Pregúntame en qué me baso para responder o dime qué regla quieres que agregue a mi memoria (por ejemplo: "Quiero que agregues: no hacemos reembolsos").</div>
+                </div>
+
+                <div style="display:flex;gap:8px;">
+                  <input type="text" id="dcAiCoachInput" class="form-control" placeholder="Escribe aquí una pregunta o una regla para agregar..." />
+                  <button type="button" id="dcAiCoachSendBtn" class="btn-primary" style="white-space:nowrap;">Enviar</button>
+                </div>
+              </div>
             </div>
           </div>
         </section>
       </div>
     </div>
   </main>
+
+  <script id="dcAiFlowAndCoachScript">
+    (function () {
+      const KB_KEY = "darecore_ai_knowledge";
+
+      // Animacion circular de filamentos y particulas en degradado violeta-magenta -> azul-cian
+      function startDataFlowSphereAnimation() {
+        const canvas = document.getElementById("dcAiFlowCanvas");
+        const container = document.getElementById("darecoreAiKnowledgeAdmin");
+        if (!canvas || !container) return;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return;
+
+        let width = 0;
+        let height = 0;
+        const strandCount = 84;
+        const particleCount = 130;
+        const particles = Array.from({ length: particleCount }, (_, i) => ({
+          angle: (i / particleCount) * Math.PI * 2,
+          radiusFactor: 0.22 + ((i * 37) % 72) / 100,
+          speed: 0.002 + ((i % 7) * 0.00055),
+          size: 1.1 + (i % 3) * 0.75,
+          phase: i * 0.45
+        }));
+
+        function resizeCanvas() {
+          const rect = container.getBoundingClientRect();
+          if (!rect.width || !rect.height) return;
+          width = canvas.width = Math.floor(rect.width);
+          height = canvas.height = Math.floor(rect.height);
+        }
+
+        resizeCanvas();
+        window.addEventListener("resize", resizeCanvas);
+
+        let t = 0;
+        function renderFrame() {
+          if (!width || !height) resizeCanvas();
+          t += 0.012;
+
+          ctx.clearRect(0, 0, width || 1, height || 1);
+          if (!width || !height) {
+            requestAnimationFrame(renderFrame);
+            return;
+          }
+
+          const cx = width * 0.5;
+          const cy = height * 0.5;
+          const baseR = Math.min(width, height) * 0.44;
+
+          for (let i = 0; i < strandCount; i++) {
+            const frac = i / strandCount;
+            const a1 = frac * Math.PI * 2 + t * 0.55;
+            const a2 = a1 + Math.PI * 0.78 + Math.sin(t + frac * 6) * 0.35;
+
+            const r1 = baseR * (0.35 + 0.65 * Math.sin(frac * Math.PI));
+            const r2 = baseR * (0.45 + 0.55 * Math.cos(frac * Math.PI * 1.5 + t));
+
+            const x1 = cx + Math.cos(a1) * r1 * 1.25;
+            const y1 = cy + Math.sin(a1) * r1 * 0.92;
+            const x2 = cx + Math.cos(a2) * r2 * 1.25;
+            const y2 = cy + Math.sin(a2) * r2 * 0.92;
+
+            const cpx = cx + Math.cos(a1 + 0.5) * baseR * 0.65;
+            const cpy = cy + Math.sin(a2 - 0.5) * baseR * 0.55;
+
+            const grad = ctx.createLinearGradient(x1, y1, x2, y2);
+            grad.addColorStop(0, "rgba(217, 70, 239, 0.34)");
+            grad.addColorStop(0.5, "rgba(99, 102, 241, 0.24)");
+            grad.addColorStop(1, "rgba(6, 182, 212, 0.36)");
+
+            ctx.beginPath();
+            ctx.moveTo(x1, y1);
+            ctx.quadraticCurveTo(cpx, cpy, x2, y2);
+            ctx.strokeStyle = grad;
+            ctx.lineWidth = 1.05;
+            ctx.stroke();
+          }
+
+          for (let p = 0; p < particles.length; p++) {
+            const pt = particles[p];
+            pt.angle += pt.speed;
+            const wobble = Math.sin(t * 1.6 + pt.phase) * 14;
+            const rad = baseR * pt.radiusFactor + wobble;
+            const px = cx + Math.cos(pt.angle) * rad * 1.25;
+            const py = cy + Math.sin(pt.angle) * rad * 0.92;
+            const hueMix = (Math.cos(pt.angle) + 1) * 0.5;
+
+            ctx.beginPath();
+            ctx.arc(px, py, pt.size, 0, Math.PI * 2);
+            ctx.fillStyle = hueMix < 0.45
+              ? "rgba(232, 121, 249, 0.85)"
+              : hueMix < 0.75
+                ? "rgba(129, 140, 248, 0.85)"
+                : "rgba(34, 211, 238, 0.9)";
+            ctx.fill();
+          }
+
+          requestAnimationFrame(renderFrame);
+        }
+
+        requestAnimationFrame(renderFrame);
+      }
+
+      function persistAiKnowledgeText(newText) {
+        const clean = String(newText || "").trim();
+        const ta = document.getElementById("darecoreAiKbTextarea");
+        const status = document.getElementById("darecoreAiKbStatus");
+        if (ta) ta.value = clean;
+        try { localStorage.setItem(KB_KEY, clean); } catch (_) {}
+        if (window.db) {
+          window.db.collection("settings").doc("aiKnowledge").set({
+            content: clean,
+            text: clean,
+            updatedAt: new Date().toISOString()
+          }, { merge: true }).catch(() => {});
+        }
+        if (status) {
+          status.textContent = "Memoria Guardada";
+          setTimeout(() => { status.textContent = "Memoria Activa"; }, 2500);
+        }
+      }
+
+      function extractRuleToAdd(promptText) {
+        const raw = String(promptText || "").trim();
+        const match = raw.match(/(?:agrega(?:r)?|a[ñn]ade|anota|recuerda|pon(?:er)?|guarda(?:r)?)(?:\s+(?:en\s+(?:tu\s+)?memoria|que|a\s+tu\s+memoria))?\s*[:\-]?\s*(.+)/i);
+        if (match && match[1]) return match[1].trim();
+        return "";
+      }
+
+      function initAiCoach() {
+        const input = document.getElementById("dcAiCoachInput");
+        const sendBtn = document.getElementById("dcAiCoachSendBtn");
+        const log = document.getElementById("dcAiCoachLog");
+        const ta = document.getElementById("darecoreAiKbTextarea");
+        if (!input || !sendBtn || !log) return;
+
+        function appendMsg(text, isAdmin) {
+          const div = document.createElement("div");
+          div.className = isAdmin ? "dc-ai-msg-admin" : "dc-ai-msg-bot";
+          div.textContent = text;
+          log.appendChild(div);
+          log.scrollTop = log.scrollHeight;
+        }
+
+        function handleCoachSubmit() {
+          const text = (input.value || "").trim();
+          if (!text) return;
+          appendMsg(text, true);
+          input.value = "";
+
+          const currentKb = (ta && ta.value.trim()) || localStorage.getItem(KB_KEY) || "";
+          const rule = extractRuleToAdd(text);
+
+          if (rule) {
+            const alreadyExists = currentKb.toLowerCase().includes(rule.toLowerCase());
+            const updatedKb = alreadyExists
+              ? currentKb
+              : (currentKb ? currentKb + "\n- " + rule : "- " + rule);
+            persistAiKnowledgeText(updatedKb);
+            appendMsg(
+              alreadyExists
+                ? `Ya tenía registrada esa información en mi memoria: "${rule}".`
+                : `Listo, agregué a mi memoria: "${rule}". A partir de ahora lo tendré en cuenta cada vez que me pregunten.`
+            );
+            return;
+          }
+
+          if (/bas[ao]|fuente|memoria|qu[eé] sabes|respondes/i.test(text)) {
+            if (!currentKb) {
+              appendMsg("Actualmente mi base de conocimiento está vacía. Dime qué quieres que agregue y lo guardo en mi memoria.");
+            } else {
+              appendMsg(`Me baso exactamente en la información guardada en este panel:\n\n${currentKb}`);
+            }
+            return;
+          }
+
+          if (!currentKb) {
+            appendMsg("Todavía no tengo información guardada sobre ese tema. Si quieres que lo recuerde, dime: 'Agrega: ...'");
+          } else {
+            appendMsg(`Según mi memoria actual:\n${currentKb}\n\nSi quieres que agregue o cambie algo específico, dime: "Quiero que agregues: ...".`);
+          }
+        }
+
+        sendBtn.onclick = handleCoachSubmit;
+        input.onkeydown = (e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            handleCoachSubmit();
+          }
+        };
+      }
+
+      window.addEventListener("DOMContentLoaded", () => {
+        startDataFlowSphereAnimation();
+        initAiCoach();
+      });
+    })();
+  </script>
 
   <script id="dcAdminPanelSwitcher">
     (function () {
@@ -716,6 +970,7 @@
               if (savedKb) kbArea.value = savedKb;
             } catch (_) {}
           }
+          window.dispatchEvent(new Event("resize"));
         }
 
         document.querySelectorAll("[data-dc-tab]").forEach((ctrl) => {
