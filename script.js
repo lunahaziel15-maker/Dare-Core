@@ -837,6 +837,9 @@ function getStoredProducts() {
                 if (!currentSearchTerm.trim()) {
                     initStore();
                     renderHeroSlide(heroSlideIndex);
+                    if (typeof loadAdminProducts === 'function' && document.getElementById('adminProductList')) {
+                        loadAdminProducts();
+                    }
                 }
             }
         }).catch(err => console.log("Modo offline:", err))
