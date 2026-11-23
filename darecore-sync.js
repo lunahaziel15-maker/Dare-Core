@@ -511,6 +511,75 @@
     }
   }
 
+  function extractOrderFolioFromText(raw) {
+    const str = String(raw || "");
+    const match =
+      str.match(/(?:Folio|Pedido|Compra|Orden)\s*:?\s*#?([A-Za-z0-9_-]+)/i) ||
+      str.match(/#(PEDIDO-[A-Za-z0-9_-]+|COMPRA-[A-Za-z0-9_-]+|[A-Za-z0-9_-]{4,})/i);
+    if (match && match[1]) {
+      return "#" + match[1].replace(/^#+/, "");
+    }
+    try {
+      const orders = JSON.parse(localStorage.getItem("darecore_client_orders") || "[]");
+      if (Array.isArray(orders) && orders[0] && orders[0].folio) {
+        const f = String(orders[0].folio).trim();
+        return f.startsWith("#") ? f : "#" + f;
+      }
+    } catch (_) {}
+    return "#PEDIDO";
+  }
+
+  function buildShortWhatsAppMessage(originalText) {
+    const folio = extractOrderFolioFromText(originalText);
+    return `Hola DareCore, me gustaría procesar el pago de mi pedido "${folio}"`;
+  }
+
+  function patchWhatsAppSameTab() {
+    const phone = window.WHATSAPP_PHONE || "5214777035509";
+
+    window.openWhatsAppWithMessage = function (message) {
+      const cleanMsg = buildShortWhatsAppMessage(message);
+      const url = `https://api.whatsapp.com/send/?phone=${phone}&text=${encodeURIComponent(cleanMsg)}`;
+      window.location.assign(url);
+    };
+
+    const origWindowOpen = window.open.bind(window);
+    window.open = function (url, target, features) {
+      if (typeof url === "string" && /whatsapp\.com|wa\.me/i.test(url)) {
+        try {
+          const u = new URL(url, window.location.origin);
+          const rawText = u.searchParams.get("text") || "";
+          u.searchParams.set("text", buildShortWhatsAppMessage(rawText));
+          window.location.assign(u.toString());
+        } catch (_) {
+          window.location.assign(url);
+        }
+        return null;
+      }
+      return origWindowOpen(url, target, features);
+    };
+
+    document.addEventListener(
+      "click",
+      (e) => {
+        const link = e.target.closest("a[href*='whatsapp.com'], a[href*='wa.me']");
+        if (!link) return;
+        e.preventDefault();
+        e.stopPropagation();
+        if (typeof e.stopImmediatePropagation === "function") e.stopImmediatePropagation();
+        try {
+          const u = new URL(link.href, window.location.origin);
+          const rawText = u.searchParams.get("text") || "";
+          u.searchParams.set("text", buildShortWhatsAppMessage(rawText));
+          window.location.assign(u.toString());
+        } catch (_) {
+          window.location.assign(link.href);
+        }
+      },
+      true
+    );
+  }
+
   function periodicSweep() {
     if (document.body) scrubDomMojibake(document.body);
     autoDismissToasts();
@@ -521,6 +590,7 @@
     wrapAdminStatusUpdater();
     patchClientOrderLookup();
     initAiKnowledgeSync();
+    patchWhatsAppSameTab();
     periodicSweep();
 
     if (typeof firebase !== "undefined" && firebase.auth) {

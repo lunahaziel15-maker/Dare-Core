@@ -5,10 +5,10 @@
   function getSavedEmail() {
     const firebaseMail = window.auth && window.auth.currentUser && window.auth.currentUser.email;
     if (firebaseMail && EMAIL_REGEX.test(firebaseMail)) {
-      localStorage.setItem(EMAIL_KEY, firebaseMail);
-      return firebaseMail;
+      localStorage.setItem(EMAIL_KEY, firebaseMail.trim().toLowerCase());
+      return firebaseMail.trim().toLowerCase();
     }
-    const mail = (localStorage.getItem(EMAIL_KEY) || "").trim();
+    const mail = (localStorage.getItem(EMAIL_KEY) || "").trim().toLowerCase();
     return EMAIL_REGEX.test(mail) ? mail : "";
   }
 
@@ -67,7 +67,7 @@
     document.body.appendChild(modal);
 
     const finishAndProceed = (email) => {
-      localStorage.setItem(EMAIL_KEY, email);
+      localStorage.setItem(EMAIL_KEY, email.trim().toLowerCase());
       modal.style.display = "none";
       renderEmailBadge();
       if (typeof window.__dcPendingAction === "function") {
@@ -106,7 +106,7 @@
     document.getElementById("dc-email-gate-save").onclick = () => {
       const input = document.getElementById("dc-email-gate-input");
       const err = document.getElementById("dc-email-gate-error");
-      const val = (input.value || "").trim();
+      const val = (input.value || "").trim().toLowerCase();
       if (!EMAIL_REGEX.test(val)) {
         err.textContent = "Por favor ingresa un correo electrónico válido.";
         input.focus();
@@ -149,16 +149,34 @@
       <button id="dc-logout-email-btn" type="button" style="background:#262626;color:#fff;border:none;border-radius:999px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer;">Cerrar sesión</button>
     `;
     document.getElementById("dc-logout-email-btn").onclick = () => {
-      localStorage.removeItem(EMAIL_KEY);
-      if (window.auth && window.auth.signOut) {
-        try { window.auth.signOut(); } catch (e) {}
-      }
+      [
+        EMAIL_KEY,
+        "darecore_guest_email",
+        "darecore_guest_name",
+        "darecore_user_email",
+        "darecore_user_name",
+        "darecore_guest_verified",
+        "darecore_session_email",
+        "darecore_client_orders"
+      ].forEach((k) => {
+        try { localStorage.removeItem(k); } catch (_) {}
+        try { sessionStorage.removeItem(k); } catch (_) {}
+      });
+      if (badge) badge.remove();
       cleanGhostOrders();
-      location.reload();
+
+      const authObj =
+        (typeof firebase !== "undefined" && firebase.auth && firebase.auth()) ||
+        window.auth;
+      if (authObj && typeof authObj.signOut === "function") {
+        authObj.signOut().then(() => location.reload()).catch(() => location.reload());
+        setTimeout(() => location.reload(), 400);
+      } else {
+        location.reload();
+      }
     };
   }
 
-  // Solo interceptar al pulsar PROCEDER AL PAGO (o finalizar/confirmar pedido)
   document.addEventListener("click", function (e) {
     const btn = e.target.closest("button, a");
     if (!btn) return;
