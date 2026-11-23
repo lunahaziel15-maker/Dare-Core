@@ -830,16 +830,14 @@ function getStoredProducts() {
     const { db } = ensureFirebaseRefs();
     if (db && !isSyncing) {
         isSyncing = true;
-        db.collection('products').orderBy('id', 'desc').get().then((snapshot) => {
+        db.collection('products').get().then((snapshot) => {
             if (!snapshot.empty) {
                 const cloudProducts = snapshot.docs.map(doc => ({ ...doc.data(), firestoreId: doc.id }));
                 localStorage.setItem('darecore_products', JSON.stringify(cloudProducts));
                 if (!currentSearchTerm.trim()) {
                     initStore();
                     renderHeroSlide(heroSlideIndex);
-                    if (typeof loadAdminProducts === 'function' && document.getElementById('adminProductList')) {
-                        loadAdminProducts();
-                    }
+                    if (typeof loadAdminProducts === 'function' && document.getElementById('adminProductList')) { loadAdminProducts(); }
                 }
             }
         }).catch(err => console.log("Modo offline:", err))
