@@ -332,7 +332,7 @@
       transform: translateY(-1px);
     }
 
-    /* PANEL MODIFICACIÓN DE IA: Composición editorial lateral flotante + Esfera 1:1 central */
+    /* PANEL MODIFICACIÓN DE IA: Columnas editoriales limpias en extremos + Esfera 1:1 despejada */
     #darecoreAiKnowledgeAdmin {
       display: grid !important;
       visibility: visible !important;
@@ -347,10 +347,17 @@
       border: 1px solid #18181b !important;
       border-radius: 22px !important;
       box-shadow: 0 24px 60px -20px rgba(0, 0, 0, 0.9) !important;
-      padding: 28px 32px !important;
-      grid-template-columns: minmax(230px, 290px) minmax(0, 1fr) minmax(230px, 290px);
+      padding: 22px 24px !important;
+      grid-template-columns: minmax(195px, 240px) minmax(320px, 1fr) minmax(195px, 235px);
       align-items: center;
-      gap: 20px;
+      gap: 16px;
+    }
+
+    /* Ocultar cualquier boton de microfono flotante externo que duplique el del panel */
+    #darecoreAiKnowledgeAdmin button:not(#dcAiCoachSendBtn):not(#dcAiMicBtn):not(.dc-ai-rule-del),
+    #sec-ia > button,
+    .dc-voice-float-btn {
+      display: none !important;
     }
 
     #dcAiFlowCanvas {
@@ -364,17 +371,17 @@
 
     @keyframes dcFloatEditorial {
       0%, 100% { transform: translateY(0px); }
-      50% { transform: translateY(-6px); }
+      50% { transform: translateY(-4px); }
     }
 
     @keyframes dcRuleSlideIn {
-      from { opacity: 0; transform: translateX(-10px); }
+      from { opacity: 0; transform: translateX(-8px); }
       to { opacity: 1; transform: translateX(0); }
     }
 
     @keyframes dcMicPulse {
       0%, 100% { box-shadow: 0 0 0 0 rgba(255, 204, 0, 0.55); }
-      50% { box-shadow: 0 0 0 10px rgba(255, 204, 0, 0); }
+      50% { box-shadow: 0 0 0 9px rgba(255, 204, 0, 0); }
     }
 
     .dc-ai-side-col {
@@ -384,29 +391,29 @@
       flex-direction: column;
       justify-content: center;
       max-height: 100%;
-      animation: dcFloatEditorial 6.5s ease-in-out infinite;
+      animation: dcFloatEditorial 7s ease-in-out infinite;
     }
 
     .dc-ai-side-col.right-col {
-      animation-delay: -3.2s;
+      animation-delay: -3.5s;
     }
 
     .dc-natgeo-kicker {
       display: inline-flex;
       align-items: center;
-      gap: 8px;
+      gap: 7px;
       font-family: 'Space Grotesk', sans-serif !important;
-      font-size: 10px;
+      font-size: 9px;
       font-weight: 600;
-      letter-spacing: 0.22em;
+      letter-spacing: 0.2em;
       text-transform: uppercase;
       color: #ffcc00;
-      margin-bottom: 8px;
+      margin-bottom: 6px;
     }
 
     .dc-natgeo-bar {
-      width: 3px;
-      height: 14px;
+      width: 2.5px;
+      height: 12px;
       background: #ffcc00;
       display: inline-block;
       flex-shrink: 0;
@@ -414,29 +421,29 @@
 
     .dc-natgeo-title {
       font-family: 'Cinzel', Georgia, serif !important;
-      font-size: 18px !important;
+      font-size: 14.5px !important;
       font-weight: 700 !important;
-      letter-spacing: 0.06em;
+      letter-spacing: 0.05em;
       text-transform: uppercase;
       color: #ffffff !important;
       line-height: 1.25;
-      margin: 0 0 14px 0;
-      text-shadow: 0 2px 18px rgba(0, 0, 0, 0.9);
+      margin: 0 0 10px 0;
+      text-shadow: 0 2px 14px rgba(0, 0, 0, 0.95);
     }
 
     .dc-ai-memory-stream {
       display: flex;
       flex-direction: column;
-      gap: 10px;
-      max-height: 290px;
+      gap: 7px;
+      max-height: 270px;
       overflow-y: auto;
-      padding-right: 6px;
+      padding-right: 4px;
       border-left: 1px solid rgba(255, 204, 0, 0.35);
-      padding-left: 14px;
+      padding-left: 11px;
     }
 
     .dc-ai-memory-stream::-webkit-scrollbar {
-      width: 3px;
+      width: 2px;
     }
     .dc-ai-memory-stream::-webkit-scrollbar-thumb {
       background: rgba(255, 204, 0, 0.45);
@@ -447,21 +454,21 @@
       display: flex;
       align-items: flex-start;
       justify-content: space-between;
-      gap: 8px;
+      gap: 6px;
       font-family: 'Space Grotesk', 'Inter', sans-serif;
-      font-size: 12.5px;
+      font-size: 11.5px;
       font-weight: 400;
-      line-height: 1.48;
-      color: rgba(248, 250, 252, 0.92);
-      text-shadow: 0 2px 12px rgba(0, 0, 0, 0.95);
+      line-height: 1.42;
+      color: rgba(248, 250, 252, 0.88);
+      text-shadow: 0 2px 12px rgba(0, 0, 0, 0.98);
       animation: dcRuleSlideIn 0.35s ease both;
     }
 
     .dc-ai-rule-del {
       background: transparent !important;
       border: none !important;
-      color: rgba(255, 255, 255, 0.35) !important;
-      font-size: 14px;
+      color: rgba(255, 255, 255, 0.32) !important;
+      font-size: 13px;
       line-height: 1;
       cursor: pointer;
       padding: 0 2px;
@@ -480,12 +487,12 @@
       border-radius: 0 !important;
       color: #ffffff !important;
       font-family: 'Space Grotesk', 'Inter', sans-serif !important;
-      font-size: 13px !important;
-      line-height: 1.5;
-      padding: 8px 2px !important;
+      font-size: 12px !important;
+      line-height: 1.45;
+      padding: 6px 2px !important;
       resize: none;
       outline: none;
-      text-shadow: 0 2px 12px rgba(0, 0, 0, 0.9);
+      text-shadow: 0 2px 12px rgba(0, 0, 0, 0.95);
       transition: border-color 0.25s ease;
     }
 
@@ -500,8 +507,8 @@
     .dc-ai-action-row {
       display: flex;
       align-items: center;
-      gap: 10px;
-      margin-top: 14px;
+      gap: 9px;
+      margin-top: 12px;
     }
 
     .dc-ai-save-editorial-btn {
@@ -509,9 +516,9 @@
       color: #09090b !important;
       border: none !important;
       border-radius: 4px !important;
-      padding: 8px 16px !important;
+      padding: 7px 14px !important;
       font-family: 'Space Grotesk', sans-serif !important;
-      font-size: 11px !important;
+      font-size: 10.5px !important;
       font-weight: 600 !important;
       letter-spacing: 0.14em;
       text-transform: uppercase;
@@ -525,8 +532,8 @@
     }
 
     .dc-ai-mic-btn {
-      width: 34px;
-      height: 34px;
+      width: 32px;
+      height: 32px;
       border-radius: 50% !important;
       border: 1px solid rgba(255, 204, 0, 0.55) !important;
       background: rgba(0, 0, 0, 0.55) !important;
@@ -551,13 +558,13 @@
     }
 
     .dc-ai-live-feedback {
-      margin-top: 10px;
+      margin-top: 8px;
       font-family: 'Space Grotesk', sans-serif;
-      font-size: 11px;
-      letter-spacing: 0.04em;
+      font-size: 10.5px;
+      letter-spacing: 0.03em;
       color: #38bdf8;
-      min-height: 16px;
-      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.95);
+      min-height: 15px;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.98);
     }
 
     @media (max-width: 960px) {
@@ -565,10 +572,10 @@
         grid-template-columns: 1fr;
         height: auto;
         max-height: none;
-        padding: 22px 18px !important;
+        padding: 20px 16px !important;
       }
       .dc-ai-center-void {
-        min-height: 280px;
+        min-height: 260px;
       }
     }
 
@@ -1073,6 +1080,83 @@
         return "";
       }
 
+      function normalizeDirectiveSentence(text) {
+        let s = String(text || "").trim().replace(/\s+/g, " ");
+        if (!s) return "";
+        s = s.replace(/^si\b/i, "Sí");
+        s = s.charAt(0).toUpperCase() + s.slice(1);
+        if (!/[.!?]$/.test(s)) s += ".";
+        return s;
+      }
+
+      function applySmartKnowledgeUpdate(rawMemory, newDirectiveRaw) {
+        const cleanNew = normalizeDirectiveSentence(newDirectiveRaw);
+        if (!cleanNew) return String(rawMemory || "").trim();
+
+        let text = String(rawMemory || "").trim();
+        const lowerNew = cleanNew.toLowerCase();
+
+        // Grupos temáticos mutuamente excluyentes para actualizar el texto existente sin dejar contradicciones
+        const topicMatchers = [
+          {
+            // Facturación: "no facturamos" <-> "sí facturamos"
+            test: /factur/i,
+            inlineRegex: /(?:,\s*|\.\s*|\b)(?:no\s+factur\w*|s[ií]\s+factur\w*|emitimos\s+factura\w*|no\s+emitimos\s+factura\w*)(?:\s+y\b)?/gi,
+            lineRegex: /factur/i
+          },
+          {
+            // Reembolsos / devoluciones
+            test: /(?:reembols|embols|devoluc)/i,
+            inlineRegex: /(?:,\s*|\.\s*|\b)(?:no\s+(?:hacemos|hay|se\s+hacen)\s+(?:reembols\w*|embols\w*|devoluc\w*)|s[ií]\s+(?:hacemos|hay)\s+(?:reembols\w*|devoluc\w*))/gi,
+            lineRegex: /(?:reembols|embols|devoluc)/i
+          },
+          {
+            // Tiempos de envío
+            test: /(?:env[ií]o|tardan|entrega)/i,
+            inlineRegex: /(?:,\s*|\.\s*|\b)los\s+env[ií]os\s+tardan[^.;\n]*/gi,
+            lineRegex: /(?:env[ií]o|tardan|entrega)/i
+          }
+        ];
+
+        const matchedTopic = topicMatchers.find((m) => m.test.test(lowerNew));
+
+        if (matchedTopic && text) {
+          // 1. Limpiar menciones opuestas o anteriores dentro de párrafos existentes
+          text = text.replace(matchedTopic.inlineRegex, " ");
+          text = text.replace(/\s{2,}/g, " ").replace(/\s+,/g, ",").replace(/\s+\./g, ".").trim();
+
+          // 2. Reemplazar si ya existía una línea dedicada a ese mismo tema
+          const lines = text
+            .split(/\r?\n/)
+            .map((l) => l.trim())
+            .filter(Boolean);
+
+          let replacedLine = false;
+          const updatedLines = lines.map((line) => {
+            const stripped = line.replace(/^[\-\*\•\d\.\)\s]+/, "");
+            if (matchedTopic.lineRegex.test(stripped) && stripped.length < 95) {
+              replacedLine = true;
+              return "- " + cleanNew;
+            }
+            return line;
+          });
+
+          if (replacedLine) {
+            return updatedLines.join("\n");
+          }
+          return updatedLines.join("\n") + "\n- " + cleanNew;
+        }
+
+        // Si no es un tema conflictivo, evitar duplicados exactos y agregarlo limpio
+        const lines = text ? text.split(/\r?\n/).map((l) => l.trim()).filter(Boolean) : [];
+        const already = lines.some(
+          (l) => l.replace(/^[\-\*\•\d\.\)\s]+/, "").toLowerCase() === lowerNew
+        );
+        if (already) return lines.join("\n");
+        lines.push("- " + cleanNew);
+        return lines.join("\n");
+      }
+
       function parseRulesList(rawText) {
         return String(rawText || "")
           .split(/\r?\n/)
@@ -1085,7 +1169,7 @@
         if (!stream) return;
         const rules = parseRulesList(localStorage.getItem(KB_KEY) || "");
         if (!rules.length) {
-          stream.innerHTML = `<div class="dc-ai-rule-item" style="color:rgba(226,232,240,0.55);font-style:italic;">Aún sin directrices registradas. Escribe o dicta una regla a la derecha para activar la base de conocimiento.</div>`;
+          stream.innerHTML = `<div class="dc-ai-rule-item" style="color:rgba(226,232,240,0.5);font-style:italic;">Sin directrices registradas aún. Escribe o dicta una regla a la derecha.</div>`;
           return;
         }
         stream.innerHTML = rules
@@ -1098,6 +1182,16 @@
           .join("");
       }
 
+      function hideDuplicateFloatingMics() {
+        const panel = document.getElementById("darecoreAiKnowledgeAdmin");
+        if (!panel) return;
+        panel.querySelectorAll("button").forEach((btn) => {
+          if (btn.id !== "dcAiCoachSendBtn" && btn.id !== "dcAiMicBtn" && !btn.classList.contains("dc-ai-rule-del")) {
+            btn.style.display = "none";
+          }
+        });
+      }
+
       function initAiCoach() {
         const input = document.getElementById("dcAiCoachInput");
         const sendBtn = document.getElementById("dcAiCoachSendBtn");
@@ -1106,6 +1200,8 @@
         const stream = document.getElementById("dcAiMemoryStream");
         if (!input || !sendBtn) return;
 
+        hideDuplicateFloatingMics();
+        setTimeout(hideDuplicateFloatingMics, 600);
         renderEditorialMemoryStream();
 
         function setFeedback(msg, isWarn) {
@@ -1118,17 +1214,11 @@
           const cleanInput = String(rawInput || "").trim();
           if (!cleanInput) return;
           const extracted = extractRuleToAdd(cleanInput) || cleanInput;
-          const rules = parseRulesList(localStorage.getItem(KB_KEY) || "");
-          const exists = rules.some((r) => r.toLowerCase() === extracted.toLowerCase());
-          if (!exists) {
-            rules.push(extracted);
-            const serialized = rules.map((r) => "- " + r).join("\n");
-            persistAiKnowledgeText(serialized);
-            renderEditorialMemoryStream();
-            setFeedback("Directriz integrada a DareCore Intelligence.", false);
-          } else {
-            setFeedback("Esta directriz ya forma parte de la memoria.", true);
-          }
+          const currentRaw = localStorage.getItem(KB_KEY) || "";
+          const updatedSerialized = applySmartKnowledgeUpdate(currentRaw, extracted);
+          persistAiKnowledgeText(updatedSerialized);
+          renderEditorialMemoryStream();
+          setFeedback("Memoria actualizada con coherencia.", false);
           input.value = "";
         }
 
@@ -1143,7 +1233,7 @@
               const serialized = rules.map((r) => "- " + r).join("\n");
               persistAiKnowledgeText(serialized);
               renderEditorialMemoryStream();
-              setFeedback("Directriz eliminada de la memoria.", true);
+              setFeedback("Directriz eliminada.", true);
             }
           });
         }
@@ -1156,11 +1246,10 @@
           }
         };
 
-        // Dictado por voz con Web Speech API (Micrófono)
         if (micBtn) {
           const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
           if (!SpeechRecognition) {
-            micBtn.onclick = () => setFeedback("Tu navegador no soporta dictado por voz; escribe la regla.", true);
+            micBtn.onclick = () => setFeedback("Tu navegador no soporta dictado por voz.", true);
           } else {
             const recognition = new SpeechRecognition();
             recognition.lang = "es-MX";
@@ -1171,7 +1260,7 @@
             recognition.onstart = () => {
               isListening = true;
               micBtn.classList.add("is-listening");
-              setFeedback("Escuchando... dicta la directriz ahora.", true);
+              setFeedback("Escuchando... dicta ahora.", true);
             };
 
             recognition.onresult = (event) => {
@@ -1186,7 +1275,7 @@
             };
 
             recognition.onerror = () => {
-              setFeedback("No se pudo captar audio. Verifica el permiso del micrófono.", true);
+              setFeedback("Verifica el permiso del micrófono.", true);
             };
 
             recognition.onend = () => {
