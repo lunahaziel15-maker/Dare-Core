@@ -2784,5 +2784,57 @@
       });
     })();
   </script>
+<script id="dcCleanAdminScrollAndViewScript">
+    (function () {
+      function revealAdminWorkspaceCleanly() {
+        const loginSec = document.getElementById("loginSection");
+        const dashSec = document.getElementById("dashboardSection");
+        const loginIsHidden =
+          !loginSec ||
+          loginSec.classList.contains("hidden") ||
+          window.getComputedStyle(loginSec).display === "none";
+
+        if (loginIsHidden && dashSec) {
+          dashSec.classList.remove("hidden");
+          dashSec.style.display = "block";
+          dashSec.style.visibility = "visible";
+          dashSec.style.opacity = "1";
+        }
+
+        const frame = document.querySelector(".dc-dashboard-frame");
+        if (frame) {
+          frame.style.visibility = "visible";
+          frame.style.opacity = "1";
+        }
+
+        // Garantizar que al menos un panel de pestaña esté visible sin quedarse en blanco
+        const panels = Array.from(document.querySelectorAll(".dc-tab-panel"));
+        const hasVisible = panels.some(
+          (p) => p.classList.contains("is-visible") && window.getComputedStyle(p).display !== "none"
+        );
+        if (!hasVisible) {
+          const catSec = document.getElementById("sec-catalogo");
+          if (catSec) {
+            catSec.classList.add("is-visible");
+            catSec.style.display = "grid";
+          }
+        }
+      }
+
+      document.addEventListener("DOMContentLoaded", () => {
+        revealAdminWorkspaceCleanly();
+        setTimeout(revealAdminWorkspaceCleanly, 250);
+        setTimeout(revealAdminWorkspaceCleanly, 700);
+      });
+
+      document.addEventListener("submit", (e) => {
+        if (e.target && e.target.id === "loginForm") {
+          setTimeout(revealAdminWorkspaceCleanly, 80);
+          setTimeout(revealAdminWorkspaceCleanly, 300);
+          setTimeout(revealAdminWorkspaceCleanly, 700);
+        }
+      }, true);
+    })();
+  </script>
 </body>
 </html>
