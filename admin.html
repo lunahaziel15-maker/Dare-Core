@@ -2987,7 +2987,67 @@
   </script>
 <script id="dcLogoutButtonScript">
     (function () {
-      function doCleanLogoutAndReload() {
+      function revealLoginBox() {
+        document.body.classList.remove("dc-logged-in");
+
+        const dash = document.getElementById("dashboardSection");
+        if (dash) {
+          dash.classList.add("hidden");
+          dash.hidden = true;
+          dash.style.setProperty("display", "none", "important");
+        }
+
+        // Ocultar paneles internos del dashboard
+        document.querySelectorAll(".dc-tab-panel").forEach(function (p) {
+          p.classList.remove("is-visible");
+          p.style.setProperty("display", "none", "important");
+        });
+
+        const stage = document.querySelector(".dc-login-stage-exact");
+        const card = document.querySelector(".dc-login-card-exact");
+        const loginSec = document.getElementById("loginSection");
+
+        if (stage) {
+          stage.classList.remove("is-auth-done", "hidden");
+          stage.hidden = false;
+          stage.style.setProperty("display", "flex", "important");
+          stage.style.setProperty("min-height", "100vh", "important");
+          stage.style.setProperty("height", "auto", "important");
+          stage.style.setProperty("padding", "24px 16px", "important");
+          stage.style.setProperty("margin", "0 auto", "important");
+          stage.style.setProperty("visibility", "visible", "important");
+          stage.style.setProperty("opacity", "1", "important");
+        }
+
+        if (card) {
+          card.classList.remove("hidden");
+          card.hidden = false;
+          card.style.setProperty("display", "block", "important");
+          card.style.setProperty("visibility", "visible", "important");
+          card.style.setProperty("opacity", "1", "important");
+        }
+
+        if (loginSec) {
+          loginSec.classList.remove("hidden");
+          loginSec.hidden = false;
+          loginSec.style.setProperty("display", "block", "important");
+          loginSec.style.setProperty("visibility", "visible", "important");
+          loginSec.style.setProperty("opacity", "1", "important");
+        }
+
+        const passInput = document.querySelector('input[type="password"]');
+        if (passInput) passInput.value = "";
+
+        document.documentElement.scrollTop = 0;
+        document.body.scrollTop = 0;
+      }
+
+      async function handleAdminLogoutClick(e) {
+        if (e) {
+          e.preventDefault();
+          e.stopPropagation();
+        }
+
         try {
           Object.keys(sessionStorage).forEach(function (k) {
             if (/auth|admin|login|user|session|darecore/i.test(k)) {
@@ -3006,15 +3066,14 @@
 
         try {
           if (window.firebase && typeof window.firebase.auth === "function" && window.firebase.apps && window.firebase.apps.length) {
-            window.firebase.auth().signOut().catch(function () {});
+            await window.firebase.auth().signOut();
           }
         } catch (_) {}
 
-        document.body.classList.remove("dc-logged-in");
-        window.location.reload();
+        revealLoginBox();
       }
 
-      function wireLogoutBtn() {
+      function ensureLogoutButtonInHeader() {
         let btn = document.getElementById("dcLogoutBtn") || document.getElementById("logoutBtn");
         if (!btn) {
           const pills =
@@ -3036,13 +3095,15 @@
           pills.appendChild(btn);
         }
 
-        if (!btn.dataset.dcReloadWired) {
-          btn.dataset.dcReloadWired = "1";
-          btn.addEventListener("click", function (e) {
-            e.preventDefault();
-            e.stopPropagation();
-            doCleanLogoutAndReload();
-          }, true);
+        btn.style.setProperty("display", "inline-flex", "important");
+        btn.style.setProperty("align-items", "center", "important");
+        btn.style.setProperty("visibility", "visible", "important");
+        btn.style.setProperty("opacity", "1", "important");
+        btn.style.setProperty("cursor", "pointer", "important");
+
+        if (!btn.dataset.dcRealLogoutBound) {
+          btn.dataset.dcRealLogoutBound = "1";
+          btn.addEventListener("click", handleAdminLogoutClick, true);
         }
       }
 
@@ -3051,21 +3112,19 @@
         if (!el) return;
         const txt = (el.textContent || "").trim().toLowerCase();
         if (el.id === "dcLogoutBtn" || el.id === "logoutBtn" || txt === "cerrar sesión" || txt === "cerrar sesion") {
-          e.preventDefault();
-          e.stopPropagation();
-          doCleanLogoutAndReload();
+          handleAdminLogoutClick(e);
         }
       }, true);
 
       if (document.readyState === "loading") {
         document.addEventListener("DOMContentLoaded", function () {
-          wireLogoutBtn();
-          setTimeout(wireLogoutBtn, 300);
-          setTimeout(wireLogoutBtn, 1000);
+          ensureLogoutButtonInHeader();
+          setTimeout(ensureLogoutButtonInHeader, 300);
+          setTimeout(ensureLogoutButtonInHeader, 1000);
         });
       } else {
-        wireLogoutBtn();
-        setTimeout(wireLogoutBtn, 300);
+        ensureLogoutButtonInHeader();
+        setTimeout(ensureLogoutButtonInHeader, 300);
       }
     })();
   </script>
