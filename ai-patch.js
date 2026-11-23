@@ -1,14 +1,17 @@
 (function () {
   const ADMIN_AI_KEY = "darecore_admin_ai_prompt";
 
-  // 1. Silenciar voz hablada de la IA (solo responde en texto)
-  if (window.speechSynthesis) {
-    window.speechSynthesis.cancel();
-    window.speechSynthesis.speak = function () {};
+  // 1. Silenciar voz hablada de la IA inmediatamente (solo responde por texto)
+  function disableTTS() {
+    if (window.speechSynthesis) {
+      try { window.speechSynthesis.cancel(); } catch (e) {}
+      window.speechSynthesis.speak = function () {};
+    }
   }
+  disableTTS();
 
-  // 2. Eliminar/ocultar definitivamente el boton rojo de detener (sin tocar el microfono)
-  function hideStopButtonForever() {
+  // 2. Eliminar por completo el boton rojo de detener (dejar solo microfono y Enviar)
+  function removeStopButton() {
     const sendBtn = Array.from(document.querySelectorAll("button")).find(
       (b) => /^enviar$/i.test((b.textContent || "").trim())
     );
@@ -17,16 +20,14 @@
     const btns = Array.from(bar.querySelectorAll("button")).filter((b) => b !== sendBtn);
     if (btns.length < 2) return;
 
-    // El boton rojo de detener es el primero antes del microfono (o el que tiene fondo rojo/cuadro rect)
     const stopBtn = btns.find((b) => {
       const bg = getComputedStyle(b).backgroundColor || "";
       const meta = (b.id + " " + b.className + " " + (b.title || "") + " " + (b.getAttribute("aria-label") || "")).toLowerCase();
       return /stop|detener|cancel/.test(meta) || /rgb\(\s*255\s*,\s*(5[0-9]|6[0-9]|7[0-9]|8[0-9])\s*,/.test(bg) || !!b.querySelector("rect");
     }) || btns[0];
 
-    if (stopBtn) {
-      stopBtn.style.setProperty("display", "none", "important");
-      stopBtn.setAttribute("hidden", "true");
+    if (stopBtn && stopBtn.parentElement) {
+      stopBtn.remove();
     }
   }
 
@@ -76,10 +77,15 @@
     return origFetch(resource, init);
   };
 
-  window.addEventListener("DOMContentLoaded", () => {
-    hideStopButtonForever();
-    syncAdminKnowledge();
-    setInterval(hideStopButtonForever, 300);
-    new MutationObserver(hideStopButtonForever).observe(document.body, { childList: true, subtree: true, attributes: true });
-  });
+  // Ejecutar al instante y vigilar cambios en el DOM
+  removeStopButton();
+  syncAdminKnowledge();
+  setInterval(() => {
+    disableTTS();
+    removeStopButton();
+  }, 250);
+
+  if (document.body) {
+    new MutationObserver(removeStopButton).observe(document.body, { childList: true, subtree: true });
+  }
 })();
