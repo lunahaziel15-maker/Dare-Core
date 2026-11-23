@@ -1093,50 +1093,61 @@
     writeJsonArr(key, list);
   }
 
-  // Interceptar escrituras a orders y darelab_orders para garantizar respaldo visible en admin
+  // Interceptar escrituras a orders y darelab_orders de forma segura
   function hookFirestoreOrderWrites() {
-    if (!window.firebase || !firebase.firestore || window.__dcHookedFirestoreOrders) return;
+    if (window.__dcHookedFirestoreOrders) return;
+    const proto = window.firebase && firebase.firestore && firebase.firestore.prototype;
+    if (!proto || typeof proto.collection !== "function") return;
     window.__dcHookedFirestoreOrders = true;
-    const origCollection = firebase.firestore.prototype.collection;
-    firebase.firestore.prototype.collection = function (colName) {
+    const origCollection = proto.collection;
+    proto.collection = function (colName) {
       const colRef = origCollection.apply(this, arguments);
       if (colName !== "orders" && colName !== "darelab_orders") return colRef;
 
-      const origAdd = colRef.add.bind(colRef);
-      colRef.add = async function (payload) {
-        const safePayload = Object.assign({}, payload || {}, {
-          status: (payload && payload.status) || "En proceso",
-          createdAt: (payload && payload.createdAt) || new Date().toISOString()
-        });
-        upsertOrderInRegistry(colName, "", safePayload);
-        try {
-          const docRef = await origAdd(safePayload);
-          if (docRef && docRef.id) {
-            upsertOrderInRegistry(colName, docRef.id, safePayload);
-          }
-          return docRef;
-        } catch (err) {
-          return { id: safePayload.folio || safePayload.purchaseNumber || ("local-" + Date.now()) };
-        }
-      };
-
-      const origDoc = colRef.doc.bind(colRef);
-      colRef.doc = function (docId) {
-        const docRef = origDoc.apply(this, arguments);
-        const origSet = docRef.set.bind(docRef);
-        docRef.set = async function (payload, opts) {
+      if (colRef && typeof colRef.add === "function" && !colRef.__dcWrappedAdd) {
+        const origAdd = colRef.add.bind(colRef);
+        colRef.add = async function (payload) {
           const safePayload = Object.assign({}, payload || {}, {
-            status: (payload && payload.status) || "En proceso"
+            status: (payload && payload.status) || "En proceso",
+            createdAt: (payload && payload.createdAt) || new Date().toISOString()
           });
-          upsertOrderInRegistry(colName, docId, safePayload);
+          upsertOrderInRegistry(colName, "", safePayload);
           try {
-            return await origSet(safePayload, opts);
+            const docRef = await origAdd(safePayload);
+            if (docRef && docRef.id) {
+              upsertOrderInRegistry(colName, docRef.id, safePayload);
+            }
+            return docRef;
           } catch (err) {
-            return Promise.resolve();
+            return { id: safePayload.folio || safePayload.purchaseNumber || ("local-" + Date.now()) };
           }
         };
-        return docRef;
-      };
+        colRef.__dcWrappedAdd = true;
+      }
+
+      if (colRef && typeof colRef.doc === "function" && !colRef.__dcWrappedDoc) {
+        const origDoc = colRef.doc.bind(colRef);
+        colRef.doc = function (docId) {
+          const docRef = origDoc.apply(this, arguments);
+          if (docRef && typeof docRef.set === "function" && !docRef.__dcWrappedSet) {
+            const origSet = docRef.set.bind(docRef);
+            docRef.set = async function (payload, opts) {
+              const safePayload = Object.assign({}, payload || {}, {
+                status: (payload && payload.status) || "En proceso"
+              });
+              upsertOrderInRegistry(colName, docId, safePayload);
+              try {
+                return await origSet(safePayload, opts);
+              } catch (err) {
+                return Promise.resolve();
+              }
+            };
+            docRef.__dcWrappedSet = true;
+          }
+          return docRef;
+        };
+        colRef.__dcWrappedDoc = true;
+      }
 
       return colRef;
     };
