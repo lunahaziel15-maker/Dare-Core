@@ -3966,3 +3966,70 @@ window.addEventListener('click', function(e) {
     setTimeout(renderClientOrdersListIfNeeded, 1200);
   });
 })();
+/* DARECORE STRICT WHATSAPP GATE */
+(function () {
+  if (window.__dcStrictWhatsAppGateInstalled) return;
+  window.__dcStrictWhatsAppGateInstalled = true;
+
+  function getValidWhatsAppDigits() {
+    const inputs = Array.from(document.querySelectorAll("input, tel"));
+    const waInput = inputs.find(function (inp) {
+      const meta = ((inp.id || "") + " " + (inp.name || "") + " " + (inp.placeholder || "") + " " + (inp.getAttribute("aria-label") || "")).toLowerCase();
+      if (/whatsapp|wa|tel[eé]fono|celular|477/i.test(meta)) return true;
+      const prevTxt = (inp.previousElementSibling && inp.previousElementSibling.textContent || "").toLowerCase();
+      const parentTxt = (inp.parentElement && inp.parentElement.textContent || "").toLowerCase();
+      return /n[uú]mero de whatsapp|whatsapp/i.test(prevTxt + " " + parentTxt);
+    });
+    if (!waInput) return { ok: true, digits: "", el: null };
+    const digits = String(waInput.value || "").replace(/\D+/g, "");
+    return { ok: digits.length === 10, digits: digits, el: waInput };
+  }
+
+  function showStrictWaError(el) {
+    const msg = "Debes ingresar tu número de WhatsApp de 10 dígitos para continuar.";
+    if (typeof window.showFloatingToast === "function") {
+      try { window.showFloatingToast(msg); } catch (_) {}
+    } else {
+      alert(msg);
+    }
+    if (el) {
+      el.style.borderColor = "#ef4444";
+      el.focus();
+      setTimeout(function () { el.style.borderColor = ""; }, 2500);
+    }
+  }
+
+  // Interceptar clics en botones de Dare Lab / solicitar mockup / total estimado
+  document.addEventListener("click", function (e) {
+    const btn = e.target && e.target.closest ? e.target.closest("button, a") : null;
+    if (!btn) return;
+    const txt = (btn.textContent || "").trim().toLowerCase();
+    const isDareLabAction = /solicitar\s*mockup|total\s*estimado|cotizar/i.test(txt);
+    if (!isDareLabAction) return;
+
+    const check = getValidWhatsAppDigits();
+    if (!check.ok) {
+      e.preventDefault();
+      e.stopPropagation();
+      if (typeof e.stopImmediatePropagation === "function") e.stopImmediatePropagation();
+      showStrictWaError(check.el);
+      window.__dcBlockNextWhatsAppUntil = Date.now() + 2000;
+    }
+  }, true);
+
+  // Bloquear window.open hacia WhatsApp si el usuario no ingreso los 10 digitos en Dare Lab
+  const origOpen = window.open.bind(window);
+  window.open = function (url) {
+    const u = String(url || "");
+    const inPersonalizar = /personalizar/i.test(window.location.pathname || "");
+    const blockedRecently = window.__dcBlockNextWhatsAppUntil && Date.now() < window.__dcBlockNextWhatsAppUntil;
+    if (/whatsapp\.com|wa\.me/i.test(u) && (inPersonalizar || blockedRecently)) {
+      const check = getValidWhatsAppDigits();
+      if (!check.ok) {
+        showStrictWaError(check.el);
+        return null;
+      }
+    }
+    return origOpen.apply(window, arguments);
+  };
+})();
