@@ -332,21 +332,20 @@
       transform: translateY(-1px);
     }
 
-    /* PANEL ÚNICO DE MODIFICACIÓN DE IA: esfera animada protagonista y un solo cuadro traslúcido */
+    /* PANEL MODIFICACIÓN DE IA: Vórtice neón de fibras cósmicas en movimiento sobre negro puro */
     #darecoreAiKnowledgeAdmin {
-      display: block !important;
+      display: flex !important;
       visibility: visible !important;
       opacity: 1 !important;
       position: relative;
       overflow: hidden;
-      min-height: 520px;
-      background: radial-gradient(circle at 50% 45%, #11162b 0%, #06070f 65%, #030308 100%) !important;
+      min-height: 620px;
+      background: #000000 !important;
       color: #f8fafc !important;
-      border: 1px solid rgba(139, 92, 246, 0.32) !important;
+      border: 1px solid #18181b !important;
       border-radius: 22px !important;
-      box-shadow: 0 24px 60px -20px rgba(3, 7, 18, 0.78) !important;
-      padding: 26px 28px !important;
-      display: flex !important;
+      box-shadow: 0 28px 65px -20px rgba(0, 0, 0, 0.9) !important;
+      padding: 20px 22px !important;
       flex-direction: column;
       justify-content: space-between;
     }
@@ -367,90 +366,106 @@
       align-items: center;
       justify-content: space-between;
       gap: 12px;
-      flex-wrap: wrap;
+      pointer-events: none;
     }
 
     .dc-ai-top-bar h2 {
       margin: 0;
-      font-size: 18px !important;
+      font-size: 14px !important;
       font-weight: 500 !important;
-      color: #ffffff !important;
-      letter-spacing: -0.01em;
+      color: rgba(255, 255, 255, 0.72) !important;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
     }
 
     .dc-ai-spacer {
-      min-height: 170px;
+      flex: 1;
+      min-height: 360px;
       pointer-events: none;
     }
 
     .dc-ai-single-dock {
       position: relative;
       z-index: 1;
-      background: rgba(8, 11, 22, 0.56);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      border: 1px solid rgba(148, 163, 184, 0.22);
-      border-radius: 16px;
-      padding: 14px 16px;
+      max-width: 680px;
+      width: 100%;
+      margin: 0 auto;
+      background: rgba(0, 0, 0, 0.45);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 18px;
+      padding: 10px 12px;
+      transition: background-color 0.25s ease, border-color 0.25s ease;
+    }
+
+    .dc-ai-single-dock:focus-within {
+      background: rgba(0, 0, 0, 0.76);
+      border-color: rgba(56, 189, 248, 0.45);
     }
 
     .dc-ai-chat-log {
-      max-height: 165px;
+      max-height: 125px;
       overflow-y: auto;
       display: flex;
       flex-direction: column;
-      gap: 8px;
-      margin-bottom: 10px;
+      gap: 6px;
+      margin-bottom: 8px;
       padding-right: 4px;
+    }
+
+    .dc-ai-chat-log:empty {
+      display: none;
+      margin-bottom: 0;
     }
 
     .dc-ai-msg-admin {
       align-self: flex-end;
       max-width: 82%;
       background: rgba(217, 70, 239, 0.22);
-      border: 1px solid rgba(217, 70, 239, 0.4);
+      border: 1px solid rgba(217, 70, 239, 0.42);
       color: #ffffff;
-      padding: 8px 12px;
+      padding: 6px 11px;
       border-radius: 12px 12px 3px 12px;
-      font-size: 12.5px;
+      font-size: 12px;
       font-weight: 400;
-      line-height: 1.45;
+      line-height: 1.4;
     }
 
     .dc-ai-msg-bot {
       align-self: flex-start;
-      max-width: 90%;
-      background: rgba(15, 23, 42, 0.72);
-      border: 1px solid rgba(34, 211, 238, 0.3);
+      max-width: 92%;
+      background: rgba(9, 13, 28, 0.82);
+      border: 1px solid rgba(34, 211, 238, 0.34);
       color: #e2e8f0;
-      padding: 9px 13px;
+      padding: 8px 12px;
       border-radius: 12px 12px 12px 3px;
-      font-size: 12.5px;
+      font-size: 12px;
       font-weight: 400;
-      line-height: 1.5;
+      line-height: 1.45;
       white-space: pre-line;
     }
 
     #dcAiCoachInput {
-      background: rgba(15, 23, 42, 0.65) !important;
-      color: #f8fafc !important;
-      border: 1px solid rgba(148, 163, 184, 0.28) !important;
+      background: rgba(255, 255, 255, 0.06) !important;
+      color: #ffffff !important;
+      border: 1px solid rgba(255, 255, 255, 0.16) !important;
       border-radius: 999px !important;
-      padding: 9px 15px !important;
+      padding: 8px 14px !important;
       font-size: 12.5px !important;
     }
 
     #dcAiCoachInput::placeholder {
-      color: #94a3b8;
+      color: rgba(226, 232, 240, 0.62);
     }
 
     #dcAiCoachSendBtn {
-      background: linear-gradient(90deg, #d946ef 0%, #6366f1 50%, #06b6d4 100%) !important;
+      background: linear-gradient(90deg, #e879f9 0%, #3b82f6 52%, #22d3ee 100%) !important;
       color: #ffffff !important;
       border: none !important;
       border-radius: 999px !important;
       padding: 0 18px !important;
-      height: 36px !important;
+      height: 34px !important;
       font-size: 12px !important;
       font-weight: 500 !important;
       cursor: pointer;
@@ -726,7 +741,7 @@
             <!-- Único lugar de interacción con la memoria de DareCore Intelligence -->
             <div class="dc-ai-single-dock">
               <div id="dcAiCoachLog" class="dc-ai-chat-log">
-                <div class="dc-ai-msg-bot">Pregúntame en qué me baso para responder o dime qué regla quieres agregar (ej. "Agrega: no hacemos reembolsos").</div>
+                
               </div>
 
               <div style="display:flex;gap:8px;align-items:center;">
@@ -744,6 +759,29 @@
     (function () {
       const KB_KEY = "darecore_ai_knowledge";
 
+      function neonVortexColor(normX, alpha) {
+        // Degradado exacto: izquierda magenta neón -> centro-izq violeta -> centro azul cobalto -> derecha turquesa/cian
+        const x = Math.max(0, Math.min(1, normX));
+        let r, g, b;
+        if (x < 0.28) {
+          const k = x / 0.28;
+          r = Math.round(255 - k * 85);   // 255 -> 170
+          g = Math.round(25 + k * 25);    // 25 -> 50
+          b = Math.round(245 + k * 10);   // 245 -> 255
+        } else if (x < 0.55) {
+          const k = (x - 0.28) / 0.27;
+          r = Math.round(170 - k * 145);  // 170 -> 25
+          g = Math.round(50 + k * 65);    // 50 -> 115
+          b = 255;
+        } else {
+          const k = (x - 0.55) / 0.45;
+          r = Math.round(25 - k * 15);    // 25 -> 10
+          g = Math.round(115 + k * 130);  // 115 -> 245
+          b = Math.round(255 - k * 25);   // 255 -> 230
+        }
+        return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+      }
+
       function startDataFlowSphereAnimation() {
         const canvas = document.getElementById("dcAiFlowCanvas");
         const container = document.getElementById("darecoreAiKnowledgeAdmin");
@@ -753,21 +791,48 @@
 
         let width = 0;
         let height = 0;
-        const strandCount = 115;
-        const particleCount = 180;
-        const particles = Array.from({ length: particleCount }, (_, i) => ({
-          angle: (i / particleCount) * Math.PI * 2,
-          radiusFactor: 0.25 + ((i * 37) % 70) / 100,
-          speed: 0.0024 + ((i % 7) * 0.0006),
-          size: 1.1 + (i % 3) * 0.7,
-          phase: i * 0.45
+
+        // 1. Fibras entrelazadas del anillo exterior (estilo "peludo" denso de la referencia)
+        const rimFibers = Array.from({ length: 340 }, (_, i) => ({
+          baseAngle: (i / 340) * Math.PI * 2,
+          span: 0.45 + ((i * 29) % 55) / 100,
+          rInFactor: 0.72 + ((i * 17) % 24) / 100,
+          rOutFactor: 0.96 + ((i * 13) % 10) / 100,
+          curl: (((i % 2 === 0 ? 1 : -1) * (18 + (i % 34)))),
+          speed: (i % 2 === 0 ? 1 : -1) * (0.0018 + (i % 9) * 0.00022),
+          phase: i * 0.31
+        }));
+
+        // 2. Haces cósmicos internos que conectan el nodo central y el nodo superior-izquierdo con el anillo
+        const coreStreams = Array.from({ length: 150 }, (_, i) => ({
+          targetAngle: (i / 150) * Math.PI * 2,
+          fromUpperNode: i % 3 === 0,
+          bend1: ((i * 41) % 90) - 45,
+          bend2: ((i * 67) % 110) - 55,
+          speed: 0.0022 + (i % 7) * 0.0003,
+          phase: i * 0.27
+        }));
+
+        // 3. Partículas estelares blancas brillantes sobre el anillo y los haces
+        const stars = Array.from({ length: 320 }, (_, i) => ({
+          angle: (i / 320) * Math.PI * 2 + ((i * 19) % 100) * 0.01,
+          rFactor: i < 220
+            ? 0.74 + ((i * 23) % 28) / 100
+            : 0.08 + ((i * 31) % 66) / 100,
+          speed: (i % 2 === 0 ? 1 : -1) * (0.0014 + (i % 8) * 0.00032),
+          size: i % 9 === 0 ? 1.85 : (0.75 + (i % 3) * 0.35),
+          twinklePhase: i * 0.7
         }));
 
         function resizeCanvas() {
           const rect = container.getBoundingClientRect();
           if (!rect.width || !rect.height) return;
-          width = canvas.width = Math.floor(rect.width);
-          height = canvas.height = Math.floor(rect.height);
+          const dpr = Math.min(window.devicePixelRatio || 1, 2);
+          width = Math.floor(rect.width);
+          height = Math.floor(rect.height);
+          canvas.width = Math.floor(width * dpr);
+          canvas.height = Math.floor(height * dpr);
+          ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
         }
 
         resizeCanvas();
@@ -776,63 +841,124 @@
         let t = 0;
         function renderFrame() {
           if (!width || !height) resizeCanvas();
-          t += 0.013;
+          t += 0.012;
 
-          ctx.clearRect(0, 0, width || 1, height || 1);
+          ctx.globalCompositeOperation = "source-over";
+          ctx.fillStyle = "#000000";
+          ctx.fillRect(0, 0, width || 1, height || 1);
+
           if (!width || !height) {
             requestAnimationFrame(renderFrame);
             return;
           }
 
+          ctx.globalCompositeOperation = "lighter";
+
           const cx = width * 0.5;
-          const cy = height * 0.44;
-          const baseR = Math.min(width, height) * 0.46;
+          const cy = height * 0.47;
+          const R = Math.min(width * 0.44, height * 0.44);
 
-          for (let i = 0; i < strandCount; i++) {
-            const frac = i / strandCount;
-            const a1 = frac * Math.PI * 2 + t * 0.6;
-            const a2 = a1 + Math.PI * 0.82 + Math.sin(t + frac * 6) * 0.38;
+          // Posición orbital suave del nodo superior izquierdo (como en la imagen de referencia)
+          const upperAngle = -Math.PI * 0.78 + Math.sin(t * 0.6) * 0.08;
+          const upperX = cx + Math.cos(upperAngle) * (R * 0.76);
+          const upperY = cy + Math.sin(upperAngle) * (R * 0.76);
 
-            const r1 = baseR * (0.4 + 0.6 * Math.sin(frac * Math.PI));
-            const r2 = baseR * (0.48 + 0.52 * Math.cos(frac * Math.PI * 1.5 + t));
+          // Posición del nodo central luminoso
+          const coreX = cx + Math.cos(t * 0.8) * 5;
+          const coreY = cy + Math.sin(t * 0.9) * 5;
 
-            const x1 = cx + Math.cos(a1) * r1 * 1.28;
-            const y1 = cy + Math.sin(a1) * r1 * 0.94;
-            const x2 = cx + Math.cos(a2) * r2 * 1.28;
-            const y2 = cy + Math.sin(a2) * r2 * 0.94;
+          // A) Haces internos desde el nodo central y nodo superior-izquierdo hacia el anillo
+          for (let i = 0; i < coreStreams.length; i++) {
+            const s = coreStreams[i];
+            const ang = s.targetAngle + t * (s.fromUpperNode ? 0.28 : -0.24);
+            const endR = R * (0.86 + 0.08 * Math.sin(t * 1.4 + s.phase));
+            const ex = cx + Math.cos(ang) * endR;
+            const ey = cy + Math.sin(ang) * endR;
 
-            const cpx = cx + Math.cos(a1 + 0.55) * baseR * 0.62;
-            const cpy = cy + Math.sin(a2 - 0.55) * baseR * 0.52;
+            const sx = s.fromUpperNode ? upperX : coreX;
+            const sy = s.fromUpperNode ? upperY : coreY;
 
+            const midX = (sx + ex) * 0.5 + Math.cos(ang + Math.PI * 0.5) * (s.bend1 + Math.sin(t + s.phase) * 18);
+            const midY = (sy + ey) * 0.5 + Math.sin(ang + Math.PI * 0.5) * (s.bend2 + Math.cos(t + s.phase) * 18);
+
+            const normS = (sx - (cx - R)) / (2 * R);
+            const normE = (ex - (cx - R)) / (2 * R);
+            const grad = ctx.createLinearGradient(sx, sy, ex, ey);
+            grad.addColorStop(0, neonVortexColor(normS, 0.34));
+            grad.addColorStop(1, neonVortexColor(normE, 0.28));
+
+            ctx.beginPath();
+            ctx.moveTo(sx, sy);
+            ctx.quadraticCurveTo(midX, midY, ex, ey);
+            ctx.strokeStyle = grad;
+            ctx.lineWidth = 0.85;
+            ctx.stroke();
+          }
+
+          // B) Anillo exterior denso de fibras cósmicas curvas y puntas en el borde
+          for (let i = 0; i < rimFibers.length; i++) {
+            const f = rimFibers[i];
+            const a1 = f.baseAngle + t * (f.speed * 140);
+            const a2 = a1 + f.span * Math.sin(t * 0.5 + f.phase * 0.2) + 0.35;
+
+            const r1 = R * f.rInFactor;
+            const r2 = R * (f.rOutFactor + 0.03 * Math.sin(t * 1.8 + f.phase));
+
+            const x1 = cx + Math.cos(a1) * r1;
+            const y1 = cy + Math.sin(a1) * r1;
+            const x2 = cx + Math.cos(a2) * r2;
+            const y2 = cy + Math.sin(a2) * r2;
+
+            const midA = (a1 + a2) * 0.5;
+            const ctrlR = R * 0.94 + f.curl * Math.cos(t + f.phase);
+            const cpx = cx + Math.cos(midA) * ctrlR;
+            const cpy = cy + Math.sin(midA) * ctrlR;
+
+            const norm1 = (x1 - (cx - R)) / (2 * R);
+            const norm2 = (x2 - (cx - R)) / (2 * R);
             const grad = ctx.createLinearGradient(x1, y1, x2, y2);
-            grad.addColorStop(0, "rgba(217, 70, 239, 0.45)");
-            grad.addColorStop(0.5, "rgba(99, 102, 241, 0.34)");
-            grad.addColorStop(1, "rgba(6, 182, 212, 0.48)");
+            grad.addColorStop(0, neonVortexColor(norm1, 0.42));
+            grad.addColorStop(1, neonVortexColor(norm2, 0.48));
 
             ctx.beginPath();
             ctx.moveTo(x1, y1);
             ctx.quadraticCurveTo(cpx, cpy, x2, y2);
             ctx.strokeStyle = grad;
-            ctx.lineWidth = 1.15;
+            ctx.lineWidth = 0.95;
             ctx.stroke();
           }
 
-          for (let p = 0; p < particles.length; p++) {
-            const pt = particles[p];
-            pt.angle += pt.speed;
-            const wobble = Math.sin(t * 1.6 + pt.phase) * 14;
-            const rad = baseR * pt.radiusFactor + wobble;
-            const px = cx + Math.cos(pt.angle) * rad * 1.28;
-            const py = cy + Math.sin(pt.angle) * rad * 0.94;
-            const hueMix = (Math.cos(pt.angle) + 1) * 0.5;
+          // C) Destellos en el nodo central y en el nodo superior izquierdo
+          const coreGlow = ctx.createRadialGradient(coreX, coreY, 0, coreX, coreY, R * 0.14);
+          coreGlow.addColorStop(0, "rgba(125, 211, 252, 0.95)");
+          coreGlow.addColorStop(0.35, "rgba(59, 130, 246, 0.45)");
+          coreGlow.addColorStop(1, "rgba(0, 0, 0, 0)");
+          ctx.fillStyle = coreGlow;
+          ctx.beginPath();
+          ctx.arc(coreX, coreY, R * 0.14, 0, Math.PI * 2);
+          ctx.fill();
+
+          const upperGlow = ctx.createRadialGradient(upperX, upperY, 0, upperX, upperY, R * 0.16);
+          upperGlow.addColorStop(0, "rgba(245, 208, 254, 0.9)");
+          upperGlow.addColorStop(0.4, "rgba(217, 70, 239, 0.42)");
+          upperGlow.addColorStop(1, "rgba(0, 0, 0, 0)");
+          ctx.fillStyle = upperGlow;
+          ctx.beginPath();
+          ctx.arc(upperX, upperY, R * 0.16, 0, Math.PI * 2);
+          ctx.fill();
+
+          // D) Micro-partículas blancas luminosas flotando en órbita
+          for (let p = 0; p < stars.length; p++) {
+            const st = stars[p];
+            st.angle += st.speed;
+            const rad = R * st.rFactor + Math.sin(t * 1.5 + st.twinklePhase) * 5;
+            const px = cx + Math.cos(st.angle) * rad;
+            const py = cy + Math.sin(st.angle) * rad;
+            const twinkle = 0.55 + 0.45 * Math.sin(t * 3 + st.twinklePhase);
 
             ctx.beginPath();
-            ctx.arc(px, py, pt.size, 0, Math.PI * 2);
-            ctx.fillStyle = hueMix < 0.45
-              ? "rgba(232, 121, 249, 0.9)"
-              : hueMix < 0.75
-                ? "rgba(129, 140, 248, 0.9)"
-                : "rgba(34, 211, 238, 0.95)";
+            ctx.arc(px, py, st.size, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(255, 255, 255, ${twinkle.toFixed(2)})`;
             ctx.fill();
           }
 
@@ -898,24 +1024,24 @@
             appendMsg(
               alreadyExists
                 ? `Ya tenía registrada esa regla en mi memoria: "${rule}".`
-                : `Listo, agregué a mi memoria: "${rule}". A partir de ahora DareCore Intelligence lo tomará en cuenta al responder.`
+                : `Agregado a mi memoria: "${rule}".`
             );
             return;
           }
 
           if (/bas[ao]|fuente|memoria|qu[eé] sabes|respondes/i.test(text)) {
             if (!currentKb) {
-              appendMsg("Actualmente mi memoria está vacía. Escribe por ejemplo: 'Agrega: no hacemos reembolsos' para guardarlo.");
+              appendMsg("Mi memoria está vacía actualmente. Escribe por ejemplo: 'Agrega: no hacemos reembolsos'.");
             } else {
-              appendMsg(`Me baso exactamente en esta memoria:\n\n${currentKb}`);
+              appendMsg(`Me baso en esta memoria:\n\n${currentKb}`);
             }
             return;
           }
 
           if (!currentKb) {
-            appendMsg("Aún no tengo información guardada sobre eso. Dime: 'Agrega: ...' y lo incorporo a mi memoria.");
+            appendMsg("Aún no tengo reglas guardadas sobre eso. Escribe: 'Agrega: ...' para guardarlo.");
           } else {
-            appendMsg(`Según mi memoria actual:\n${currentKb}\n\nSi quieres agregar otra regla, escribe: "Agrega: ...".`);
+            appendMsg(`Memoria actual:\n${currentKb}`);
           }
         }
 
