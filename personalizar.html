@@ -265,5 +265,95 @@
 <script src="darecore-ai.js"></script>
   <script src="email-gate.js"></script>
   <script src="darecore-sync.js"></script>
+<script id="dcHardNavigationStopWa">
+(function () {
+  if (window.__dcHardNavigationStopWaInstalled) return;
+  window.__dcHardNavigationStopWaInstalled = true;
+
+  function isAI(el) {
+    if (!el) return false;
+    if (typeof window.__dcIsInsideDareCoreAI === "function" && window.__dcIsInsideDareCoreAI(el)) return true;
+    let cur = el;
+    for (let i = 0; i < 12 && cur; i++) {
+      const id = String(cur.id || "").toLowerCase();
+      const cls = String(cur.className || "").toLowerCase();
+      if (/darecore\s*intelligence|ai\s*assistant|groq|chat.*ai|ai.*chat/i.test(id + " " + cls)) return true;
+      cur = cur.parentElement;
+    }
+    return false;
+  }
+
+  function getWaInput() {
+    const inputs = Array.from(document.querySelectorAll("input, tel"));
+    return inputs.find(function (el) {
+      if (isAI(el)) return false;
+      const blob = [
+        el.id || "",
+        el.name || "",
+        el.placeholder || "",
+        el.getAttribute("aria-label") || "",
+        (el.previousElementSibling && el.previousElementSibling.textContent) || "",
+        (el.parentElement && el.parentElement.textContent) || ""
+      ].join(" ").toLowerCase();
+      return /whatsapp|wa|tel[eé]fono|celular|477/i.test(blob);
+    }) || null;
+  }
+
+  function hasTenDigits() {
+    const inp = getWaInput();
+    if (!inp) return true;
+    return String(inp.value || "").replace(/\D+/g, "").length === 10;
+  }
+
+  function warnNoWa() {
+    const inp = getWaInput();
+    const msg = "Debes escribir tu número de WhatsApp de 10 dígitos para solicitar tu mockup digital.";
+    if (typeof window.showFloatingToast === "function") {
+      try { window.showFloatingToast(msg); } catch (_) {}
+    } else {
+      alert(msg);
+    }
+    if (inp) {
+      inp.style.setProperty("border", "2px solid #ef4444", "important");
+      inp.style.setProperty("box-shadow", "0 0 0 3px rgba(239,68,68,0.25)", "important");
+      try { inp.scrollIntoView({ behavior: "smooth", block: "center" }); } catch (_) {}
+      try { inp.focus(); } catch (_) {}
+    }
+  }
+
+  function isWaUrl(u) {
+    return /(?:api\.whatsapp\.com|wa\.me|whatsapp:\/\/)/i.test(String(u || ""));
+  }
+
+  document.addEventListener("click", function (e) {
+    const btn = e.target && e.target.closest ? e.target.closest("button, a, input[type='submit'], [role='button']") : null;
+    if (!btn || isAI(btn)) return;
+    const t = ((btn.textContent || "") + " " + (btn.value || "") + " " + (btn.getAttribute("href") || "")).toLowerCase();
+    if (/solicitar\s*mockup|mockup\s*digital|whatsapp|wa\.me|api\.whatsapp/i.test(t) && !hasTenDigits()) {
+      e.preventDefault();
+      e.stopPropagation();
+      if (typeof e.stopImmediatePropagation === "function") e.stopImmediatePropagation();
+      window.__dcBlockWaUntil = Date.now() + 5000;
+      warnNoWa();
+    }
+  }, true);
+
+  const origOpen = window.open.bind(window);
+  window.open = function (url) {
+    if (isWaUrl(url) && (!hasTenDigits() || (window.__dcBlockWaUntil && Date.now() < window.__dcBlockWaUntil))) {
+      warnNoWa();
+      return null;
+    }
+    return origOpen.apply(window, arguments);
+  };
+
+  window.addEventListener("beforeunload", function (e) {
+    if (!hasTenDigits() && window.__dcBlockWaUntil && Date.now() < window.__dcBlockWaUntil) {
+      e.preventDefault();
+      e.returnValue = "";
+    }
+  });
+})();
+</script>
 </body>
 </html>
