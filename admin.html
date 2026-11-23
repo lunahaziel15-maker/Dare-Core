@@ -2967,5 +2967,94 @@
       }, true);
     })();
   </script>
+<script id="dcLogoutButtonScript">
+    (function () {
+      function performAdminLogout() {
+        try {
+          if (window.firebase && typeof window.firebase.auth === "function" && window.firebase.apps && window.firebase.apps.length) {
+            window.firebase.auth().signOut().catch(function () {});
+          }
+        } catch (_) {}
+
+        try {
+          ["dc_admin_auth", "darecore_admin_auth", "adminAuth", "isAdminLoggedIn"].forEach(function (k) {
+            sessionStorage.removeItem(k);
+            localStorage.removeItem(k);
+          });
+        } catch (_) {}
+
+        document.body.classList.remove("dc-logged-in");
+
+        const dash = document.getElementById("dashboardSection");
+        if (dash) {
+          dash.classList.add("hidden");
+          dash.style.display = "none";
+        }
+
+        const stage = document.querySelector(".dc-login-stage-exact");
+        const card = document.querySelector(".dc-login-card-exact");
+        const loginSec = document.getElementById("loginSection");
+
+        if (stage) {
+          stage.classList.remove("is-auth-done");
+          stage.style.setProperty("display", "flex", "important");
+          stage.style.setProperty("height", "auto", "important");
+          stage.style.setProperty("min-height", "100vh", "important");
+          stage.style.setProperty("padding", "24px 16px", "important");
+          stage.style.setProperty("margin", "0 auto", "important");
+        }
+        if (card) {
+          card.classList.remove("hidden");
+          card.style.setProperty("display", "block", "important");
+          card.style.setProperty("visibility", "visible", "important");
+          card.style.setProperty("opacity", "1", "important");
+        }
+        if (loginSec) {
+          loginSec.classList.remove("hidden");
+          loginSec.style.setProperty("display", "block", "important");
+        }
+
+        window.scrollTo(0, 0);
+      }
+
+      function ensureLogoutButton() {
+        let logoutBtn = document.getElementById("dcLogoutBtn") || document.getElementById("logoutBtn");
+
+        if (!logoutBtn) {
+          const pillsContainer =
+            document.querySelector(".dc-topbar-pills") ||
+            Array.from(document.querySelectorAll("button, a")).find(function (el) {
+              return /tienda/i.test((el.textContent || "").trim());
+            })?.parentElement;
+
+          if (!pillsContainer) return;
+
+          const referenceBtn = pillsContainer.querySelector("button, a");
+          logoutBtn = document.createElement("button");
+          logoutBtn.type = "button";
+          logoutBtn.id = "dcLogoutBtn";
+          logoutBtn.textContent = "Cerrar Sesión";
+          if (referenceBtn && referenceBtn.className) {
+            logoutBtn.className = referenceBtn.className.replace(/\bis-active\b|\bactive\b/g, "").trim();
+          }
+          pillsContainer.appendChild(logoutBtn);
+        }
+
+        if (!logoutBtn.dataset.dcBound) {
+          logoutBtn.dataset.dcBound = "1";
+          logoutBtn.addEventListener("click", function (ev) {
+            ev.preventDefault();
+            performAdminLogout();
+          });
+        }
+      }
+
+      document.addEventListener("DOMContentLoaded", function () {
+        ensureLogoutButton();
+        setTimeout(ensureLogoutButton, 300);
+        setTimeout(ensureLogoutButton, 900);
+      });
+    })();
+  </script>
 </body>
 </html>
