@@ -2812,47 +2812,68 @@
       });
     })();
   </script>
-<script id="dcStopScrollJumpScript">
+<script id="dcConsoleAndCatalogFixScript">
     (function () {
-      let userIsScrolling = false;
-      let scrollTimer = null;
-      let lastUserScrollY = 0;
+      // Evitar que errores no capturados de Firebase detengan el panel o provoquen re-renders en blanco
+      window.addEventListener("error", function (event) {
+        const msg = String((event && event.message) || "");
+        if (msg.includes("No Firebase App") || msg.includes("initializeApp")) {
+          event.preventDefault();
+          return true;
+        }
+      });
 
-      window.addEventListener("scroll", () => {
-        userIsScrolling = true;
-        lastUserScrollY = window.scrollY;
-        clearTimeout(scrollTimer);
-        scrollTimer = setTimeout(() => {
-          userIsScrolling = false;
-        }, 600);
+      // Respetar el scroll del usuario si algo intenta regresarlo arriba
+      let lastScrollY = 0;
+      let scrollingDown = false;
+      let scrollTimeout = null;
+
+      window.addEventListener("scroll", function () {
+        const curr = window.scrollY || window.pageYOffset || 0;
+        if (curr > lastScrollY + 10) {
+          scrollingDown = true;
+        }
+        lastScrollY = curr;
+        clearTimeout(scrollTimeout);
+        scrollTimeout = setTimeout(function () {
+          scrollingDown = false;
+        }, 700);
       }, { passive: true });
 
-      // Si algún código intenta mandar el scroll a 0 mientras el usuario está desplazado hacia abajo, restaurar su posición
-      const origScrollTo = window.scrollTo.bind(window);
+      const nativeScrollTo = window.scrollTo.bind(window);
       window.scrollTo = function (x, y) {
         const targetY = typeof x === "object" && x !== null ? (x.top ?? 0) : y;
-        if (userIsScrolling && lastUserScrollY > 80 && (targetY === 0 || targetY === undefined)) {
-          return origScrollTo(typeof x === "object" && x !== null ? { ...x, top: lastUserScrollY } : (typeof x === "number" ? x : 0), lastUserScrollY);
+        if (scrollingDown && lastScrollY > 120 && (targetY === 0 || targetY === undefined)) {
+          return;
         }
-        return origScrollTo.apply(window, arguments);
+        return nativeScrollTo.apply(window, arguments);
       };
 
-      // Asegurar que al entrar al dashboard se muestre el contenido sin hueco vacío arriba
-      function checkTopSpace() {
-        const dash = document.getElementById("dashboardSection");
-        if (!dash) return;
-        const firstChild = dash.firstElementChild;
-        if (firstChild) {
-          const rect = firstChild.getBoundingClientRect();
-          if (rect.height === 0) {
-            firstChild.style.display = "none";
+      // Ocultar bloques duplicados de Pedidos Entregados y Tabla de Medidas dentro de #sec-catalogo
+      function hideDuplicatesInsideCatalog() {
+        const cat = document.getElementById("sec-catalogo");
+        if (!cat) return;
+        const blocks = cat.querySelectorAll("section, article, div");
+        blocks.forEach(function (el) {
+          if (el === cat || el.id === "addProductForm" || el.id === "adminProductList") return;
+          if (el.querySelector("#addProductForm") || el.querySelector("#adminProductList")) return;
+          const heading = (el.querySelector("h1, h2, h3, h4")?.textContent || "").toUpperCase();
+          const text = (el.textContent || "").toUpperCase();
+          const isDup =
+            heading.includes("PEDIDOS ENTREGADOS") ||
+            heading.includes("TABLAS DE MEDIDAS") ||
+            heading.includes("TABLA DE MEDIDAS") ||
+            (text.includes("PECHO/BUSTO") && text.includes("CINTURA (CM)"));
+          if (isDup) {
+            el.style.display = "none";
           }
-        }
+        });
       }
 
-      document.addEventListener("DOMContentLoaded", () => {
-        checkTopSpace();
-        setTimeout(checkTopSpace, 300);
+      document.addEventListener("DOMContentLoaded", function () {
+        hideDuplicatesInsideCatalog();
+        setTimeout(hideDuplicatesInsideCatalog, 400);
+        setTimeout(hideDuplicatesInsideCatalog, 1200);
       });
     })();
   </script>
