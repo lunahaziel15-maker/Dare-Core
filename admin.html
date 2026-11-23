@@ -2987,7 +2987,7 @@
   </script>
 <script id="dcLogoutButtonScript">
     (function () {
-      function clearSessionKeys() {
+      function clearSavedAdminSession() {
         try {
           Object.keys(sessionStorage).forEach(function (k) {
             if (/auth|admin|login|user|session|darecore/i.test(k)) {
@@ -3005,8 +3005,8 @@
         } catch (_) {}
       }
 
-      function showLoginScreenCleanly() {
-        clearSessionKeys();
+      function executeLogoutToLogin() {
+        clearSavedAdminSession();
 
         try {
           if (window.firebase && typeof window.firebase.auth === "function" && window.firebase.apps && window.firebase.apps.length) {
@@ -3016,113 +3016,135 @@
 
         document.body.classList.remove("dc-logged-in");
 
+        // Ocultar dashboard y marcos del panel autenticado
         const dash = document.getElementById("dashboardSection");
         if (dash) {
           dash.classList.add("hidden");
+          dash.hidden = true;
           dash.style.setProperty("display", "none", "important");
         }
 
-        const frame = document.querySelector(".dc-dashboard-frame");
-        if (frame && (!document.getElementById("loginSection") || !frame.contains(document.getElementById("loginSection")))) {
-          frame.style.setProperty("display", "none", "important");
+        const shell = document.querySelector(".dc-shell-outer");
+        if (shell && !shell.querySelector(".dc-login-card-exact") && !shell.querySelector("#loginSection")) {
+          shell.style.setProperty("display", "none", "important");
         }
 
+        // Mostrar etapa y tarjeta de inicio de sesión
         const stage = document.querySelector(".dc-login-stage-exact");
         const card = document.querySelector(".dc-login-card-exact");
         const loginSec = document.getElementById("loginSection");
 
         if (stage) {
           stage.classList.remove("is-auth-done", "hidden");
+          stage.hidden = false;
           stage.style.setProperty("display", "flex", "important");
           stage.style.setProperty("height", "auto", "important");
           stage.style.setProperty("min-height", "100vh", "important");
+          stage.style.setProperty("max-height", "none", "important");
           stage.style.setProperty("padding", "24px 16px", "important");
           stage.style.setProperty("margin", "0 auto", "important");
           stage.style.setProperty("visibility", "visible", "important");
           stage.style.setProperty("opacity", "1", "important");
+          stage.style.setProperty("pointer-events", "auto", "important");
         }
 
         if (card) {
           card.classList.remove("hidden");
+          card.hidden = false;
           card.style.setProperty("display", "block", "important");
           card.style.setProperty("visibility", "visible", "important");
           card.style.setProperty("opacity", "1", "important");
+          card.style.setProperty("pointer-events", "auto", "important");
         }
 
         if (loginSec) {
           loginSec.classList.remove("hidden");
+          loginSec.hidden = false;
           loginSec.style.setProperty("display", "block", "important");
           loginSec.style.setProperty("visibility", "visible", "important");
           loginSec.style.setProperty("opacity", "1", "important");
+          loginSec.style.setProperty("pointer-events", "auto", "important");
         }
 
-        const userInput = document.querySelector('input[type="text"], input[type="email"]');
+        // Limpiar contraseña para reingresar
         const passInput = document.querySelector('input[type="password"]');
-        if (passInput) passInput.value = "";
-        if (userInput && /admin|usuario|correo/i.test((userInput.placeholder || "") + (userInput.name || "") + (userInput.id || ""))) {
-          userInput.value = "";
-          userInput.focus();
+        if (passInput) {
+          passInput.value = "";
         }
 
-        if (typeof window.scrollTo === "function") {
-          window.scrollTo(0, 0);
-        }
+        // Subir arriba sin depender de scrollTo interceptado
+        document.documentElement.scrollTop = 0;
+        document.body.scrollTop = 0;
+
+        try {
+          window.dispatchEvent(new CustomEvent("dc:admin:logout"));
+        } catch (_) {}
       }
 
-      function ensureLogoutButton() {
-        let logoutBtn = document.getElementById("dcLogoutBtn") || document.getElementById("logoutBtn");
+      function ensureAndWireLogoutButton() {
+        let btn = document.getElementById("dcLogoutBtn") || document.getElementById("logoutBtn");
 
-        if (!logoutBtn) {
-          const pillsContainer =
+        if (!btn) {
+          const pills =
             document.querySelector(".dc-topbar-pills") ||
             Array.from(document.querySelectorAll("button, a")).find(function (el) {
               return /tienda/i.test((el.textContent || "").trim());
             })?.parentElement;
 
-          if (!pillsContainer) return;
+          if (!pills) return;
 
-          const referenceBtn = pillsContainer.querySelector("button, a");
-          logoutBtn = document.createElement("button");
-          logoutBtn.type = "button";
-          logoutBtn.id = "dcLogoutBtn";
-          logoutBtn.textContent = "Cerrar Sesión";
-          if (referenceBtn && referenceBtn.className) {
-            logoutBtn.className = referenceBtn.className.replace(/\bis-active\b|\bactive\b/g, "").trim();
+          const sample = pills.querySelector("button, a");
+          btn = document.createElement("button");
+          btn.type = "button";
+          btn.id = "dcLogoutBtn";
+          btn.textContent = "Cerrar Sesión";
+          if (sample && sample.className) {
+            btn.className = sample.className.replace(/\bis-active\b|\bactive\b/g, "").trim();
           }
-          pillsContainer.appendChild(logoutBtn);
+          pills.appendChild(btn);
         }
 
-        logoutBtn.style.display = "inline-flex";
-        logoutBtn.style.alignItems = "center";
-        logoutBtn.style.visibility = "visible";
-        logoutBtn.style.opacity = "1";
+        btn.style.setProperty("display", "inline-flex", "important");
+        btn.style.setProperty("align-items", "center", "important");
+        btn.style.setProperty("visibility", "visible", "important");
+        btn.style.setProperty("opacity", "1", "important");
+        btn.style.setProperty("pointer-events", "auto", "important");
+        btn.style.setProperty("cursor", "pointer", "important");
 
-        if (!logoutBtn.dataset.dcLogoutBound) {
-          logoutBtn.dataset.dcLogoutBound = "1";
-          logoutBtn.addEventListener("click", function (e) {
+        if (!btn.dataset.dcLogoutWired) {
+          btn.dataset.dcLogoutWired = "1";
+          btn.addEventListener("click", function (e) {
             e.preventDefault();
             e.stopPropagation();
-            showLoginScreenCleanly();
-          }, true);
+            executeLogoutToLogin();
+          }, false);
         }
       }
 
+      // Respaldo por delegación
       document.addEventListener("click", function (e) {
-        const target = e.target && e.target.closest ? e.target.closest("button, a") : null;
-        if (!target) return;
-        const label = (target.textContent || "").trim().toLowerCase();
-        if (label === "cerrar sesión" || label === "cerrar sesion" || target.id === "dcLogoutBtn" || target.id === "logoutBtn") {
+        const el = e.target && e.target.closest ? e.target.closest("#dcLogoutBtn, #logoutBtn, button, a") : null;
+        if (!el) return;
+        const txt = (el.textContent || "").trim().toLowerCase();
+        if (el.id === "dcLogoutBtn" || el.id === "logoutBtn" || txt === "cerrar sesión" || txt === "cerrar sesion") {
           e.preventDefault();
           e.stopPropagation();
-          showLoginScreenCleanly();
+          executeLogoutToLogin();
         }
-      }, true);
+      }, false);
 
-      document.addEventListener("DOMContentLoaded", function () {
-        ensureLogoutButton();
-        setTimeout(ensureLogoutButton, 250);
-        setTimeout(ensureLogoutButton, 800);
-      });
+      function initLogoutWatcher() {
+        ensureAndWireLogoutButton();
+        setTimeout(ensureAndWireLogoutButton, 200);
+        setTimeout(ensureAndWireLogoutButton, 700);
+        setTimeout(ensureAndWireLogoutButton, 1500);
+      }
+
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", initLogoutWatcher);
+      } else {
+        initLogoutWatcher();
+      }
     })();
   </script>
 </body>
