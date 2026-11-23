@@ -631,7 +631,7 @@ No uses emojis ni asteriscos dobles (**). Escribe solo texto plano limpio.`;
     const stopBtn = document.getElementById("dcVoiceStopIconBtn");
     if (!stopBtn) return;
     const isPlaying = speakingActive || Boolean(synth && (synth.speaking || synth.pending));
-    stopBtn.style.display = isPlaying ? "inline-flex" : "none";
+    stopBtn.style.display = "none";
   }
 
   function speakTextSimultaneously(text) {
@@ -699,7 +699,7 @@ No uses emojis ni asteriscos dobles (**). Escribe solo texto plano limpio.`;
     const sendBtn = document.getElementById("darecoreAiSend");
     if (!form || !input || !sendBtn) return;
 
-    if (!document.getElementById("dcVoiceStopIconBtn")) {
+    if (false && !document.getElementById("dcVoiceStopIconBtn")) {
       const stopBtn = document.createElement("button");
       stopBtn.id = "dcVoiceStopIconBtn";
       stopBtn.type = "button";
