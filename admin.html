@@ -1080,113 +1080,104 @@
         return "";
       }
 
-      function normalizeDirectiveSentence(text) {
+      function normalizeSentenceUnit(text) {
         let s = String(text || "").trim().replace(/\s+/g, " ");
         if (!s) return "";
+        s = s.replace(/^[\-\*\•\d\.\)\s]+/, "").trim();
         s = s.replace(/^si\b/i, "Sí");
         s = s.charAt(0).toUpperCase() + s.slice(1);
         if (!/[.!?]$/.test(s)) s += ".";
         return s;
       }
 
-      function applySmartKnowledgeUpdate(rawMemory, newDirectiveRaw) {
-        const cleanNew = normalizeDirectiveSentence(newDirectiveRaw);
-        if (!cleanNew) return String(rawMemory || "").trim();
-
-        let text = String(rawMemory || "").trim();
-        const lowerNew = cleanNew.toLowerCase();
-
-        // Grupos temáticos mutuamente excluyentes para actualizar el texto existente sin dejar contradicciones
-        const topicMatchers = [
-          {
-            // Facturación: "no facturamos" <-> "sí facturamos"
-            test: /factur/i,
-            inlineRegex: /(?:,\s*|\.\s*|\b)(?:no\s+factur\w*|s[ií]\s+factur\w*|emitimos\s+factura\w*|no\s+emitimos\s+factura\w*)(?:\s+y\b)?/gi,
-            lineRegex: /factur/i
-          },
-          {
-            // Reembolsos / devoluciones
-            test: /(?:reembols|embols|devoluc)/i,
-            inlineRegex: /(?:,\s*|\.\s*|\b)(?:no\s+(?:hacemos|hay|se\s+hacen)\s+(?:reembols\w*|embols\w*|devoluc\w*)|s[ií]\s+(?:hacemos|hay)\s+(?:reembols\w*|devoluc\w*))/gi,
-            lineRegex: /(?:reembols|embols|devoluc)/i
-          },
-          {
-            // Tiempos de envío
-            test: /(?:env[ií]o|tardan|entrega)/i,
-            inlineRegex: /(?:,\s*|\.\s*|\b)los\s+env[ií]os\s+tardan[^.;\n]*/gi,
-            lineRegex: /(?:env[ií]o|tardan|entrega)/i
-          }
-        ];
-
-        const matchedTopic = topicMatchers.find((m) => m.test.test(lowerNew));
-
-        if (matchedTopic && text) {
-          // 1. Limpiar menciones opuestas o anteriores dentro de párrafos existentes
-          text = text.replace(matchedTopic.inlineRegex, " ");
-          text = text.replace(/\s{2,}/g, " ").replace(/\s+,/g, ",").replace(/\s+\./g, ".").trim();
-
-          // 2. Reemplazar si ya existía una línea dedicada a ese mismo tema
-          const lines = text
-            .split(/\r?\n/)
-            .map((l) => l.trim())
-            .filter(Boolean);
-
-          let replacedLine = false;
-          const updatedLines = lines.map((line) => {
-            const stripped = line.replace(/^[\-\*\•\d\.\)\s]+/, "");
-            if (matchedTopic.lineRegex.test(stripped) && stripped.length < 95) {
-              replacedLine = true;
-              return "- " + cleanNew;
-            }
-            return line;
-          });
-
-          if (replacedLine) {
-            return updatedLines.join("\n");
-          }
-          return updatedLines.join("\n") + "\n- " + cleanNew;
-        }
-
-        // Si no es un tema conflictivo, evitar duplicados exactos y agregarlo limpio
-        const lines = text ? text.split(/\r?\n/).map((l) => l.trim()).filter(Boolean) : [];
-        const already = lines.some(
-          (l) => l.replace(/^[\-\*\•\d\.\)\s]+/, "").toLowerCase() === lowerNew
-        );
-        if (already) return lines.join("\n");
-        lines.push("- " + cleanNew);
-        return lines.join("\n");
+      // Convierte cualquier memoria previa (aunque tuviera saltos de línea o viñetas) en un SOLO párrafo continuo
+      function buildSingleUnifiedParagraph(rawMemory) {
+        const parts = String(rawMemory || "")
+          .split(/\r?\n+/)
+          .map((line) => line.replace(/^[\-\*\•\d\.\)\s]+/, "").trim())
+          .filter(Boolean)
+          .map((line) => (/[.!?]$/.test(line) ? line : line + "."));
+        return parts.join(" ").replace(/\s{2,}/g, " ").trim();
       }
 
-      function parseRulesList(rawText) {
-        return String(rawText || "")
-          .split(/\r?\n/)
-          .map((line) => line.replace(/^[\-\*\•\d\.\)\s]+/, "").trim())
+      // Extrae palabras clave significativas (ignorando "no", "si", artículos y verbos auxiliares) para detectar si la nueva frase actualiza una existente
+      function getSemanticKeywords(sentence) {
+        const stopWords = new Set([
+          "no", "si", "sí", "que", "de", "del", "la", "las", "el", "los", "un", "una",
+          "unos", "unas", "y", "o", "en", "por", "para", "con", "sin", "al", "se", "su",
+          "sus", "lo", "le", "les", "es", "son", "esta", "está", "estan", "están",
+          "hacemos", "hace", "tenemos", "tiene", "tienen", "hay", "como", "cada", "todo", "toda"
+        ]);
+        return String(sentence || "")
+          .toLowerCase()
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "")
+          .replace(/[^a-z0-9\s]/g, " ")
+          .split(/\s+/)
+          .filter((w) => w.length >= 4 && !stopWords.has(w))
+          .map((w) => w.slice(0, 6)); // raíz de 6 letras (ej. factur, tienda, reembols, envios)
+      }
+
+      function mergeIntoSingleParagraph(rawMemory, newInputRaw) {
+        const newSentence = normalizeSentenceUnit(newInputRaw);
+        if (!newSentence) return buildSingleUnifiedParagraph(rawMemory);
+
+        const unified = buildSingleUnifiedParagraph(rawMemory);
+        if (!unified) return newSentence;
+
+        // Dividir el párrafo único en oraciones individuales por punto seguido
+        const sentences = unified
+          .split(/(?<=[.!?])\s+/)
+          .map((s) => s.trim())
           .filter(Boolean);
+
+        const newKeys = getSemanticKeywords(newSentence);
+        let replaced = false;
+
+        const updatedSentences = sentences.map((existing) => {
+          const exKeys = getSemanticKeywords(existing);
+          // Si comparten al menos una raíz temática clave y la oración existente es una regla corta (no la descripción general larga de marca)
+          const sharesTopic = newKeys.some((k) => exKeys.includes(k));
+          if (sharesTopic && existing.length <= 130) {
+            replaced = true;
+            return newSentence;
+          }
+          // Si la frase nueva está incrustada dentro de una oración compuesta larga (ej. "...no facturamos..."), actualizar esa cláusula
+          if (sharesTopic && existing.length > 130 && newKeys.length > 0) {
+            const root = newKeys[0];
+            const clauseRegex = new RegExp("(?:,\\s*|\\by\\s+)?(?:no\\s+|s[ií]\\s+)?[a-záéíóúñ\\s]{0,22}" + root + "[a-záéíóúñ]*", "i");
+            if (clauseRegex.test(existing)) {
+              replaced = true;
+              const cleanClause = newSentence.replace(/[.!?]+$/, "").toLowerCase();
+              return existing.replace(clauseRegex, ", " + cleanClause).replace(/,\s*,/g, ",");
+            }
+          }
+          return existing;
+        });
+
+        if (!replaced) {
+          updatedSentences.push(newSentence);
+        }
+
+        return updatedSentences.join(" ").replace(/\s{2,}/g, " ").trim();
       }
 
       function renderEditorialMemoryStream() {
         const stream = document.getElementById("dcAiMemoryStream");
         if (!stream) return;
-        const rules = parseRulesList(localStorage.getItem(KB_KEY) || "");
-        if (!rules.length) {
-          stream.innerHTML = `<div class="dc-ai-rule-item" style="color:rgba(226,232,240,0.5);font-style:italic;">Sin directrices registradas aún. Escribe o dicta una regla a la derecha.</div>`;
+        const unifiedText = buildSingleUnifiedParagraph(localStorage.getItem(KB_KEY) || "");
+        if (!unifiedText) {
+          stream.innerHTML = `<div class="dc-ai-rule-item" style="color:rgba(226,232,240,0.5);font-style:italic;">Aún sin información registrada. Escribe o dicta una instrucción a la derecha para construir la base de DareCore IA.</div>`;
           return;
         }
-        stream.innerHTML = rules
-          .map(
-            (rule, idx) => `<div class="dc-ai-rule-item" style="animation-delay:${idx * 0.05}s;">
-              <span>${rule.replace(/</g, "<").replace(/>/g, ">")}</span>
-              <button type="button" class="dc-ai-rule-del" data-del-idx="${idx}" title="Eliminar directriz">×</button>
-            </div>`
-          )
-          .join("");
+        stream.innerHTML = `<div class="dc-ai-rule-item"><span>${unifiedText.replace(/</g, "<").replace(/>/g, ">")}</span></div>`;
       }
 
       function hideDuplicateFloatingMics() {
         const panel = document.getElementById("darecoreAiKnowledgeAdmin");
         if (!panel) return;
         panel.querySelectorAll("button").forEach((btn) => {
-          if (btn.id !== "dcAiCoachSendBtn" && btn.id !== "dcAiMicBtn" && !btn.classList.contains("dc-ai-rule-del")) {
+          if (btn.id !== "dcAiCoachSendBtn" && btn.id !== "dcAiMicBtn") {
             btn.style.display = "none";
           }
         });
@@ -1197,11 +1188,16 @@
         const sendBtn = document.getElementById("dcAiCoachSendBtn");
         const micBtn = document.getElementById("dcAiMicBtn");
         const feedback = document.getElementById("dcAiLiveFeedback");
-        const stream = document.getElementById("dcAiMemoryStream");
         if (!input || !sendBtn) return;
 
         hideDuplicateFloatingMics();
         setTimeout(hideDuplicateFloatingMics, 600);
+
+        // Si había líneas separadas guardadas previamente, consolidarlas en el párrafo único al iniciar
+        const initialUnified = buildSingleUnifiedParagraph(localStorage.getItem(KB_KEY) || "");
+        if (initialUnified && initialUnified !== (localStorage.getItem(KB_KEY) || "").trim()) {
+          persistAiKnowledgeText(initialUnified);
+        }
         renderEditorialMemoryStream();
 
         function setFeedback(msg, isWarn) {
@@ -1215,27 +1211,11 @@
           if (!cleanInput) return;
           const extracted = extractRuleToAdd(cleanInput) || cleanInput;
           const currentRaw = localStorage.getItem(KB_KEY) || "";
-          const updatedSerialized = applySmartKnowledgeUpdate(currentRaw, extracted);
-          persistAiKnowledgeText(updatedSerialized);
+          const updatedSingleParagraph = mergeIntoSingleParagraph(currentRaw, extracted);
+          persistAiKnowledgeText(updatedSingleParagraph);
           renderEditorialMemoryStream();
-          setFeedback("Memoria actualizada con coherencia.", false);
+          setFeedback("Memoria unificada y actualizada.", false);
           input.value = "";
-        }
-
-        if (stream) {
-          stream.addEventListener("click", (e) => {
-            const delBtn = e.target.closest("[data-del-idx]");
-            if (!delBtn) return;
-            const idx = Number(delBtn.getAttribute("data-del-idx"));
-            const rules = parseRulesList(localStorage.getItem(KB_KEY) || "");
-            if (!Number.isNaN(idx) && idx >= 0 && idx < rules.length) {
-              rules.splice(idx, 1);
-              const serialized = rules.map((r) => "- " + r).join("\n");
-              persistAiKnowledgeText(serialized);
-              renderEditorialMemoryStream();
-              setFeedback("Directriz eliminada.", true);
-            }
-          });
         }
 
         sendBtn.onclick = () => addDirectiveToMemory(input.value);
