@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DARECORE // Dare Lab - Crea tu prenda a medida</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -65,13 +65,10 @@
             .options-row { grid-template-columns: 1fr; }
         }
     </style>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-<script src="firebase-config.js"></script>
 </head>
 <body>
-<header>
-<div class="nav-container">
+    <header>
+        <div class="nav-container">
             <a href="index.html" class="logo">DARE<span>CORE</span></a>
             <ul class="nav-links">
                 <li><a href="index.html">INICIO</a></li>
@@ -265,79 +262,5 @@
 <script src="darecore-ai.js"></script>
   <script src="email-gate.js"></script>
   <script src="darecore-sync.js"></script>
-<script id="dcCleanMockupPhoneGuard">
-(function () {
-  if (window.__dcCleanMockupPhoneGuard) return;
-  window.__dcCleanMockupPhoneGuard = true;
-
-  function isAI(el) {
-    if (!el) return false;
-    if (typeof window.__dcIsInsideDareCoreAI === "function" && window.__dcIsInsideDareCoreAI(el)) return true;
-    let cur = el;
-    for (let i = 0; i < 15 && cur; i++) {
-      const id = String(cur.id || "").toLowerCase();
-      const cls = String(cur.className || "").toLowerCase();
-      if (/darecore\s*intelligence|ai\s*assistant|groq|chat.*ai|ai.*chat/i.test(id + " " + cls)) return true;
-      cur = cur.parentElement;
-    }
-    return false;
-  }
-
-  function validateWa() {
-    const inp = document.getElementById("customWhatsapp");
-    if (!inp) return { ok: true, inp: null };
-    const digits = String(inp.value || "").replace(/\D+/g, "");
-    return { ok: digits.length === 10, inp: inp };
-  }
-
-  function alertAndFocus(ev, inp) {
-    if (ev) {
-      try { ev.preventDefault(); } catch (_) {}
-      try { ev.stopPropagation(); } catch (_) {}
-      if (typeof ev.stopImmediatePropagation === "function") { try { ev.stopImmediatePropagation(); } catch (_) {} }
-    }
-    const msg = "Debes escribir tu número de WhatsApp de 10 dígitos para solicitar tu mockup digital.";
-    if (typeof window.showFloatingToast === "function") {
-      try { window.showFloatingToast(msg); } catch (_) {}
-    } else {
-      alert(msg);
-    }
-    if (inp) {
-      inp.required = true;
-      inp.style.setProperty("border", "2px solid #ef4444", "important");
-      inp.style.setProperty("box-shadow", "0 0 0 3px rgba(239,68,68,0.28)", "important");
-      try { inp.scrollIntoView({ behavior: "smooth", block: "center" }); } catch (_) {}
-      try { inp.focus(); } catch (_) {}
-    }
-    return false;
-  }
-
-  document.addEventListener("click", function (ev) {
-    const btn = ev.target && ev.target.closest ? ev.target.closest("#requestMockupBtn, button, a, input[type='submit'], [role='button']") : null;
-    if (!btn || isAI(btn)) return;
-    const href = btn.getAttribute ? (btn.getAttribute("href") || "") : "";
-    const txt = ((btn.textContent || "") + " " + (btn.value || "") + " " + href).toLowerCase();
-    const isMockupOrWa = btn.id === "requestMockupBtn" || /solicitar\s*mockup|mockup\s*digital|wa\.me|api\.whatsapp|whatsapp/i.test(txt);
-    if (isMockupOrWa) {
-      const st = validateWa();
-      if (!st.ok) {
-        return alertAndFocus(ev, st.inp);
-      }
-    }
-  }, true);
-
-  const origOpen = window.open.bind(window);
-  window.open = function (url) {
-    if (/(?:wa\.me|api\.whatsapp\.com|whatsapp:\/\/)/i.test(String(url || ""))) {
-      const st = validateWa();
-      if (!st.ok) {
-        alertAndFocus(null, st.inp);
-        return null;
-      }
-    }
-    return origOpen.apply(window, arguments);
-  };
-})();
-</script>
 </body>
 </html>
