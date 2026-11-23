@@ -355,5 +355,84 @@
   });
 })();
 </script>
+<script id="dcExactCustomWhatsappGate">
+(function () {
+  if (window.__dcExactCustomWhatsappGateInstalled) return;
+  window.__dcExactCustomWhatsappGateInstalled = true;
+
+  function checkCustomWa() {
+    const inp = document.getElementById("customWhatsapp");
+    if (!inp) return { ok: true, digits: "", inp: null };
+    const digits = String(inp.value || "").replace(/\D+/g, "");
+    return { ok: digits.length === 10, digits: digits, inp: inp };
+  }
+
+  function showCustomWaAlert(inp) {
+    const msg = "Debes ingresar tu número de WhatsApp de 10 dígitos para solicitar tu mockup digital.";
+    if (typeof window.showFloatingToast === "function") {
+      try { window.showFloatingToast(msg); } catch (_) {}
+    } else {
+      alert(msg);
+    }
+    if (inp) {
+      inp.required = true;
+      inp.style.setProperty("border", "2px solid #ef4444", "important");
+      inp.style.setProperty("box-shadow", "0 0 0 3px rgba(239,68,68,0.25)", "important");
+      try { inp.scrollIntoView({ behavior: "smooth", block: "center" }); } catch (_) {}
+      try { inp.focus(); } catch (_) {}
+    }
+  }
+
+  function bindRequestMockupLock() {
+    const btn = document.getElementById("requestMockupBtn");
+    const inp = document.getElementById("customWhatsapp");
+    if (inp && !inp.__dcDigitsListener) {
+      inp.addEventListener("input", function () {
+        const d = String(inp.value || "").replace(/\D+/g, "");
+        if (d.length === 10) {
+          inp.style.removeProperty("border");
+          inp.style.removeProperty("box-shadow");
+        }
+      });
+      inp.__dcDigitsListener = true;
+    }
+
+    if (btn && !btn.__dcExactLocked) {
+      btn.addEventListener("click", function (e) {
+        const st = checkCustomWa();
+        if (!st.ok) {
+          e.preventDefault();
+          e.stopPropagation();
+          if (typeof e.stopImmediatePropagation === "function") {
+            e.stopImmediatePropagation();
+          }
+          window.__dcBlockCustomWaUntil = Date.now() + 5000;
+          showCustomWaAlert(st.inp);
+          return false;
+        }
+      }, true);
+      btn.__dcExactLocked = true;
+    }
+  }
+
+  const origOpen = window.open.bind(window);
+  window.open = function (url) {
+    const u = String(url || "");
+    if (/whatsapp\.com|wa\.me|api\.whatsapp/i.test(u)) {
+      const st = checkCustomWa();
+      if (st.inp && (!st.ok || (window.__dcBlockCustomWaUntil && Date.now() < window.__dcBlockCustomWaUntil))) {
+        showCustomWaAlert(st.inp);
+        return null;
+      }
+    }
+    return origOpen.apply(window, arguments);
+  };
+
+  bindRequestMockupLock();
+  document.addEventListener("DOMContentLoaded", bindRequestMockupLock);
+  const t = setInterval(bindRequestMockupLock, 200);
+  setTimeout(function () { clearInterval(t); }, 10000);
+})();
+</script>
 </body>
 </html>
