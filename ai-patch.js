@@ -1,7 +1,14 @@
 (function () {
   const ADMIN_AI_KEY = "darecore_admin_ai_prompt";
 
-  function swapMicAndStop() {
+  // 1. Desactivar lectura en voz alta de la IA (solo responde en texto)
+  if (window.speechSynthesis) {
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak = function () {};
+  }
+
+  // 2. Ocultar el boton rojo de detener y dejar activo el microfono para enviar voz
+  function cleanChatVoiceControls() {
     const sendBtn = Array.from(document.querySelectorAll("button")).find(
       (b) => /^enviar$/i.test((b.textContent || "").trim())
     );
@@ -15,16 +22,13 @@
       const meta = (b.id + " " + b.className + " " + (b.title || "") + " " + (b.getAttribute("aria-label") || "")).toLowerCase();
       return /stop|detener|cancel/.test(meta) || /rgb\(\s*255\s*,\s*(5[0-9]|6[0-9]|7[0-9]|8[0-9])\s*,/.test(bg) || !!b.querySelector("rect");
     });
-    const micBtn = btns.find((b) => b !== stopBtn);
 
-    if (stopBtn && micBtn) {
-      const children = Array.from(bar.children);
-      if (children.indexOf(stopBtn) < children.indexOf(micBtn)) {
-        bar.insertBefore(micBtn, stopBtn);
-      }
+    if (stopBtn) {
+      stopBtn.style.display = "none";
     }
   }
 
+  // 3. Sincronizar conocimiento configurado en Admin ("Modificar IA")
   function syncAdminKnowledge() {
     try {
       if (window.db && typeof window.db.collection === "function") {
@@ -83,8 +87,8 @@
   };
 
   window.addEventListener("DOMContentLoaded", () => {
-    swapMicAndStop();
+    cleanChatVoiceControls();
     syncAdminKnowledge();
-    new MutationObserver(swapMicAndStop).observe(document.body, { childList: true, subtree: true });
+    new MutationObserver(cleanChatVoiceControls).observe(document.body, { childList: true, subtree: true });
   });
 })();
