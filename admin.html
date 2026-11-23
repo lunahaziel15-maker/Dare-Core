@@ -2987,7 +2987,36 @@
   </script>
 <script id="dcLogoutButtonScript">
     (function () {
-      function revealLoginBox() {
+      function showTopLogoutButton() {
+        const topBtn = document.getElementById("topbarLogoutBtn") || document.getElementById("dcLogoutBtn");
+        if (topBtn) {
+          topBtn.classList.remove("hidden");
+          topBtn.hidden = false;
+          topBtn.style.setProperty("display", "inline-flex", "important");
+          topBtn.style.setProperty("visibility", "visible", "important");
+          topBtn.style.setProperty("opacity", "1", "important");
+        }
+      }
+
+      function performFullLogout() {
+        try {
+          sessionStorage.clear();
+        } catch (_) {}
+
+        try {
+          Object.keys(localStorage).forEach(function (k) {
+            if (/auth|admin|login|session|darecore|flag/i.test(k)) {
+              localStorage.removeItem(k);
+            }
+          });
+        } catch (_) {}
+
+        try {
+          if (window.firebase && typeof window.firebase.auth === "function" && window.firebase.apps && window.firebase.apps.length) {
+            window.firebase.auth().signOut().catch(function () {});
+          }
+        } catch (_) {}
+
         document.body.classList.remove("dc-logged-in");
 
         const dash = document.getElementById("dashboardSection");
@@ -2997,15 +3026,9 @@
           dash.style.setProperty("display", "none", "important");
         }
 
-        // Ocultar paneles internos del dashboard
-        document.querySelectorAll(".dc-tab-panel").forEach(function (p) {
-          p.classList.remove("is-visible");
-          p.style.setProperty("display", "none", "important");
-        });
-
+        const loginSec = document.getElementById("loginSection");
         const stage = document.querySelector(".dc-login-stage-exact");
         const card = document.querySelector(".dc-login-card-exact");
-        const loginSec = document.getElementById("loginSection");
 
         if (stage) {
           stage.classList.remove("is-auth-done", "hidden");
@@ -3042,89 +3065,28 @@
         document.body.scrollTop = 0;
       }
 
-      async function handleAdminLogoutClick(e) {
-        if (e) {
+      document.addEventListener("click", function (e) {
+        const btn = e.target && e.target.closest ? e.target.closest("#topbarLogoutBtn, #dcLogoutBtn, #logoutBtn, button, a") : null;
+        if (!btn) return;
+        const txt = (btn.textContent || "").trim().toLowerCase();
+        if (btn.id === "topbarLogoutBtn" || btn.id === "dcLogoutBtn" || btn.id === "logoutBtn" || txt === "cerrar sesión" || txt === "cerrar sesion") {
           e.preventDefault();
           e.stopPropagation();
-        }
-
-        try {
-          Object.keys(sessionStorage).forEach(function (k) {
-            if (/auth|admin|login|user|session|darecore/i.test(k)) {
-              sessionStorage.removeItem(k);
-            }
-          });
-        } catch (_) {}
-
-        try {
-          Object.keys(localStorage).forEach(function (k) {
-            if (/auth|admin|login|session|darecore_admin/i.test(k)) {
-              localStorage.removeItem(k);
-            }
-          });
-        } catch (_) {}
-
-        try {
-          if (window.firebase && typeof window.firebase.auth === "function" && window.firebase.apps && window.firebase.apps.length) {
-            await window.firebase.auth().signOut();
-          }
-        } catch (_) {}
-
-        revealLoginBox();
-      }
-
-      function ensureLogoutButtonInHeader() {
-        let btn = document.getElementById("dcLogoutBtn") || document.getElementById("logoutBtn");
-        if (!btn) {
-          const pills =
-            document.querySelector(".dc-topbar-pills") ||
-            Array.from(document.querySelectorAll("button, a")).find(function (el) {
-              return /tienda/i.test((el.textContent || "").trim());
-            })?.parentElement;
-
-          if (!pills) return;
-
-          const sample = pills.querySelector("button, a");
-          btn = document.createElement("button");
-          btn.type = "button";
-          btn.id = "dcLogoutBtn";
-          btn.textContent = "Cerrar Sesión";
-          if (sample && sample.className) {
-            btn.className = sample.className.replace(/\bis-active\b|\bactive\b/g, "").trim();
-          }
-          pills.appendChild(btn);
-        }
-
-        btn.style.setProperty("display", "inline-flex", "important");
-        btn.style.setProperty("align-items", "center", "important");
-        btn.style.setProperty("visibility", "visible", "important");
-        btn.style.setProperty("opacity", "1", "important");
-        btn.style.setProperty("cursor", "pointer", "important");
-
-        if (!btn.dataset.dcRealLogoutBound) {
-          btn.dataset.dcRealLogoutBound = "1";
-          btn.addEventListener("click", handleAdminLogoutClick, true);
-        }
-      }
-
-      document.addEventListener("click", function (e) {
-        const el = e.target && e.target.closest ? e.target.closest("#dcLogoutBtn, #logoutBtn, button, a") : null;
-        if (!el) return;
-        const txt = (el.textContent || "").trim().toLowerCase();
-        if (el.id === "dcLogoutBtn" || el.id === "logoutBtn" || txt === "cerrar sesión" || txt === "cerrar sesion") {
-          handleAdminLogoutClick(e);
+          performFullLogout();
         }
       }, true);
 
+      function startWatcher() {
+        showTopLogoutButton();
+        setTimeout(showTopLogoutButton, 250);
+        setTimeout(showTopLogoutButton, 800);
+        setTimeout(showTopLogoutButton, 1600);
+      }
+
       if (document.readyState === "loading") {
-        document.addEventListener("DOMContentLoaded", function () {
-          ensureLogoutButtonInHeader();
-          setTimeout(ensureLogoutButtonInHeader, 300);
-          setTimeout(ensureLogoutButtonInHeader, 1000);
-        });
+        document.addEventListener("DOMContentLoaded", startWatcher);
       } else {
-        ensureLogoutButtonInHeader();
-        setTimeout(ensureLogoutButtonInHeader, 300);
+        startWatcher();
       }
     })();
   </script>
