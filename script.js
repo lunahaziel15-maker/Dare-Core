@@ -1,3 +1,23 @@
+/* DARECORE INTELLIGENCE EXEMPTION FOR PHONE GATE */
+(function () {
+  window.__dcIsInsideDareCoreAI = function (el) {
+    if (!el) return false;
+    let cur = el;
+    for (let i = 0; i < 12 && cur; i++) {
+      const id = String(cur.id || "").toLowerCase();
+      const cls = String(cur.className || "").toLowerCase();
+      const txt = String(cur.textContent || "").toLowerCase();
+      if (/darecore\s*intelligence|ai\s*assistant|groq|chat.*ai|ai.*chat|assistant/i.test(id + " " + cls)) {
+        return true;
+      }
+      if (i <= 5 && /darecore intelligence/i.test(txt) && /groq/i.test(txt)) {
+        return true;
+      }
+      cur = cur.parentElement;
+    }
+    return false;
+  };
+})();
 /* DARECORE STRICT PHONE BEFORE WHATSAPP */
 (function () {
   if (window.__dcStrictPhoneBeforeWa) return;
@@ -36,7 +56,7 @@
   }
 
   // Interceptar clics en botones de Dare Lab antes de cualquier otro handler
-  document.addEventListener("click", function (e) {
+  document.addEventListener("click", function (e) { if (window.__dcIsInsideDareCoreAI && window.__dcIsInsideDareCoreAI(e.target)) return;
     const btn = e.target && e.target.closest ? e.target.closest("button, a, input[type='submit']") : null;
     if (!btn) return;
     const txt = ((btn.textContent || "") + " " + (btn.value || "")).trim().toLowerCase();
@@ -55,7 +75,7 @@
   }, true);
 
   // Interceptar envío de formularios en personalizar.html si falta teléfono
-  document.addEventListener("submit", function (e) {
+  document.addEventListener("submit", function (e) { if (window.__dcIsInsideDareCoreAI && window.__dcIsInsideDareCoreAI(e.target)) return;
     const isPersonalizarPage = /personalizar/i.test(window.location.pathname || "");
     if (isPersonalizarPage && !hasValidPhone()) {
       e.preventDefault();
@@ -3990,7 +4010,7 @@ window.addEventListener('click', function(e) {
   }
 
   // Capturar cuando el cliente procesa pago hacia WhatsApp para registrar el pedido al instante
-  document.addEventListener("click", function (e) {
+  document.addEventListener("click", function (e) { if (window.__dcIsInsideDareCoreAI && window.__dcIsInsideDareCoreAI(e.target)) return;
     const btn = e.target && e.target.closest ? e.target.closest("button, a") : null;
     if (!btn) return;
     const txt = (btn.textContent || "").trim().toLowerCase();
@@ -4082,7 +4102,7 @@ window.addEventListener('click', function(e) {
   }
 
   // Interceptar clics en botones de Dare Lab / solicitar mockup / total estimado
-  document.addEventListener("click", function (e) {
+  document.addEventListener("click", function (e) { if (window.__dcIsInsideDareCoreAI && window.__dcIsInsideDareCoreAI(e.target)) return;
     const btn = e.target && e.target.closest ? e.target.closest("button, a") : null;
     if (!btn) return;
     const txt = (btn.textContent || "").trim().toLowerCase();
