@@ -3658,5 +3658,57 @@
       });
     })();
   </script>
+<script id="dcShippedEmailControlScript">
+    (function () {
+      function injectShippedEmailBox() {
+        if (document.getElementById("dcShippedEmailConfigBox")) return;
+        const ordersSection =
+          document.getElementById("sec-pedidos") ||
+          Array.from(document.querySelectorAll("section, div")).find(function (el) {
+            return /compras del carrito/i.test(el.textContent || "") && el.querySelector("select");
+          });
+        if (!ordersSection) return;
+
+        const box = document.createElement("div");
+        box.id = "dcShippedEmailConfigBox";
+        box.style.cssText = "margin:12px 0 18px;padding:12px 14px;border:1px solid #e5e7eb;border-radius:12px;background:#f9fafb;display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;";
+
+        let savedEmail = "";
+        try { savedEmail = localStorage.getItem("darecore_shipped_override_email") || ""; } catch (_) {}
+
+        box.innerHTML = [
+          '<div style="font-size:12px;color:#374151;">',
+          '  <strong>Correo al marcar "Enviado":</strong> por defecto usa el correo del cliente registrado; escribe otro aquí solo si deseas redirigirlo.',
+          '</div>',
+          '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">',
+          '  <input type="email" id="dcOverrideShippedEmailInput" placeholder="Correo alternativo (opcional)" value="' + savedEmail.replace(/"/g, """) + '" style="padding:7px 10px;border:1px solid #d1d5db;border-radius:8px;font-size:12px;min-width:230px;" />',
+          '  <button type="button" id="dcSaveShippedEmailBtn" style="padding:7px 12px;border:none;border-radius:8px;background:#111827;color:#fff;font-size:12px;font-weight:700;cursor:pointer;">Guardar correo</button>',
+          '</div>'
+        ].join("");
+
+        ordersSection.insertBefore(box, ordersSection.firstChild);
+
+        const saveBtn = document.getElementById("dcSaveShippedEmailBtn");
+        const inp = document.getElementById("dcOverrideShippedEmailInput");
+        if (saveBtn && inp) {
+          saveBtn.addEventListener("click", function () {
+            const val = (inp.value || "").trim();
+            try { localStorage.setItem("darecore_shipped_override_email", val); } catch (_) {}
+            window.DARECORE_SHIPPED_EMAIL_CONFIG = Object.assign({}, window.DARECORE_SHIPPED_EMAIL_CONFIG || {}, {
+              overrideRecipientEmail: val
+            });
+            saveBtn.textContent = "Guardado ✓";
+            setTimeout(function () { saveBtn.textContent = "Guardar correo"; }, 1800);
+          });
+        }
+      }
+
+      document.addEventListener("DOMContentLoaded", function () {
+        injectShippedEmailBox();
+        setTimeout(injectShippedEmailBox, 500);
+        setTimeout(injectShippedEmailBox, 1400);
+      });
+    })();
+  </script>
 </body>
 </html>

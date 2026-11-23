@@ -1058,3 +1058,140 @@
     setTimeout(syncClientOrderBadges, 400);
   });
 })();
+/* DARECORE ONLY-SENT EMAIL RULE */
+(function () {
+  if (window.__dcOnlySentEmailRuleInstalled) return;
+  window.__dcOnlySentEmailRuleInstalled = true;
+
+  // Cambia aquí si deseas forzar un correo específico o deja "" para usar el correo registrado del cliente
+  window.DARECORE_SHIPPED_EMAIL_CONFIG = Object.assign({
+    overrideRecipientEmail: "",
+    senderName: "DareCore Store",
+    publicKey: (typeof EMAILJS_PUBLIC_KEY !== "undefined" ? EMAILJS_PUBLIC_KEY : "oPqh5dU4hbXT_uZng"),
+    serviceId: (typeof EMAILJS_SERVICE_ID !== "undefined" ? EMAILJS_SERVICE_ID : "service_a3uxsit"),
+    templateId: (typeof EMAILJS_TEMPLATE_ID !== "undefined" ? EMAILJS_TEMPLATE_ID : "template_gxvi2ue")
+  }, window.DARECORE_SHIPPED_EMAIL_CONFIG || {});
+
+  try {
+    const savedOverride = localStorage.getItem("darecore_shipped_override_email");
+    if (savedOverride !== null) {
+      window.DARECORE_SHIPPED_EMAIL_CONFIG.overrideRecipientEmail = savedOverride.trim();
+    }
+  } catch (_) {}
+
+  function isSentStatus(val) {
+    return String(val || "").trim().toLowerCase() === "enviado";
+  }
+
+  function buildPackageShippedMessage(folio, customerName, itemsText, totalText) {
+    const safeName = customerName || "Cliente";
+    const safeFolio = folio || "DareCore";
+    return (
+      "Hola " + safeName + ",\n\n" +
+      "¡Excelentes noticias! Tu paquete correspondiente al pedido #" + safeFolio +
+      " ha sido enviado exitosamente por DareCore.\n\n" +
+      (itemsText ? "Productos enviados: " + itemsText + "\n" : "") +
+      (totalText ? "Total del pedido: " + totalText + "\n" : "") +
+      "\nYa va en camino hacia tu destino. Gracias por confiar en DareCore y formar parte del drop."
+    );
+  }
+
+  async function sendPackageShippedNotification(orderInfo) {
+    const cfg = window.DARECORE_SHIPPED_EMAIL_CONFIG || {};
+    const targetEmail = String(cfg.overrideRecipientEmail || orderInfo.email || "").trim();
+    if (!targetEmail || !targetEmail.includes("@")) return;
+
+    const folio = String(orderInfo.folio || "").replace(/^#/, "").trim();
+    const customerName = String(orderInfo.customerName || targetEmail.split("@")[0]).trim();
+    const itemsText = String(orderInfo.itemsText || "").trim();
+    const totalText = String(orderInfo.totalText || "").trim();
+
+    const subject = "Tu paquete #" + folio + " ha sido enviado exitosamente — DareCore";
+    const message = buildPackageShippedMessage(folio, customerName, itemsText, totalText);
+
+    if (typeof window.triggerAutomatedEmail === "function") {
+      try {
+        await window.triggerAutomatedEmail({
+          type: "order_shipped",
+          status: "Enviado",
+          to: targetEmail,
+          recipients: [targetEmail],
+          folio: folio,
+          customerName: customerName,
+          items: itemsText,
+          total: totalText,
+          subject: subject,
+          message: message
+        });
+      } catch (_) {}
+    }
+
+    if (cfg.publicKey && cfg.serviceId && cfg.templateId && window.emailjs && typeof window.emailjs.send === "function") {
+      try {
+        if (typeof window.emailjs.init === "function") {
+          window.emailjs.init(cfg.publicKey);
+        }
+        await window.emailjs.send(cfg.serviceId, cfg.templateId, {
+          to_email: targetEmail,
+          email: targetEmail,
+          to_name: customerName,
+          folio: folio,
+          status: "Enviado",
+          items: itemsText,
+          total: totalText,
+          subject: subject,
+          message: message
+        });
+      } catch (_) {}
+    }
+  }
+
+  function extractOrderDetailsFromCard(card, selectEl) {
+    const container = card || (selectEl ? selectEl.closest("div, article, section, li") : null) || document.body;
+    const rawText = container.textContent || "";
+    const folioMatch = rawText.match(/#(COMPRA|PEDIDO)-[A-Z0-9_-]+/i);
+    const emailMatch = rawText.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i);
+    const clientMatch = rawText.match(/Cliente:\s*([^\n(]+)/i);
+    const totalMatch = rawText.match(/Total:\s*\$?[0-9.,]+\s*(?:MXN)?/i);
+
+    let folio = folioMatch ? folioMatch[0].replace(/^#/, "") : "";
+    let email = emailMatch ? emailMatch[0] : "";
+    let customerName = clientMatch ? clientMatch[1].trim() : "";
+    let totalText = totalMatch ? totalMatch[0].replace(/^Total:\s*/i, "").trim() : "";
+
+    // Buscar también en ancestros cercanos por si el correo o folio está un nivel arriba
+    if ((!folio || !email) && selectEl) {
+      let p = selectEl.parentElement;
+      for (let i = 0; i < 5 && p && p !== document.body; i++) {
+        const pt = p.textContent || "";
+        if (!folio) {
+          const fm = pt.match(/#(COMPRA|PEDIDO)-[A-Z0-9_-]+/i);
+          if (fm) folio = fm[0].replace(/^#/, "");
+        }
+        if (!email) {
+          const em = pt.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i);
+          if (em) email = em[0];
+        }
+        p = p.parentElement;
+      }
+    }
+
+    return {
+      folio: folio,
+      email: email,
+      customerName: customerName,
+      totalText: totalText
+    };
+  }
+
+  // Escuchar cambios en los selectores de estatus del panel admin
+  document.addEventListener("change", function (e) {
+    const sel = e.target && e.target.closest ? e.target.closest("select") : null;
+    if (!sel) return;
+    const chosen = sel.value || (sel.options[sel.selectedIndex] && (sel.options[sel.selectedIndex].value || sel.options[sel.selectedIndex].textContent)) || "";
+    if (!isSentStatus(chosen)) return;
+
+    const details = extractOrderDetailsFromCard(sel.closest("div, article, section, li"), sel);
+    sendPackageShippedNotification(details);
+  }, true);
+})();
