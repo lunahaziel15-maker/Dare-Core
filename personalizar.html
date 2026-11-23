@@ -1,6 +1,137 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+<script id="dcFinalWhatsappTenDigitsGuard">
+(function () {
+  if (window.__dcFinalWhatsappTenDigitsGuard) return;
+  window.__dcFinalWhatsappTenDigitsGuard = true;
+
+  function insideAI(el) {
+    if (!el) return false;
+    if (typeof window.__dcIsInsideDareCoreAI === "function" && window.__dcIsInsideDareCoreAI(el)) return true;
+    let cur = el;
+    for (let i = 0; i < 15 && cur; i++) {
+      const id = String(cur.id || "").toLowerCase();
+      const cls = String(cur.className || "").toLowerCase();
+      if (/darecore\s*intelligence|ai\s*assistant|groq|chat.*ai|ai.*chat/i.test(id + " " + cls)) return true;
+      cur = cur.parentElement;
+    }
+    return false;
+  }
+
+  function getPhoneInput() {
+    const exact = document.getElementById("customWhatsapp");
+    if (exact) return exact;
+    return Array.from(document.querySelectorAll("input, tel")).find(function (el) {
+      if (insideAI(el)) return false;
+      const info = ((el.id || "") + " " + (el.name || "") + " " + (el.placeholder || "") + " " + (el.type || "")).toLowerCase();
+      return /whatsapp|wa|tel|phone|celular/.test(info);
+    }) || null;
+  }
+
+  function has10Digits() {
+    const inp = getPhoneInput();
+    if (!inp) return true;
+    return String(inp.value || "").replace(/\D+/g, "").length === 10;
+  }
+
+  function blockAndRequirePhone(ev) {
+    if (ev) {
+      try { ev.preventDefault(); } catch (_) {}
+      try { ev.stopPropagation(); } catch (_) {}
+      if (typeof ev.stopImmediatePropagation === "function") {
+        try { ev.stopImmediatePropagation(); } catch (_) {}
+      }
+    }
+    window.__dcBlockWaUntil = Date.now() + 8000;
+
+    const msg = "Debes ingresar tu número de celular / WhatsApp de 10 dígitos para solicitar tu mockup digital.";
+    if (typeof window.showFloatingToast === "function") {
+      try { window.showFloatingToast(msg); } catch (_) {}
+    } else {
+      alert(msg);
+    }
+
+    const inp = getPhoneInput();
+    if (inp) {
+      inp.required = true;
+      inp.setAttribute("aria-invalid", "true");
+      inp.style.setProperty("border", "2px solid #ef4444", "important");
+      inp.style.setProperty("box-shadow", "0 0 0 3px rgba(239, 68, 68, 0.28)", "important");
+      try { inp.scrollIntoView({ behavior: "smooth", block: "center" }); } catch (_) {}
+      try { inp.focus(); } catch (_) {}
+    }
+    return false;
+  }
+
+  function isWaUrl(u) {
+    return /(?:wa\.me|api\.whatsapp\.com|whatsapp:\/\/)/i.test(String(u || ""));
+  }
+
+  document.addEventListener("click", function (ev) {
+    const btn = ev.target && ev.target.closest ? ev.target.closest("#requestMockupBtn, button, a, input[type='submit'], [role='button']") : null;
+    if (!btn || insideAI(btn)) return;
+
+    const href = btn.getAttribute ? (btn.getAttribute("href") || "") : "";
+    const txt = ((btn.textContent || "") + " " + (btn.value || "") + " " + href).toLowerCase();
+    const isMockupOrWa = btn.id === "requestMockupBtn" || /solicitar\s*mockup|mockup\s*digital|wa\.me|api\.whatsapp|whatsapp/i.test(txt);
+
+    if (isMockupOrWa && !has10Digits()) {
+      blockAndRequirePhone(ev);
+      return false;
+    }
+  }, true);
+
+  document.addEventListener("submit", function (ev) {
+    if (insideAI(ev.target)) return;
+    if (!has10Digits()) {
+      blockAndRequirePhone(ev);
+      return false;
+    }
+  }, true);
+
+  document.addEventListener("input", function (ev) {
+    const inp = getPhoneInput();
+    if (!inp || ev.target !== inp) return;
+    if (String(inp.value || "").replace(/\D+/g, "").length === 10) {
+      inp.removeAttribute("aria-invalid");
+      inp.style.removeProperty("border");
+      inp.style.removeProperty("box-shadow");
+    }
+  }, true);
+
+  const origOpen = window.open.bind(window);
+  window.open = function (url) {
+    if (isWaUrl(url) && (!has10Digits() || (window.__dcBlockWaUntil && Date.now() < window.__dcBlockWaUntil))) {
+      blockAndRequirePhone(null);
+      return null;
+    }
+    return origOpen.apply(window, arguments);
+  };
+
+  try {
+    const origAssign = window.location.assign.bind(window.location);
+    window.location.assign = function (url) {
+      if (isWaUrl(url) && (!has10Digits() || (window.__dcBlockWaUntil && Date.now() < window.__dcBlockWaUntil))) {
+        blockAndRequirePhone(null);
+        return;
+      }
+      return origAssign(url);
+    };
+  } catch (_) {}
+
+  try {
+    const origReplace = window.location.replace.bind(window.location);
+    window.location.replace = function (url) {
+      if (isWaUrl(url) && (!has10Digits() || (window.__dcBlockWaUntil && Date.now() < window.__dcBlockWaUntil))) {
+        blockAndRequirePhone(null);
+        return;
+      }
+      return origReplace(url);
+    };
+  } catch (_) {}
+})();
+</script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DARECORE // Dare Lab - Crea tu prenda a medida</title>
@@ -70,16 +201,17 @@
 <script src="firebase-config.js"></script>
 </head>
 <body>
-<script id="dcDefinitiveCustomWhatsappLock">
+<header>
+<script id="dcFinalWhatsappTenDigitsGuard">
 (function () {
-  if (window.__dcDefinitiveCustomWhatsappLockInstalled) return;
-  window.__dcDefinitiveCustomWhatsappLockInstalled = true;
+  if (window.__dcFinalWhatsappTenDigitsGuard) return;
+  window.__dcFinalWhatsappTenDigitsGuard = true;
 
-  function isAssistantEl(el) {
+  function insideAI(el) {
     if (!el) return false;
     if (typeof window.__dcIsInsideDareCoreAI === "function" && window.__dcIsInsideDareCoreAI(el)) return true;
     let cur = el;
-    for (let i = 0; i < 14 && cur; i++) {
+    for (let i = 0; i < 15 && cur; i++) {
       const id = String(cur.id || "").toLowerCase();
       const cls = String(cur.className || "").toLowerCase();
       if (/darecore\s*intelligence|ai\s*assistant|groq|chat.*ai|ai.*chat/i.test(id + " " + cls)) return true;
@@ -88,136 +220,119 @@
     return false;
   }
 
-  function getPhoneControl() {
+  function getPhoneInput() {
     const exact = document.getElementById("customWhatsapp");
     if (exact) return exact;
-    const inputs = Array.from(document.querySelectorAll("input, tel"));
-    return inputs.find(function (el) {
-      if (isAssistantEl(el)) return false;
-      const meta = [
-        el.id || "",
-        el.name || "",
-        el.placeholder || "",
-        el.getAttribute("aria-label") || "",
-        (el.previousElementSibling && el.previousElementSibling.textContent) || "",
-        (el.parentElement && el.parentElement.textContent) || ""
-      ].join(" ").toLowerCase();
-      return /whatsapp|wa|tel[eé]fono|celular|477/i.test(meta);
+    return Array.from(document.querySelectorAll("input, tel")).find(function (el) {
+      if (insideAI(el)) return false;
+      const info = ((el.id || "") + " " + (el.name || "") + " " + (el.placeholder || "") + " " + (el.type || "")).toLowerCase();
+      return /whatsapp|wa|tel|phone|celular/.test(info);
     }) || null;
   }
 
-  function hasValidTenDigits() {
-    const ctrl = getPhoneControl();
-    if (!ctrl) return true;
-    const digits = String(ctrl.value || "").replace(/\D+/g, "");
-    return digits.length === 10;
+  function has10Digits() {
+    const inp = getPhoneInput();
+    if (!inp) return true;
+    return String(inp.value || "").replace(/\D+/g, "").length === 10;
   }
 
-  function enforcePhoneField(eventObj) {
-    if (eventObj) {
-      try { eventObj.preventDefault(); } catch (_) {}
-      try { eventObj.stopPropagation(); } catch (_) {}
-      if (typeof eventObj.stopImmediatePropagation === "function") {
-        try { eventObj.stopImmediatePropagation(); } catch (_) {}
+  function blockAndRequirePhone(ev) {
+    if (ev) {
+      try { ev.preventDefault(); } catch (_) {}
+      try { ev.stopPropagation(); } catch (_) {}
+      if (typeof ev.stopImmediatePropagation === "function") {
+        try { ev.stopImmediatePropagation(); } catch (_) {}
       }
     }
-    window.__dcBlockWaNavigationUntil = Date.now() + 6000;
+    window.__dcBlockWaUntil = Date.now() + 8000;
 
-    const msg = "Debes ingresar tu número de WhatsApp de 10 dígitos para solicitar tu mockup digital.";
+    const msg = "Debes ingresar tu número de celular / WhatsApp de 10 dígitos para solicitar tu mockup digital.";
     if (typeof window.showFloatingToast === "function") {
       try { window.showFloatingToast(msg); } catch (_) {}
     } else {
       alert(msg);
     }
 
-    const ctrl = getPhoneControl();
-    if (ctrl) {
-      ctrl.required = true;
-      ctrl.setAttribute("aria-invalid", "true");
-      ctrl.style.setProperty("border", "2px solid #ef4444", "important");
-      ctrl.style.setProperty("box-shadow", "0 0 0 3px rgba(239, 68, 68, 0.28)", "important");
-      try { ctrl.scrollIntoView({ behavior: "smooth", block: "center" }); } catch (_) {}
-      try { ctrl.focus(); } catch (_) {}
+    const inp = getPhoneInput();
+    if (inp) {
+      inp.required = true;
+      inp.setAttribute("aria-invalid", "true");
+      inp.style.setProperty("border", "2px solid #ef4444", "important");
+      inp.style.setProperty("box-shadow", "0 0 0 3px rgba(239, 68, 68, 0.28)", "important");
+      try { inp.scrollIntoView({ behavior: "smooth", block: "center" }); } catch (_) {}
+      try { inp.focus(); } catch (_) {}
     }
     return false;
   }
 
-  function isWaTarget(val) {
-    return /(?:api\.whatsapp\.com|wa\.me|whatsapp:\/\/)/i.test(String(val || ""));
+  function isWaUrl(u) {
+    return /(?:wa\.me|api\.whatsapp\.com|whatsapp:\/\/)/i.test(String(u || ""));
   }
 
-  // Capturar clic en #requestMockupBtn o cualquier botón/enlace de mockup/WhatsApp
-  document.addEventListener("click", function (e) {
-    const target = e.target && e.target.closest ? e.target.closest("#requestMockupBtn, button, a, input[type='submit'], [role='button']") : null;
-    if (!target || isAssistantEl(target)) return;
+  document.addEventListener("click", function (ev) {
+    const btn = ev.target && ev.target.closest ? ev.target.closest("#requestMockupBtn, button, a, input[type='submit'], [role='button']") : null;
+    if (!btn || insideAI(btn)) return;
 
-    const isExactBtn = target.id === "requestMockupBtn";
-    const text = ((target.textContent || "") + " " + (target.value || "") + " " + (target.getAttribute("href") || "")).toLowerCase();
-    const isMockupAction = isExactBtn || /solicitar\s*mockup|mockup\s*digital|whatsapp|wa\.me|api\.whatsapp/i.test(text);
+    const href = btn.getAttribute ? (btn.getAttribute("href") || "") : "";
+    const txt = ((btn.textContent || "") + " " + (btn.value || "") + " " + href).toLowerCase();
+    const isMockupOrWa = btn.id === "requestMockupBtn" || /solicitar\s*mockup|mockup\s*digital|wa\.me|api\.whatsapp|whatsapp/i.test(txt);
 
-    if (isMockupAction && !hasValidTenDigits()) {
-      enforcePhoneField(e);
+    if (isMockupOrWa && !has10Digits()) {
+      blockAndRequirePhone(ev);
       return false;
     }
   }, true);
 
-  // Capturar envío de formularios en personalizar.html si no hay 10 dígitos
-  document.addEventListener("submit", function (e) {
-    if (isAssistantEl(e.target)) return;
-    if (!hasValidTenDigits()) {
-      enforcePhoneField(e);
+  document.addEventListener("submit", function (ev) {
+    if (insideAI(ev.target)) return;
+    if (!has10Digits()) {
+      blockAndRequirePhone(ev);
       return false;
     }
   }, true);
 
-  // Limpiar borde rojo cuando el usuario escriba los 10 dígitos en #customWhatsapp
-  document.addEventListener("input", function (e) {
-    const ctrl = getPhoneControl();
-    if (!ctrl || e.target !== ctrl) return;
-    const digits = String(ctrl.value || "").replace(/\D+/g, "");
-    if (digits.length === 10) {
-      ctrl.removeAttribute("aria-invalid");
-      ctrl.style.removeProperty("border");
-      ctrl.style.removeProperty("box-shadow");
+  document.addEventListener("input", function (ev) {
+    const inp = getPhoneInput();
+    if (!inp || ev.target !== inp) return;
+    if (String(inp.value || "").replace(/\D+/g, "").length === 10) {
+      inp.removeAttribute("aria-invalid");
+      inp.style.removeProperty("border");
+      inp.style.removeProperty("box-shadow");
     }
   }, true);
 
-  // Bloquear window.open hacia WhatsApp cuando falten los 10 dígitos
-  const prevOpen = window.open.bind(window);
+  const origOpen = window.open.bind(window);
   window.open = function (url) {
-    if (isWaTarget(url) && (!hasValidTenDigits() || (window.__dcBlockWaNavigationUntil && Date.now() < window.__dcBlockWaNavigationUntil))) {
-      enforcePhoneField(null);
+    if (isWaUrl(url) && (!has10Digits() || (window.__dcBlockWaUntil && Date.now() < window.__dcBlockWaUntil))) {
+      blockAndRequirePhone(null);
       return null;
     }
-    return prevOpen.apply(window, arguments);
+    return origOpen.apply(window, arguments);
   };
 
-  // Bloquear location.assign y location.replace hacia WhatsApp cuando falten los 10 dígitos
   try {
-    const prevAssign = window.location.assign.bind(window.location);
+    const origAssign = window.location.assign.bind(window.location);
     window.location.assign = function (url) {
-      if (isWaTarget(url) && (!hasValidTenDigits() || (window.__dcBlockWaNavigationUntil && Date.now() < window.__dcBlockWaNavigationUntil))) {
-        enforcePhoneField(null);
+      if (isWaUrl(url) && (!has10Digits() || (window.__dcBlockWaUntil && Date.now() < window.__dcBlockWaUntil))) {
+        blockAndRequirePhone(null);
         return;
       }
-      return prevAssign(url);
+      return origAssign(url);
     };
   } catch (_) {}
 
   try {
-    const prevReplace = window.location.replace.bind(window.location);
+    const origReplace = window.location.replace.bind(window.location);
     window.location.replace = function (url) {
-      if (isWaTarget(url) && (!hasValidTenDigits() || (window.__dcBlockWaNavigationUntil && Date.now() < window.__dcBlockWaNavigationUntil))) {
-        enforcePhoneField(null);
+      if (isWaUrl(url) && (!has10Digits() || (window.__dcBlockWaUntil && Date.now() < window.__dcBlockWaUntil))) {
+        blockAndRequirePhone(null);
         return;
       }
-      return prevReplace(url);
+      return origReplace(url);
     };
   } catch (_) {}
 })();
 </script>
-
-    <header>
         <div class="nav-container">
             <a href="index.html" class="logo">DARE<span>CORE</span></a>
             <ul class="nav-links">
@@ -412,426 +527,5 @@
 <script src="darecore-ai.js"></script>
   <script src="email-gate.js"></script>
   <script src="darecore-sync.js"></script>
-<script id="dcHardNavigationStopWa">
-(function () {
-  if (window.__dcHardNavigationStopWaInstalled) return;
-  window.__dcHardNavigationStopWaInstalled = true;
-
-  function isAI(el) {
-    if (!el) return false;
-    if (typeof window.__dcIsInsideDareCoreAI === "function" && window.__dcIsInsideDareCoreAI(el)) return true;
-    let cur = el;
-    for (let i = 0; i < 12 && cur; i++) {
-      const id = String(cur.id || "").toLowerCase();
-      const cls = String(cur.className || "").toLowerCase();
-      if (/darecore\s*intelligence|ai\s*assistant|groq|chat.*ai|ai.*chat/i.test(id + " " + cls)) return true;
-      cur = cur.parentElement;
-    }
-    return false;
-  }
-
-  function getWaInput() {
-    const inputs = Array.from(document.querySelectorAll("input, tel"));
-    return inputs.find(function (el) {
-      if (isAI(el)) return false;
-      const blob = [
-        el.id || "",
-        el.name || "",
-        el.placeholder || "",
-        el.getAttribute("aria-label") || "",
-        (el.previousElementSibling && el.previousElementSibling.textContent) || "",
-        (el.parentElement && el.parentElement.textContent) || ""
-      ].join(" ").toLowerCase();
-      return /whatsapp|wa|tel[eé]fono|celular|477/i.test(blob);
-    }) || null;
-  }
-
-  function hasTenDigits() {
-    const inp = getWaInput();
-    if (!inp) return true;
-    return String(inp.value || "").replace(/\D+/g, "").length === 10;
-  }
-
-  function warnNoWa() {
-    const inp = getWaInput();
-    const msg = "Debes escribir tu número de WhatsApp de 10 dígitos para solicitar tu mockup digital.";
-    if (typeof window.showFloatingToast === "function") {
-      try { window.showFloatingToast(msg); } catch (_) {}
-    } else {
-      alert(msg);
-    }
-    if (inp) {
-      inp.style.setProperty("border", "2px solid #ef4444", "important");
-      inp.style.setProperty("box-shadow", "0 0 0 3px rgba(239,68,68,0.25)", "important");
-      try { inp.scrollIntoView({ behavior: "smooth", block: "center" }); } catch (_) {}
-      try { inp.focus(); } catch (_) {}
-    }
-  }
-
-  function isWaUrl(u) {
-    return /(?:api\.whatsapp\.com|wa\.me|whatsapp:\/\/)/i.test(String(u || ""));
-  }
-
-  document.addEventListener("click", function (e) {
-    const btn = e.target && e.target.closest ? e.target.closest("button, a, input[type='submit'], [role='button']") : null;
-    if (!btn || isAI(btn)) return;
-    const t = ((btn.textContent || "") + " " + (btn.value || "") + " " + (btn.getAttribute("href") || "")).toLowerCase();
-    if (/solicitar\s*mockup|mockup\s*digital|whatsapp|wa\.me|api\.whatsapp/i.test(t) && !hasTenDigits()) {
-      e.preventDefault();
-      e.stopPropagation();
-      if (typeof e.stopImmediatePropagation === "function") e.stopImmediatePropagation();
-      window.__dcBlockWaUntil = Date.now() + 5000;
-      warnNoWa();
-    }
-  }, true);
-
-  const origOpen = window.open.bind(window);
-  window.open = function (url) {
-    if (isWaUrl(url) && (!hasTenDigits() || (window.__dcBlockWaUntil && Date.now() < window.__dcBlockWaUntil))) {
-      warnNoWa();
-      return null;
-    }
-    return origOpen.apply(window, arguments);
-  };
-
-  window.addEventListener("beforeunload", function (e) {
-    if (!hasTenDigits() && window.__dcBlockWaUntil && Date.now() < window.__dcBlockWaUntil) {
-      e.preventDefault();
-      e.returnValue = "";
-    }
-  });
-})();
-</script>
-<script id="dcExactCustomWhatsappGate">
-(function () {
-  if (window.__dcExactCustomWhatsappGateInstalled) return;
-  window.__dcExactCustomWhatsappGateInstalled = true;
-
-  function checkCustomWa() {
-    const inp = document.getElementById("customWhatsapp");
-    if (!inp) return { ok: true, digits: "", inp: null };
-    const digits = String(inp.value || "").replace(/\D+/g, "");
-    return { ok: digits.length === 10, digits: digits, inp: inp };
-  }
-
-  function showCustomWaAlert(inp) {
-    const msg = "Debes ingresar tu número de WhatsApp de 10 dígitos para solicitar tu mockup digital.";
-    if (typeof window.showFloatingToast === "function") {
-      try { window.showFloatingToast(msg); } catch (_) {}
-    } else {
-      alert(msg);
-    }
-    if (inp) {
-      inp.required = true;
-      inp.style.setProperty("border", "2px solid #ef4444", "important");
-      inp.style.setProperty("box-shadow", "0 0 0 3px rgba(239,68,68,0.25)", "important");
-      try { inp.scrollIntoView({ behavior: "smooth", block: "center" }); } catch (_) {}
-      try { inp.focus(); } catch (_) {}
-    }
-  }
-
-  function bindRequestMockupLock() {
-    const btn = document.getElementById("requestMockupBtn");
-    const inp = document.getElementById("customWhatsapp");
-    if (inp && !inp.__dcDigitsListener) {
-      inp.addEventListener("input", function () {
-        const d = String(inp.value || "").replace(/\D+/g, "");
-        if (d.length === 10) {
-          inp.style.removeProperty("border");
-          inp.style.removeProperty("box-shadow");
-        }
-      });
-      inp.__dcDigitsListener = true;
-    }
-
-    if (btn && !btn.__dcExactLocked) {
-      btn.addEventListener("click", function (e) {
-        const st = checkCustomWa();
-        if (!st.ok) {
-          e.preventDefault();
-          e.stopPropagation();
-          if (typeof e.stopImmediatePropagation === "function") {
-            e.stopImmediatePropagation();
-          }
-          window.__dcBlockCustomWaUntil = Date.now() + 5000;
-          showCustomWaAlert(st.inp);
-          return false;
-        }
-      }, true);
-      btn.__dcExactLocked = true;
-    }
-  }
-
-  const origOpen = window.open.bind(window);
-  window.open = function (url) {
-    const u = String(url || "");
-    if (/whatsapp\.com|wa\.me|api\.whatsapp/i.test(u)) {
-      const st = checkCustomWa();
-      if (st.inp && (!st.ok || (window.__dcBlockCustomWaUntil && Date.now() < window.__dcBlockCustomWaUntil))) {
-        showCustomWaAlert(st.inp);
-        return null;
-      }
-    }
-    return origOpen.apply(window, arguments);
-  };
-
-  bindRequestMockupLock();
-  document.addEventListener("DOMContentLoaded", bindRequestMockupLock);
-  const t = setInterval(bindRequestMockupLock, 200);
-  setTimeout(function () { clearInterval(t); }, 10000);
-})();
-</script>
-<script id="dcDefinitiveCustomWhatsappLock">
-(function () {
-  if (window.__dcDefinitiveCustomWhatsappLockInstalled) return;
-  window.__dcDefinitiveCustomWhatsappLockInstalled = true;
-
-  function isAssistantEl(el) {
-    if (!el) return false;
-    if (typeof window.__dcIsInsideDareCoreAI === "function" && window.__dcIsInsideDareCoreAI(el)) return true;
-    let cur = el;
-    for (let i = 0; i < 14 && cur; i++) {
-      const id = String(cur.id || "").toLowerCase();
-      const cls = String(cur.className || "").toLowerCase();
-      if (/darecore\s*intelligence|ai\s*assistant|groq|chat.*ai|ai.*chat/i.test(id + " " + cls)) return true;
-      cur = cur.parentElement;
-    }
-    return false;
-  }
-
-  function getPhoneControl() {
-    const exact = document.getElementById("customWhatsapp");
-    if (exact) return exact;
-    const inputs = Array.from(document.querySelectorAll("input, tel"));
-    return inputs.find(function (el) {
-      if (isAssistantEl(el)) return false;
-      const meta = [
-        el.id || "",
-        el.name || "",
-        el.placeholder || "",
-        el.getAttribute("aria-label") || "",
-        (el.previousElementSibling && el.previousElementSibling.textContent) || "",
-        (el.parentElement && el.parentElement.textContent) || ""
-      ].join(" ").toLowerCase();
-      return /whatsapp|wa|tel[eé]fono|celular|477/i.test(meta);
-    }) || null;
-  }
-
-  function hasValidTenDigits() {
-    const ctrl = getPhoneControl();
-    if (!ctrl) return true;
-    const digits = String(ctrl.value || "").replace(/\D+/g, "");
-    return digits.length === 10;
-  }
-
-  function enforcePhoneField(eventObj) {
-    if (eventObj) {
-      try { eventObj.preventDefault(); } catch (_) {}
-      try { eventObj.stopPropagation(); } catch (_) {}
-      if (typeof eventObj.stopImmediatePropagation === "function") {
-        try { eventObj.stopImmediatePropagation(); } catch (_) {}
-      }
-    }
-    window.__dcBlockWaNavigationUntil = Date.now() + 6000;
-
-    const msg = "Debes ingresar tu número de WhatsApp de 10 dígitos para solicitar tu mockup digital.";
-    if (typeof window.showFloatingToast === "function") {
-      try { window.showFloatingToast(msg); } catch (_) {}
-    } else {
-      alert(msg);
-    }
-
-    const ctrl = getPhoneControl();
-    if (ctrl) {
-      ctrl.required = true;
-      ctrl.setAttribute("aria-invalid", "true");
-      ctrl.style.setProperty("border", "2px solid #ef4444", "important");
-      ctrl.style.setProperty("box-shadow", "0 0 0 3px rgba(239, 68, 68, 0.28)", "important");
-      try { ctrl.scrollIntoView({ behavior: "smooth", block: "center" }); } catch (_) {}
-      try { ctrl.focus(); } catch (_) {}
-    }
-    return false;
-  }
-
-  function isWaTarget(val) {
-    return /(?:api\.whatsapp\.com|wa\.me|whatsapp:\/\/)/i.test(String(val || ""));
-  }
-
-  // Capturar clic en #requestMockupBtn o cualquier botón/enlace de mockup/WhatsApp
-  document.addEventListener("click", function (e) {
-    const target = e.target && e.target.closest ? e.target.closest("#requestMockupBtn, button, a, input[type='submit'], [role='button']") : null;
-    if (!target || isAssistantEl(target)) return;
-
-    const isExactBtn = target.id === "requestMockupBtn";
-    const text = ((target.textContent || "") + " " + (target.value || "") + " " + (target.getAttribute("href") || "")).toLowerCase();
-    const isMockupAction = isExactBtn || /solicitar\s*mockup|mockup\s*digital|whatsapp|wa\.me|api\.whatsapp/i.test(text);
-
-    if (isMockupAction && !hasValidTenDigits()) {
-      enforcePhoneField(e);
-      return false;
-    }
-  }, true);
-
-  // Capturar envío de formularios en personalizar.html si no hay 10 dígitos
-  document.addEventListener("submit", function (e) {
-    if (isAssistantEl(e.target)) return;
-    if (!hasValidTenDigits()) {
-      enforcePhoneField(e);
-      return false;
-    }
-  }, true);
-
-  // Limpiar borde rojo cuando el usuario escriba los 10 dígitos en #customWhatsapp
-  document.addEventListener("input", function (e) {
-    const ctrl = getPhoneControl();
-    if (!ctrl || e.target !== ctrl) return;
-    const digits = String(ctrl.value || "").replace(/\D+/g, "");
-    if (digits.length === 10) {
-      ctrl.removeAttribute("aria-invalid");
-      ctrl.style.removeProperty("border");
-      ctrl.style.removeProperty("box-shadow");
-    }
-  }, true);
-
-  // Bloquear window.open hacia WhatsApp cuando falten los 10 dígitos
-  const prevOpen = window.open.bind(window);
-  window.open = function (url) {
-    if (isWaTarget(url) && (!hasValidTenDigits() || (window.__dcBlockWaNavigationUntil && Date.now() < window.__dcBlockWaNavigationUntil))) {
-      enforcePhoneField(null);
-      return null;
-    }
-    return prevOpen.apply(window, arguments);
-  };
-
-  // Bloquear location.assign y location.replace hacia WhatsApp cuando falten los 10 dígitos
-  try {
-    const prevAssign = window.location.assign.bind(window.location);
-    window.location.assign = function (url) {
-      if (isWaTarget(url) && (!hasValidTenDigits() || (window.__dcBlockWaNavigationUntil && Date.now() < window.__dcBlockWaNavigationUntil))) {
-        enforcePhoneField(null);
-        return;
-      }
-      return prevAssign(url);
-    };
-  } catch (_) {}
-
-  try {
-    const prevReplace = window.location.replace.bind(window.location);
-    window.location.replace = function (url) {
-      if (isWaTarget(url) && (!hasValidTenDigits() || (window.__dcBlockWaNavigationUntil && Date.now() < window.__dcBlockWaNavigationUntil))) {
-        enforcePhoneField(null);
-        return;
-      }
-      return prevReplace(url);
-    };
-  } catch (_) {}
-})();
-</script>
-<script id="dcIroncladMockupWhatsappGuard">
-(function () {
-  if (window.__dcIroncladMockupWhatsappGuard) return;
-  window.__dcIroncladMockupWhatsappGuard = true;
-
-  function isAIElement(el) {
-    if (!el) return false;
-    if (typeof window.__dcIsInsideDareCoreAI === "function" && window.__dcIsInsideDareCoreAI(el)) return true;
-    let cur = el;
-    for (let i = 0; i < 14 && cur; i++) {
-      const id = String(cur.id || "").toLowerCase();
-      const cls = String(cur.className || "").toLowerCase();
-      if (/darecore\s*intelligence|ai\s*assistant|groq|chat.*ai|ai.*chat/i.test(id + " " + cls)) return true;
-      cur = cur.parentElement;
-    }
-    return false;
-  }
-
-  function getWhatsappInput() {
-    return document.getElementById("customWhatsapp") ||
-      Array.from(document.querySelectorAll("input, tel")).find(function (el) {
-        if (isAIElement(el)) return false;
-        const txt = ((el.id || "") + " " + (el.name || "") + " " + (el.placeholder || "")).toLowerCase();
-        return /whatsapp|wa|tel|phone|celular/.test(txt);
-      }) || null;
-  }
-
-  function hasTenDigits() {
-    const inp = getWhatsappInput();
-    if (!inp) return true;
-    return String(inp.value || "").replace(/\D+/g, "").length === 10;
-  }
-
-  function blockActionAndFocus(e) {
-    if (e) {
-      try { e.preventDefault(); } catch (_) {}
-      try { e.stopPropagation(); } catch (_) {}
-      if (typeof e.stopImmediatePropagation === "function") {
-        try { e.stopImmediatePropagation(); } catch (_) {}
-      }
-    }
-    window.__dcBlockWaUntil = Date.now() + 8000;
-
-    const msg = "Debes escribir tu número de WhatsApp de 10 dígitos para solicitar tu mockup digital.";
-    if (typeof window.showFloatingToast === "function") {
-      try { window.showFloatingToast(msg); } catch (_) {}
-    } else {
-      alert(msg);
-    }
-
-    const inp = getWhatsappInput();
-    if (inp) {
-      inp.required = true;
-      inp.setAttribute("aria-invalid", "true");
-      inp.style.setProperty("border", "2px solid #ef4444", "important");
-      inp.style.setProperty("box-shadow", "0 0 0 3px rgba(239, 68, 68, 0.28)", "important");
-      try { inp.scrollIntoView({ behavior: "smooth", block: "center" }); } catch (_) {}
-      try { inp.focus(); } catch (_) {}
-    }
-    return false;
-  }
-
-  function isWhatsappLink(u) {
-    return /(?:wa\.me|api\.whatsapp\.com|whatsapp:\/\/)/i.test(String(u || ""));
-  }
-
-  // 1. Interceptar clic en #requestMockupBtn o botones/enlaces de mockup/whatsapp en fase de captura
-  document.addEventListener("click", function (e) {
-    const el = e.target && e.target.closest ? e.target.closest("#requestMockupBtn, button, a, input[type='submit'], [role='button']") : null;
-    if (!el || isAIElement(el)) return;
-
-    const href = el.getAttribute ? (el.getAttribute("href") || "") : "";
-    const label = ((el.textContent || "") + " " + (el.value || "") + " " + href).toLowerCase();
-    const isTrigger = el.id === "requestMockupBtn" || /solicitar\s*mockup|mockup\s*digital|wa\.me|api\.whatsapp|whatsapp/i.test(label);
-
-    if (isTrigger && !hasTenDigits()) {
-      blockActionAndFocus(e);
-      return false;
-    }
-  }, true);
-
-  // 2. Interceptar window.open si va a WhatsApp sin 10 dígitos
-  const nativeOpen = window.open.bind(window);
-  window.open = function (url) {
-    if (isWhatsappLink(url) && (!hasTenDigits() || (window.__dcBlockWaUntil && Date.now() < window.__dcBlockWaUntil))) {
-      blockActionAndFocus(null);
-      return null;
-    }
-    return nativeOpen.apply(window, arguments);
-  };
-
-  // 3. Interceptar a.click() si un script crea un enlace <a> a wa.me / api.whatsapp.com y lo dispara programáticamente
-  if (typeof HTMLAnchorElement !== "undefined" && HTMLAnchorElement.prototype && !HTMLAnchorElement.prototype.__dcWaClickGuarded) {
-    const nativeAnchorClick = HTMLAnchorElement.prototype.click;
-    HTMLAnchorElement.prototype.click = function () {
-      const targetHref = this.href || this.getAttribute("href") || "";
-      if (isWhatsappLink(targetHref) && (!hasTenDigits() || (window.__dcBlockWaUntil && Date.now() < window.__dcBlockWaUntil))) {
-        blockActionAndFocus(null);
-        return;
-      }
-      return nativeAnchorClick.apply(this, arguments);
-    };
-    HTMLAnchorElement.prototype.__dcWaClickGuarded = true;
-  }
-})();
-</script>
 </body>
 </html>
