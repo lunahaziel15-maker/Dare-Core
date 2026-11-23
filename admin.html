@@ -732,7 +732,8 @@
   <script src="firebase-config.js"></script>
 </head>
 <body>
-  <div id="loginSection" class="login-box">
+  <div class="dc-login-stage-exact">
+      <div id="loginSection" class="login-box dc-login-card-exact">
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
       <span class="dc-brand-mark">D</span>
       <div>
@@ -756,6 +757,7 @@
       <button type="submit" class="btn-primary" style="width:100%;">Entrar al Panel</button>
     </form>
   </div>
+    </div>
 
   <main id="dashboardSection" class="dc-shell-outer hidden">
     <div class="dc-dashboard-frame">
@@ -2703,52 +2705,6 @@
         restoreFullWidthWorkspace();
         setTimeout(restoreFullWidthWorkspace, 200);
       });
-    })();
-  </script>
-<script id="dcCenterLoginExactScript">
-    (function () {
-      function positionLoginLikeReference() {
-        const passInput = document.querySelector('input[type="password"]');
-        if (!passInput) return;
-
-        // Encontrar el formulario o tarjeta inmediata que contiene los campos de usuario/contraseña y el botón ENTRAR AL PANEL
-        const formEl = passInput.closest("form");
-        let card = formEl ? formEl.parentElement : passInput.parentElement;
-
-        // Si el form mismo es la tarjeta con borde/fondo blanco, usarlo directamente
-        if (formEl) {
-          const fStyle = window.getComputedStyle(formEl);
-          if (parseFloat(fStyle.borderRadius) > 0 && fStyle.backgroundColor !== "rgba(0, 0, 0, 0)") {
-            card = formEl;
-          }
-        }
-
-        // Subir como máximo 2 niveles hasta la tarjeta blanca que envuelve el header "ACCESO EXCLUSIVO ADMIN / DareCore Console"
-        while (card && card.parentElement && card.parentElement !== document.body) {
-          if (card.textContent.includes("DareCore Console") || card.textContent.includes("ACCESO EXCLUSIVO ADMIN")) {
-            break;
-          }
-          card = card.parentElement;
-        }
-
-        if (card && card !== document.body) {
-          card.classList.add("dc-login-card-exact");
-
-          // Si el padre de la tarjeta es el wrapper de pantalla completa, centrarlo como stage flex
-          const stage = card.parentElement;
-          if (stage && stage !== document.body && !stage.querySelector(".dc-dashboard-frame")) {
-            stage.classList.add("dc-login-stage-exact");
-          } else {
-            // Si la tarjeta cuelga directo del body o comparte padre con el dashboard, envolverla en un stage centrado
-            const wrapper = document.createElement("div");
-            wrapper.className = "dc-login-stage-exact";
-            card.parentNode.insertBefore(wrapper, card);
-            wrapper.appendChild(card);
-          }
-        }
-      }
-
-      window.addEventListener("DOMContentLoaded", positionLoginLikeReference);
     })();
   </script>
 </body>
