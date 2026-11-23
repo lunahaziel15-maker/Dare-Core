@@ -3710,5 +3710,272 @@
       });
     })();
   </script>
+<script id="dcAdminFullDataBridge">
+(function () {
+  if (window.__dcAdminFullDataBridgeInstalled) return;
+  window.__dcAdminFullDataBridgeInstalled = true;
+
+  function safeParse(raw, fallback) {
+    try {
+      const v = JSON.parse(raw);
+      return v !== null && v !== undefined ? v : fallback;
+    } catch (_) {
+      return fallback;
+    }
+  }
+
+  function collectAllOrdersFromStorage() {
+    const map = new Map();
+    const candidateKeys = [];
+    try {
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (!k) continue;
+        if (/order|pedido|compra|mockup|darelab|cart|checkout|entreg/i.test(k)) {
+          candidateKeys.push(k);
+        }
+      }
+    } catch (_) {}
+
+    function ingestList(list, fallbackSource) {
+      if (!Array.isArray(list)) return;
+      list.forEach(function (item, idx) {
+        if (!item || typeof item !== "object") return;
+        const id = String(item.id || item.folio || item.orderNumber || item.purchaseNumber || item.code || ("DC-" + idx)).trim();
+        const typeRaw = String(item.type || item.origin || item.source || item.channel || fallbackSource || "").toLowerCase();
+        const isLab = /lab|mockup|personaliz|dise[ñn]o/i.test(typeRaw) || /#?PEDIDO-/i.test(id) || !!item.technique || !!item.placement;
+        const statusRaw = String(item.status || item.estado || item.deliveryStatus || "Pendiente").trim();
+        const isDelivered = /entregad/i.test(statusRaw) || !!item.deliveredAt || !!item.entregadoEn;
+
+        const normalized = Object.assign({}, item, {
+          id: id,
+          folio: item.folio || id,
+          type: isLab ? "darelab" : (typeRaw || "carrito"),
+          status: isDelivered ? "Entregado" : (statusRaw || "Pendiente")
+        });
+
+        const prev = map.get(id);
+        map.set(id, Object.assign({}, prev || {}, normalized));
+      });
+    }
+
+    candidateKeys.forEach(function (k) {
+      const val = safeParse(localStorage.getItem(k), null);
+      if (Array.isArray(val)) {
+        ingestList(val, k);
+      } else if (val && typeof val === "object") {
+        if (Array.isArray(val.orders)) ingestList(val.orders, k);
+        if (Array.isArray(val.pedidos)) ingestList(val.pedidos, k);
+        if (Array.isArray(val.items)) ingestList(val.items, k);
+      }
+    });
+
+    return Array.from(map.values());
+  }
+
+  function collectAllProductsFromStorage() {
+    const map = new Map();
+    try {
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (!k) continue;
+        if (/product|prenda|catalog|catalogo|item|drop|shop/i.test(k) && !/order|pedido|cart|carrito/i.test(k)) {
+          const val = safeParse(localStorage.getItem(k), null);
+          const arr = Array.isArray(val) ? val : (val && Array.isArray(val.products) ? val.products : []);
+          arr.forEach(function (p, idx) {
+            if (!p || typeof p !== "object") return;
+            const pid = String(p.id || p.sku || p.slug || p.name || ("PROD-" + idx)).trim();
+            map.set(pid, Object.assign({}, map.get(pid) || {}, p, { id: pid }));
+          });
+        }
+      }
+    } catch (_) {}
+    return Array.from(map.values());
+  }
+
+  async function syncFirestoreIntoLocalCache() {
+    if (!window.db || typeof window.db.collection !== "function") return;
+    const cols = ["orders", "pedidos", "darelab_orders", "mockup_requests", "products", "prendas", "catalog"];
+    for (const colName of cols) {
+      try {
+        const snap = await window.db.collection(colName).get();
+        if (!snap || !snap.docs || snap.docs.length === 0) continue;
+        const docs = snap.docs.map(function (d) {
+          return Object.assign({ id: d.id }, d.data() || {});
+        });
+        if (/product|prenda|catalog/i.test(colName)) {
+          const existing = collectAllProductsFromStorage();
+          const merged = new Map(existing.map(function (x) { return [String(x.id), x]; }));
+          docs.forEach(function (x) { merged.set(String(x.id), Object.assign({}, merged.get(String(x.id)) || {}, x)); });
+          localStorage.setItem("darecore_admin_products_cache", JSON.stringify(Array.from(merged.values())));
+        } else {
+          const existing = collectAllOrdersFromStorage();
+          const merged = new Map(existing.map(function (x) { return [String(x.id), x]; }));
+          docs.forEach(function (x) {
+            const isLab = /lab|mockup/i.test(colName) || /#?PEDIDO-/i.test(String(x.id || ""));
+            merged.set(String(x.id), Object.assign({}, merged.get(String(x.id)) || {}, x, {
+              type: x.type || (isLab ? "darelab" : "carrito")
+            }));
+          });
+          localStorage.setItem("darecore_admin_orders_cache", JSON.stringify(Array.from(merged.values())));
+        }
+      } catch (_) {}
+    }
+  }
+
+  function formatMoney(val) {
+    const n = Number(String(val || 0).replace(/[^0-9.-]/g, "")) || 0;
+    return "$" + n.toLocaleString("es-MX") + " MXN";
+  }
+
+  function setStatValue(labelRegex, valueText) {
+    const cards = Array.from(document.querySelectorAll("div, section, article"));
+    for (const el of cards) {
+      if (el.children.length > 5) continue;
+      const t = (el.textContent || "").trim();
+      if (labelRegex.test(t)) {
+        const numNode = Array.from(el.querySelectorAll("div, span, strong, h1, h2, h3, p")).find(function (n) {
+          const nt = (n.textContent || "").trim();
+          return /^\d+$/.test(nt) && n.children.length === 0;
+        });
+        if (numNode && numNode.textContent.trim() !== String(valueText)) {
+          numNode.textContent = String(valueText);
+        }
+      }
+    }
+  }
+
+  function renderUnifiedAdminPanels() {
+    const orders = collectAllOrdersFromStorage();
+    const products = collectAllProductsFromStorage();
+
+    const cartOrders = orders.filter(function (o) {
+      return o.type !== "darelab" && !/entregad/i.test(String(o.status || ""));
+    });
+    const labOrders = orders.filter(function (o) {
+      return o.type === "darelab" && !/entregad/i.test(String(o.status || ""));
+    });
+    const deliveredOrders = orders.filter(function (o) {
+      return /entregad/i.test(String(o.status || ""));
+    });
+
+    setStatValue(/prendas publicadas/i, products.length);
+    setStatValue(/compras del carrito/i, cartOrders.length);
+    setStatValue(/solicitudes dare lab/i, labOrders.length);
+
+    // Renderizar catálogo si el contenedor de prendas publicadas está vacío
+    const catalogSection = Array.from(document.querySelectorAll("div, section")).find(function (el) {
+      return /prendas publicadas en tienda/i.test(el.textContent || "") && el.querySelector("h2, h3, h4");
+    });
+    if (catalogSection && products.length > 0) {
+      const emptyMsg = Array.from(catalogSection.querySelectorAll("p, div, span")).find(function (n) {
+        return /no hay prendas|sin prendas/i.test(n.textContent || "");
+      });
+      if (emptyMsg) emptyMsg.style.display = "none";
+    }
+
+    // Renderizar pedidos del carrito si está vacío
+    const pedidosSection = Array.from(document.querySelectorAll("div, section")).find(function (el) {
+      return /compras del carrito/i.test(el.textContent || "") && /a[uú]n no hay compras registradas/i.test(el.textContent || "");
+    });
+    if (pedidosSection && cartOrders.length > 0) {
+      let host = pedidosSection.querySelector("#dcUnifiedCartOrdersList");
+      if (!host) {
+        host = document.createElement("div");
+        host.id = "dcUnifiedCartOrdersList";
+        host.style.marginTop = "12px";
+        pedidosSection.appendChild(host);
+      }
+      const noCompras = Array.from(pedidosSection.querySelectorAll("p, div")).find(function (n) {
+        return /a[uú]n no hay compras registradas/i.test((n.textContent || "").trim());
+      });
+      if (noCompras) noCompras.style.display = "none";
+
+      host.innerHTML = cartOrders.map(function (o) {
+        const folio = o.folio || o.id || "COMPRA";
+        const client = o.customerEmail || o.email || o.client || o.whatsapp || "Cliente";
+        const total = formatMoney(o.total || o.price || 0);
+        const st = o.status || "Pendiente";
+        return '<div style="border:1px solid #e4e4e7;border-radius:10px;padding:12px;margin-bottom:8px;background:#fff;display:flex;justify-content:space-between;align-items:center;gap:12px;">' +
+          '<div><strong>#' + folio + '</strong> <span style="font-size:12px;color:#71717a;">• ' + client + '</span><div style="font-size:13px;color:#3f3f46;margin-top:2px;">' + (o.summary || o.itemName || "Pedido de tienda") + '</div></div>' +
+          '<div style="text-align:right;"><strong>' + total + '</strong><div style="font-size:12px;color:#ea580c;">' + st + '</div></div>' +
+        '</div>';
+      }).join("");
+    }
+
+    // Renderizar solicitudes Dare Lab si faltan registros
+    const labSection = Array.from(document.querySelectorAll("div, section")).find(function (el) {
+      return /solicitudes dare lab/i.test(el.textContent || "") && /#?PEDIDO-/i.test(el.textContent || "");
+    });
+    if (labSection && labOrders.length > 0) {
+      let labHost = labSection.querySelector("#dcUnifiedLabOrdersList");
+      if (!labHost) {
+        labHost = document.createElement("div");
+        labHost.id = "dcUnifiedLabOrdersList";
+        labHost.style.marginTop = "12px";
+        labSection.appendChild(labHost);
+      }
+      const existingText = labSection.textContent || "";
+      const missingLab = labOrders.filter(function (o) {
+        const code = String(o.folio || o.id || "").replace(/^#/, "");
+        return code && !existingText.includes(code);
+      });
+      if (missingLab.length > 0) {
+        labHost.innerHTML = missingLab.map(function (o) {
+          const folio = String(o.folio || o.id || "").replace(/^#/, "");
+          const client = o.customerEmail || o.email || o.whatsapp || "Cliente";
+          const prenda = o.baseName || o.productName || o.garment || "Prenda personalizada";
+          const total = formatMoney(o.total || o.estimatedTotal || o.price || 0);
+          return '<div style="border:1px solid #e4e4e7;border-radius:10px;padding:12px;margin-bottom:8px;background:#fff;display:flex;justify-content:space-between;align-items:center;gap:12px;">' +
+            '<div><strong>#' + folio + '</strong> <span style="font-size:12px;color:#71717a;">• ' + client + '</span><div style="font-size:13px;color:#3f3f46;margin-top:2px;">' + prenda + '</div></div>' +
+            '<div style="text-align:right;"><strong>' + total + '</strong><div style="font-size:12px;color:#ea580c;">' + (o.status || "Pendiente") + '</div></div>' +
+          '</div>';
+        }).join("");
+      }
+    }
+
+    // Renderizar entregados si existen pedidos entregados
+    const deliveredSection = Array.from(document.querySelectorAll("div, section")).find(function (el) {
+      return /pedidos entregados/i.test(el.textContent || "");
+    });
+    if (deliveredSection && deliveredOrders.length > 0) {
+      const noDeliv = Array.from(deliveredSection.querySelectorAll("p, div")).find(function (n) {
+        return /a[uú]n no hay pedidos marcados como entregados/i.test((n.textContent || "").trim());
+      });
+      if (noDeliv) noDeliv.style.display = "none";
+
+      let delivHost = deliveredSection.querySelector("#dcUnifiedDeliveredList");
+      if (!delivHost) {
+        delivHost = document.createElement("div");
+        delivHost.id = "dcUnifiedDeliveredList";
+        delivHost.style.marginTop = "12px";
+        deliveredSection.appendChild(delivHost);
+      }
+      delivHost.innerHTML = deliveredOrders.map(function (o) {
+        const folio = String(o.folio || o.id || "").replace(/^#/, "");
+        const client = o.customerEmail || o.email || o.whatsapp || "Cliente";
+        const total = formatMoney(o.total || o.price || 0);
+        return '<div style="border:1px solid #bbf7d0;border-radius:10px;padding:12px;margin-bottom:8px;background:#f0fdf4;display:flex;justify-content:space-between;align-items:center;gap:12px;">' +
+          '<div><strong>#' + folio + '</strong> <span style="font-size:12px;color:#15803d;">• Entregado</span><div style="font-size:13px;color:#3f3f46;margin-top:2px;">' + client + '</div></div>' +
+          '<strong>' + total + '</strong>' +
+        '</div>';
+      }).join("");
+    }
+  }
+
+  async function bootBridge() {
+    await syncFirestoreIntoLocalCache();
+    renderUnifiedAdminPanels();
+  }
+
+  document.addEventListener("DOMContentLoaded", function () {
+    bootBridge();
+    setTimeout(bootBridge, 500);
+    setTimeout(bootBridge, 1500);
+  });
+  window.addEventListener("storage", renderUnifiedAdminPanels);
+  setInterval(renderUnifiedAdminPanels, 1500);
+})();
+</script>
 </body>
 </html>
