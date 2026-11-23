@@ -2881,5 +2881,33 @@
       });
     })();
   </script>
+<style id="dcAntiJumpFix">
+  html, body {
+    overflow-anchor: none !important;
+    scroll-behavior: auto !important;
+  }
+  #loginSection.hidden, #loginBox.hidden, .login-hidden {
+    display: none !important;
+    height: 0 !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+  }
+</style>
+<script id="dcAntiJumpScript">
+(function () {
+  if (window.__dcAntiJumpApplied) return;
+  window.__dcAntiJumpApplied = true;
+  const origScrollTo = window.scrollTo.bind(window);
+  const origScrollBy = window.scrollBy.bind(window);
+  window.scrollTo = function () { return; };
+  window.scrollBy = function () { return; };
+  window.__dcUnlockScroll = function () {
+    window.scrollTo = origScrollTo;
+    window.scrollBy = origScrollBy;
+  };
+})();
+</script>
 </body>
 </html>
