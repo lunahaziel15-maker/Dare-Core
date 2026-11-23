@@ -1041,3 +1041,186 @@
     setTimeout(normalizeAllStatusSelects, 300);
   }
 })();
+
+
+/* === dcOrdersAndClientStatusFix === */
+(function () {
+  if (window.__dcOrdersAndClientStatusFixApplied) return;
+  window.__dcOrdersAndClientStatusFixApplied = true;
+
+  const REG_ORDERS_KEY = "darecore_registry_orders_v1";
+  const REG_LAB_KEY    = "darecore_registry_lab_v1";
+  const CLIENT_ORD_KEY = "darecore_client_orders";
+
+  function readJsonArr(key) {
+    try {
+      const raw = localStorage.getItem(key);
+      const parsed = raw ? JSON.parse(raw) : [];
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (_) {
+      return [];
+    }
+  }
+
+  function writeJsonArr(key, arr) {
+    try {
+      localStorage.setItem(key, JSON.stringify(Array.isArray(arr) ? arr : []));
+    } catch (_) {}
+  }
+
+  function normFolio(o) {
+    return String((o && (o.folio || o.purchaseNumber || o.orderNumber || o.id)) || "").trim().toUpperCase();
+  }
+
+  function upsertOrderInRegistry(colName, docId, data) {
+    const key = colName === "darelab_orders" ? REG_LAB_KEY : REG_ORDERS_KEY;
+    const list = readJsonArr(key);
+    const entry = Object.assign({}, data || {}, {
+      id: (data && data.id) || docId || ("ORD-" + Date.now()),
+      firestoreId: docId || (data && data.firestoreId) || "",
+      status: (data && data.status) || "En proceso",
+      createdAt: (data && data.createdAt) || new Date().toISOString()
+    });
+    const fNew = normFolio(entry);
+    const idx = list.findIndex(function (item) {
+      return (docId && item.firestoreId === docId) || (fNew && normFolio(item) === fNew);
+    });
+    if (idx >= 0) {
+      list[idx] = Object.assign({}, list[idx], entry);
+    } else {
+      list.unshift(entry);
+    }
+    writeJsonArr(key, list);
+  }
+
+  // Interceptar escrituras a orders y darelab_orders para garantizar respaldo visible en admin
+  function hookFirestoreOrderWrites() {
+    if (!window.firebase || !firebase.firestore || window.__dcHookedFirestoreOrders) return;
+    window.__dcHookedFirestoreOrders = true;
+    const origCollection = firebase.firestore.prototype.collection;
+    firebase.firestore.prototype.collection = function (colName) {
+      const colRef = origCollection.apply(this, arguments);
+      if (colName !== "orders" && colName !== "darelab_orders") return colRef;
+
+      const origAdd = colRef.add.bind(colRef);
+      colRef.add = async function (payload) {
+        const safePayload = Object.assign({}, payload || {}, {
+          status: (payload && payload.status) || "En proceso",
+          createdAt: (payload && payload.createdAt) || new Date().toISOString()
+        });
+        upsertOrderInRegistry(colName, "", safePayload);
+        try {
+          const docRef = await origAdd(safePayload);
+          if (docRef && docRef.id) {
+            upsertOrderInRegistry(colName, docRef.id, safePayload);
+          }
+          return docRef;
+        } catch (err) {
+          return { id: safePayload.folio || safePayload.purchaseNumber || ("local-" + Date.now()) };
+        }
+      };
+
+      const origDoc = colRef.doc.bind(colRef);
+      colRef.doc = function (docId) {
+        const docRef = origDoc.apply(this, arguments);
+        const origSet = docRef.set.bind(docRef);
+        docRef.set = async function (payload, opts) {
+          const safePayload = Object.assign({}, payload || {}, {
+            status: (payload && payload.status) || "En proceso"
+          });
+          upsertOrderInRegistry(colName, docId, safePayload);
+          try {
+            return await origSet(safePayload, opts);
+          } catch (err) {
+            return Promise.resolve();
+          }
+        };
+        return docRef;
+      };
+
+      return colRef;
+    };
+  }
+
+  // Preservar pedidos del cliente al pulsar "Actualizar estatus" y reflejar el estado del admin
+  const prevFetchPending = window.fetchClientPendingOrders;
+  window.fetchClientPendingOrders = async function () {
+    const localBefore = readJsonArr(CLIENT_ORD_KEY);
+    let remoteList = [];
+    if (typeof prevFetchPending === "function") {
+      try {
+        const res = await prevFetchPending.apply(this, arguments);
+        if (Array.isArray(res)) remoteList = res;
+      } catch (_) {}
+    }
+
+    const regOrders = readJsonArr(REG_ORDERS_KEY);
+    const regLab    = readJsonArr(REG_LAB_KEY);
+    const adminMapByFolio = {};
+    regOrders.concat(regLab).forEach(function (admOrd) {
+      const fk = normFolio(admOrd);
+      if (fk && admOrd && admOrd.status) {
+        adminMapByFolio[fk] = admOrd.status;
+      }
+    });
+
+    const mergedMap = new Map();
+    localBefore.concat(remoteList).forEach(function (item) {
+      if (!item) return;
+      const fk = normFolio(item) || String(item.id || Math.random());
+      const current = mergedMap.get(fk) || {};
+      const merged = Object.assign({}, current, item);
+      if (adminMapByFolio[fk]) {
+        merged.status = adminMapByFolio[fk];
+      }
+      mergedMap.set(fk, merged);
+    });
+
+    const finalList = Array.from(mergedMap.values()).filter(function (o) {
+      return !/entregad/i.test(String(o.status || ""));
+    });
+
+    writeJsonArr(CLIENT_ORD_KEY, finalList);
+    try {
+      if (typeof window.renderClientPendingOrders === "function") {
+        window.renderClientPendingOrders(finalList);
+      }
+    } catch (_) {}
+    return finalList;
+  };
+
+  // Cargar pedidos y Dare Lab en admin combinando Firestore + registro local
+  async function syncAdminOrdersFromCloudAndLocal() {
+    const ordersBox = document.getElementById("adminOrdersList");
+    const labBox    = document.getElementById("adminDareLabList");
+    if (!ordersBox && !labBox) return;
+
+    try {
+      const db = window.db || (window.firebase && firebase.firestore ? firebase.firestore() : null);
+      if (db) {
+        const ordSnap = await db.collection("orders").get();
+        ordSnap.forEach(function (doc) {
+          upsertOrderInRegistry("orders", doc.id, doc.data());
+        });
+        const labSnap = await db.collection("darelab_orders").get();
+        labSnap.forEach(function (doc) {
+          upsertOrderInRegistry("darelab_orders", doc.id, doc.data());
+        });
+      }
+    } catch (_) {}
+
+    if (typeof window.renderEditableOrderCards === "function") {
+      try { window.renderEditableOrderCards("adminOrdersList", "ordersCount", REG_ORDERS_KEY, "orders"); } catch (_) {}
+      try { window.renderEditableOrderCards("adminDareLabList", "dareLabCount", REG_LAB_KEY, "darelab_orders"); } catch (_) {}
+    }
+  }
+
+  hookFirestoreOrderWrites();
+  setInterval(function () {
+    hookFirestoreOrderWrites();
+    if (document.getElementById("adminOrdersList") || document.getElementById("adminDareLabList")) {
+      syncAdminOrdersFromCloudAndLocal();
+    }
+  }, 1500);
+})();
+/* === end dcOrdersAndClientStatusFix === */
