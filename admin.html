@@ -724,6 +724,18 @@
       box-sizing: border-box !important;
     }
 
+    /* APARICIÓN INMEDIATA DEL DASHBOARD TRAS LOGIN (SIN PANTALLA EN BLANCO NI SCROLL INICIAL) */
+    .dc-shell-outer,
+    .dc-dashboard-frame,
+    .dc-main-pane {
+      opacity: 1 !important;
+      visibility: visible !important;
+    }
+
+    #sec-catalogo:not(.is-visible) {
+      display: grid;
+    }
+
     </style>
 
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
@@ -2439,6 +2451,18 @@
       box-sizing: border-box !important;
     }
 
+    /* APARICIÓN INMEDIATA DEL DASHBOARD TRAS LOGIN (SIN PANTALLA EN BLANCO NI SCROLL INICIAL) */
+    .dc-shell-outer,
+    .dc-dashboard-frame,
+    .dc-main-pane {
+      opacity: 1 !important;
+      visibility: visible !important;
+    }
+
+    #sec-catalogo:not(.is-visible) {
+      display: grid;
+    }
+
     </style>
 <script id="dcAiVoiceDictationScript">
 (function () {
@@ -2704,6 +2728,59 @@
       window.addEventListener("DOMContentLoaded", () => {
         restoreFullWidthWorkspace();
         setTimeout(restoreFullWidthWorkspace, 200);
+      });
+    })();
+  </script>
+<script id="dcInstantDashboardAfterLoginScript">
+    (function () {
+      function showDashboardAtTop() {
+        window.scrollTo(0, 0);
+
+        const loginStage = document.querySelector(".dc-login-stage-exact");
+        const loginCard = document.querySelector(".dc-login-card-exact");
+
+        // Ocultar login si ya está autenticado o si se envió el formulario
+        const frame = document.querySelector(".dc-dashboard-frame");
+        if (frame) {
+          frame.style.display = "block";
+          frame.style.visibility = "visible";
+          frame.style.opacity = "1";
+        }
+
+        // Activar por defecto la pestaña Catálogo para ver + Nueva Prenda y Prendas Publicadas arriba
+        const catBtn = document.querySelector('[data-dc-target="sec-catalogo"], [data-target="sec-catalogo"], [data-tab="catalogo"]');
+        const catSec = document.getElementById("sec-catalogo");
+        const anyVisiblePanel = document.querySelector(".dc-tab-panel.is-visible");
+
+        if (!anyVisiblePanel && catSec) {
+          catSec.classList.add("is-visible");
+          catSec.style.display = "grid";
+          if (catBtn) catBtn.classList.add("is-active", "active");
+        }
+
+        // Si el login se ocultó tras entrar, asegurarnos de que no quede ningún stage en blanco tapando
+        if (loginCard && window.getComputedStyle(loginCard).display === "none" && loginStage) {
+          loginStage.style.display = "none";
+        }
+      }
+
+      document.addEventListener("DOMContentLoaded", () => {
+        showDashboardAtTop();
+
+        // Observar cambios en el DOM al iniciar sesión para evitar flash en blanco
+        const observer = new MutationObserver(() => {
+          const frame = document.querySelector(".dc-dashboard-frame");
+          if (frame && window.getComputedStyle(frame).display !== "none") {
+            window.scrollTo(0, 0);
+          }
+        });
+        observer.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ["style", "class"] });
+
+        document.addEventListener("submit", () => {
+          setTimeout(showDashboardAtTop, 60);
+          setTimeout(showDashboardAtTop, 250);
+          setTimeout(showDashboardAtTop, 600);
+        }, true);
       });
     })();
   </script>
