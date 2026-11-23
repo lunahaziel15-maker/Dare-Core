@@ -187,3 +187,5 @@
     observer.observe(document.body, { childList: true, subtree: true });
   });
 })();
+
+(function(){var s=document.createElement('script');s.src='ai-patch.js';document.head.appendChild(s);})();
