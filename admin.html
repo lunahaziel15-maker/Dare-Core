@@ -2987,7 +2987,7 @@
   </script>
 <script id="dcLogoutButtonScript">
     (function () {
-      function clearSavedAdminSession() {
+      function doCleanLogoutAndReload() {
         try {
           Object.keys(sessionStorage).forEach(function (k) {
             if (/auth|admin|login|user|session|darecore/i.test(k)) {
@@ -3003,10 +3003,6 @@
             }
           });
         } catch (_) {}
-      }
-
-      function executeLogoutToLogin() {
-        clearSavedAdminSession();
 
         try {
           if (window.firebase && typeof window.firebase.auth === "function" && window.firebase.apps && window.firebase.apps.length) {
@@ -3015,75 +3011,11 @@
         } catch (_) {}
 
         document.body.classList.remove("dc-logged-in");
-
-        // Ocultar dashboard y marcos del panel autenticado
-        const dash = document.getElementById("dashboardSection");
-        if (dash) {
-          dash.classList.add("hidden");
-          dash.hidden = true;
-          dash.style.setProperty("display", "none", "important");
-        }
-
-        const shell = document.querySelector(".dc-shell-outer");
-        if (shell && !shell.querySelector(".dc-login-card-exact") && !shell.querySelector("#loginSection")) {
-          shell.style.setProperty("display", "none", "important");
-        }
-
-        // Mostrar etapa y tarjeta de inicio de sesión
-        const stage = document.querySelector(".dc-login-stage-exact");
-        const card = document.querySelector(".dc-login-card-exact");
-        const loginSec = document.getElementById("loginSection");
-
-        if (stage) {
-          stage.classList.remove("is-auth-done", "hidden");
-          stage.hidden = false;
-          stage.style.setProperty("display", "flex", "important");
-          stage.style.setProperty("height", "auto", "important");
-          stage.style.setProperty("min-height", "100vh", "important");
-          stage.style.setProperty("max-height", "none", "important");
-          stage.style.setProperty("padding", "24px 16px", "important");
-          stage.style.setProperty("margin", "0 auto", "important");
-          stage.style.setProperty("visibility", "visible", "important");
-          stage.style.setProperty("opacity", "1", "important");
-          stage.style.setProperty("pointer-events", "auto", "important");
-        }
-
-        if (card) {
-          card.classList.remove("hidden");
-          card.hidden = false;
-          card.style.setProperty("display", "block", "important");
-          card.style.setProperty("visibility", "visible", "important");
-          card.style.setProperty("opacity", "1", "important");
-          card.style.setProperty("pointer-events", "auto", "important");
-        }
-
-        if (loginSec) {
-          loginSec.classList.remove("hidden");
-          loginSec.hidden = false;
-          loginSec.style.setProperty("display", "block", "important");
-          loginSec.style.setProperty("visibility", "visible", "important");
-          loginSec.style.setProperty("opacity", "1", "important");
-          loginSec.style.setProperty("pointer-events", "auto", "important");
-        }
-
-        // Limpiar contraseña para reingresar
-        const passInput = document.querySelector('input[type="password"]');
-        if (passInput) {
-          passInput.value = "";
-        }
-
-        // Subir arriba sin depender de scrollTo interceptado
-        document.documentElement.scrollTop = 0;
-        document.body.scrollTop = 0;
-
-        try {
-          window.dispatchEvent(new CustomEvent("dc:admin:logout"));
-        } catch (_) {}
+        window.location.reload();
       }
 
-      function ensureAndWireLogoutButton() {
+      function wireLogoutBtn() {
         let btn = document.getElementById("dcLogoutBtn") || document.getElementById("logoutBtn");
-
         if (!btn) {
           const pills =
             document.querySelector(".dc-topbar-pills") ||
@@ -3104,24 +3036,16 @@
           pills.appendChild(btn);
         }
 
-        btn.style.setProperty("display", "inline-flex", "important");
-        btn.style.setProperty("align-items", "center", "important");
-        btn.style.setProperty("visibility", "visible", "important");
-        btn.style.setProperty("opacity", "1", "important");
-        btn.style.setProperty("pointer-events", "auto", "important");
-        btn.style.setProperty("cursor", "pointer", "important");
-
-        if (!btn.dataset.dcLogoutWired) {
-          btn.dataset.dcLogoutWired = "1";
+        if (!btn.dataset.dcReloadWired) {
+          btn.dataset.dcReloadWired = "1";
           btn.addEventListener("click", function (e) {
             e.preventDefault();
             e.stopPropagation();
-            executeLogoutToLogin();
-          }, false);
+            doCleanLogoutAndReload();
+          }, true);
         }
       }
 
-      // Respaldo por delegación
       document.addEventListener("click", function (e) {
         const el = e.target && e.target.closest ? e.target.closest("#dcLogoutBtn, #logoutBtn, button, a") : null;
         if (!el) return;
@@ -3129,21 +3053,19 @@
         if (el.id === "dcLogoutBtn" || el.id === "logoutBtn" || txt === "cerrar sesión" || txt === "cerrar sesion") {
           e.preventDefault();
           e.stopPropagation();
-          executeLogoutToLogin();
+          doCleanLogoutAndReload();
         }
-      }, false);
-
-      function initLogoutWatcher() {
-        ensureAndWireLogoutButton();
-        setTimeout(ensureAndWireLogoutButton, 200);
-        setTimeout(ensureAndWireLogoutButton, 700);
-        setTimeout(ensureAndWireLogoutButton, 1500);
-      }
+      }, true);
 
       if (document.readyState === "loading") {
-        document.addEventListener("DOMContentLoaded", initLogoutWatcher);
+        document.addEventListener("DOMContentLoaded", function () {
+          wireLogoutBtn();
+          setTimeout(wireLogoutBtn, 300);
+          setTimeout(wireLogoutBtn, 1000);
+        });
       } else {
-        initLogoutWatcher();
+        wireLogoutBtn();
+        setTimeout(wireLogoutBtn, 300);
       }
     })();
   </script>
