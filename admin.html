@@ -704,6 +704,30 @@
       }
     }
 
+    /* CENTRADO LIMPIO DEL PANEL DE INICIO DE SESIÓN */
+    #adminLoginBox,
+    .dc-login-card,
+    .login-card,
+    #loginBox {
+      max-width: 440px !important;
+      width: 92% !important;
+      margin: 0 auto !important;
+      padding: 32px 30px !important;
+      border-radius: 20px !important;
+      box-shadow: 0 24px 60px -15px rgba(15, 23, 42, 0.14) !important;
+    }
+
+    body:has(#adminLoginBox:not([style*="display: none"])) .dc-shell-outer,
+    body:has(#loginBox:not([style*="display: none"])) .dc-shell-outer,
+    .dc-login-wrap {
+      min-height: 100vh !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      margin: 0 auto !important;
+      padding: 24px !important;
+    }
+
     </style>
 
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
@@ -2395,6 +2419,30 @@
       .dc-kpi-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
       }
+    }
+
+    /* CENTRADO LIMPIO DEL PANEL DE INICIO DE SESIÓN */
+    #adminLoginBox,
+    .dc-login-card,
+    .login-card,
+    #loginBox {
+      max-width: 440px !important;
+      width: 92% !important;
+      margin: 0 auto !important;
+      padding: 32px 30px !important;
+      border-radius: 20px !important;
+      box-shadow: 0 24px 60px -15px rgba(15, 23, 42, 0.14) !important;
+    }
+
+    body:has(#adminLoginBox:not([style*="display: none"])) .dc-shell-outer,
+    body:has(#loginBox:not([style*="display: none"])) .dc-shell-outer,
+    .dc-login-wrap {
+      min-height: 100vh !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      margin: 0 auto !important;
+      padding: 24px !important;
     }
 
     </style>
