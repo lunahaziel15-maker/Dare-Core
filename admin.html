@@ -3257,5 +3257,253 @@
       }
     })();
   </script>
+<script id="dcOrdersLiveAndDeliveredCalendarScript">
+    (function () {
+      const ORDERS_STORE_KEYS = ["darecore_orders", "dc_orders", "orders", "darecorePedidos", "dc_pedidos"];
+      const DELIVERED_STORE_KEY = "darecore_delivered_orders";
+      const channel = (typeof BroadcastChannel !== "undefined") ? new BroadcastChannel("darecore_orders_sync") : null;
+
+      function readAllOrders() {
+        const list = [];
+        const seen = new Set();
+
+        function collectFromRaw(raw) {
+          if (!raw) return;
+          try {
+            const parsed = JSON.parse(raw);
+            const arr = Array.isArray(parsed) ? parsed : (parsed && typeof parsed === "object" ? Object.values(parsed) : []);
+            arr.forEach(function (item) {
+              if (!item || typeof item !== "object") return;
+              const id = String(item.id || item.orderId || item.codigo || item.numero || "").trim();
+              if (!id || seen.has(id)) return;
+              seen.add(id);
+              list.push(Object.assign({
+                id: id,
+                status: item.status || item.estado || "Pendiente",
+                client: item.client || item.cliente || item.email || "",
+                total: item.total || item.monto || "",
+                items: item.items || item.productos || [],
+                updatedAt: item.updatedAt || new Date().toISOString(),
+                deliveredAt: item.deliveredAt || null
+              }, item));
+            });
+          } catch (_) {}
+        }
+
+        ORDERS_STORE_KEYS.forEach(function (k) {
+          try { collectFromRaw(localStorage.getItem(k)); } catch (_) {}
+          try { collectFromRaw(sessionStorage.getItem(k)); } catch (_) {}
+        });
+
+        try { collectFromRaw(localStorage.getItem(DELIVERED_STORE_KEY)); } catch (_) {}
+        return list;
+      }
+
+      function saveOrdersSnapshot(orders) {
+        try {
+          const json = JSON.stringify(orders);
+          localStorage.setItem("darecore_orders", json);
+          localStorage.setItem("dc_orders", json);
+        } catch (_) {}
+        try {
+          if (channel) channel.postMessage({ type: "orders_updated", orders: orders, ts: Date.now() });
+        } catch (_) {}
+        try {
+          window.dispatchEvent(new CustomEvent("darecore:orders:updated", { detail: { orders: orders } }));
+        } catch (_) {}
+      }
+
+      function saveDeliveredOrders(deliveredList) {
+        try {
+          localStorage.setItem(DELIVERED_STORE_KEY, JSON.stringify(deliveredList));
+        } catch (_) {}
+      }
+
+      function getDeliveredOrders() {
+        try {
+          const raw = localStorage.getItem(DELIVERED_STORE_KEY);
+          const parsed = raw ? JSON.parse(raw) : [];
+          return Array.isArray(parsed) ? parsed : [];
+        } catch (_) {
+          return [];
+        }
+      }
+
+      function toIsoDateKey(dInput) {
+        const d = dInput ? new Date(dInput) : new Date();
+        if (isNaN(d.getTime())) return new Date().toISOString().slice(0, 10);
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, "0");
+        const day = String(d.getDate()).padStart(2, "0");
+        return y + "-" + m + "-" + day;
+      }
+
+      function markOrderAsDelivered(orderId, orderMeta) {
+        if (!orderId) return;
+        const orders = readAllOrders();
+        const todayIso = toIsoDateKey(new Date());
+        let found = null;
+
+        const updatedOrders = orders.map(function (o) {
+          if (String(o.id) === String(orderId)) {
+            found = Object.assign({}, o, orderMeta || {}, {
+              status: "Entregado",
+              estado: "Entregado",
+              deliveredAt: o.deliveredAt || todayIso,
+              updatedAt: new Date().toISOString()
+            });
+            return found;
+          }
+          return o;
+        });
+
+        if (!found) {
+          found = Object.assign({
+            id: orderId,
+            status: "Entregado",
+            estado: "Entregado",
+            client: "",
+            total: "",
+            deliveredAt: todayIso,
+            updatedAt: new Date().toISOString()
+          }, orderMeta || {});
+          updatedOrders.unshift(found);
+        }
+
+        const delivered = getDeliveredOrders();
+        const existsIdx = delivered.findIndex(function (d) { return String(d.id) === String(orderId); });
+        if (existsIdx >= 0) {
+          delivered[existsIdx] = Object.assign({}, delivered[existsIdx], found);
+        } else {
+          delivered.unshift(found);
+        }
+
+        saveOrdersSnapshot(updatedOrders);
+        saveDeliveredOrders(delivered);
+        renderDeliveredPanelAndCalendar();
+      }
+
+      function renderDeliveredPanelAndCalendar() {
+        const entregadosPanel =
+          document.getElementById("sec-entregados") ||
+          Array.from(document.querySelectorAll("[id*='entregad' i], .dc-tab-panel")).find(function (el) {
+            return /pedidos entregados/i.test(el.textContent || "");
+          });
+
+        if (!entregadosPanel) return;
+
+        let widget = document.getElementById("dcDeliveredCalendarWidget");
+        if (!widget) {
+          widget = document.createElement("div");
+          widget.id = "dcDeliveredCalendarWidget";
+          widget.style.cssText = "margin-top:16px;padding:16px;border-radius:14px;border:1px solid #e5e7eb;background:#ffffff;";
+          widget.innerHTML = [
+            '<div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;margin-bottom:12px;">',
+            '  <div>',
+            '    <div style="font-weight:700;font-size:15px;color:#111827;">Calendario de Entregas</div>',
+            '    <div style="font-size:12px;color:#6b7280;">Selecciona un día para ver cuántos pedidos se entregaron</div>',
+            '  </div>',
+            '  <input type="date" id="dcDeliveredDatePicker" style="padding:8px 10px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;" />',
+            '</div>',
+            '<div id="dcDeliveredDaySummary" style="font-size:13px;font-weight:600;color:#111827;margin-bottom:10px;"></div>',
+            '<div id="dcDeliveredDayList" style="display:grid;gap:8px;font-size:13px;"></div>'
+          ].join("");
+          entregadosPanel.appendChild(widget);
+
+          const picker = document.getElementById("dcDeliveredDatePicker");
+          if (picker) {
+            picker.value = toIsoDateKey(new Date());
+            picker.addEventListener("change", renderDeliveredPanelAndCalendar);
+          }
+        }
+
+        const picker = document.getElementById("dcDeliveredDatePicker");
+        const summaryEl = document.getElementById("dcDeliveredDaySummary");
+        const listEl = document.getElementById("dcDeliveredDayList");
+        const selectedDay = (picker && picker.value) ? picker.value : toIsoDateKey(new Date());
+
+        const delivered = getDeliveredOrders();
+        const dayOrders = delivered.filter(function (item) {
+          return toIsoDateKey(item.deliveredAt || item.updatedAt) === selectedDay;
+        });
+
+        if (summaryEl) {
+          summaryEl.textContent = "Pedidos entregados el " + selectedDay + ": " + dayOrders.length + " (Total histórico: " + delivered.length + ")";
+        }
+
+        if (listEl) {
+          if (dayOrders.length === 0) {
+            listEl.innerHTML = '<div style="color:#6b7280;">No hay pedidos entregados registrados en esta fecha.</div>';
+          } else {
+            listEl.innerHTML = dayOrders.map(function (ord) {
+              return '<div style="padding:10px 12px;border:1px solid #e5e7eb;border-radius:10px;display:flex;justify-content:space-between;align-items:center;">' +
+                '<div><strong>#' + String(ord.id).replace(/^#/, "") + '</strong>' +
+                (ord.client ? ' · <span style="color:#4b5563;">' + ord.client + '</span>' : '') + '</div>' +
+                '<span style="font-weight:600;color:#059669;">Entregado' + (ord.total ? ' · ' + ord.total : '') + '</span>' +
+                '</div>';
+            }).join("");
+          }
+        }
+      }
+
+      // Escuchar cambios de estatus o marcado como Entregado en admin
+      document.addEventListener("change", function (e) {
+        const sel = e.target && e.target.closest ? e.target.closest("select") : null;
+        if (!sel) return;
+        const val = String(sel.value || "").trim();
+        const card = sel.closest("article, section, div, tr, li");
+        const txt = card ? (card.textContent || "") : "";
+        const idMatch = txt.match(/#(COMPRA|PEDIDO)-[A-Z0-9_-]+/i);
+        const orderId = idMatch ? idMatch[0] : "";
+
+        if (orderId && val) {
+          const orders = readAllOrders();
+          let updated = false;
+          const nextOrders = orders.map(function (o) {
+            if (String(o.id) === orderId) {
+              updated = true;
+              return Object.assign({}, o, {
+                status: val,
+                estado: val,
+                updatedAt: new Date().toISOString()
+              });
+            }
+            return o;
+          });
+          if (!updated) {
+            nextOrders.unshift({
+              id: orderId,
+              status: val,
+              estado: val,
+              updatedAt: new Date().toISOString()
+            });
+          }
+          saveOrdersSnapshot(nextOrders);
+        }
+
+        if (/entregado/i.test(val) && orderId) {
+          markOrderAsDelivered(orderId);
+        }
+      }, true);
+
+      window.addEventListener("storage", function (e) {
+        if (!e || !e.key || /order|pedido|compra|darecore/i.test(e.key)) {
+          renderDeliveredPanelAndCalendar();
+        }
+      });
+
+      if (channel) {
+        channel.onmessage = function () {
+          renderDeliveredPanelAndCalendar();
+        };
+      }
+
+      document.addEventListener("DOMContentLoaded", function () {
+        renderDeliveredPanelAndCalendar();
+        setTimeout(renderDeliveredPanelAndCalendar, 400);
+        setTimeout(renderDeliveredPanelAndCalendar, 1200);
+      });
+    })();
+  </script>
 </body>
 </html>
