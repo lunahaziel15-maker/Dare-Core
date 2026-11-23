@@ -6,7 +6,7 @@
   <title>DareCore — Admin Dashboard</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Plus+Jakarta+Sans:wght@500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Inter:wght@400;500;600&family=Plus+Jakarta+Sans:wght@500;600;700&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
 
   <style id="dcSkillsetProDashboard">
@@ -332,22 +332,25 @@
       transform: translateY(-1px);
     }
 
-    /* PANEL MODIFICACIÓN DE IA: Imagen exacta Vórtice neón animada en tiempo real */
+    /* PANEL MODIFICACIÓN DE IA: Composición editorial lateral flotante + Esfera 1:1 central */
     #darecoreAiKnowledgeAdmin {
-      display: flex !important;
+      display: grid !important;
       visibility: visible !important;
       opacity: 1 !important;
       position: relative;
       overflow: hidden;
-      height: calc(100vh - 190px); min-height: 460px; max-height: 590px;
+      height: calc(100vh - 185px);
+      min-height: 470px;
+      max-height: 610px;
       background: #000000 !important;
       color: #f8fafc !important;
       border: 1px solid #18181b !important;
-      border-radius: 20px !important;
-      box-shadow: 0 20px 50px -20px rgba(0, 0, 0, 0.85) !important;
-      padding: 16px 18px !important;
-      flex-direction: column;
-      justify-content: flex-end;
+      border-radius: 22px !important;
+      box-shadow: 0 24px 60px -20px rgba(0, 0, 0, 0.9) !important;
+      padding: 28px 32px !important;
+      grid-template-columns: minmax(230px, 290px) minmax(0, 1fr) minmax(230px, 290px);
+      align-items: center;
+      gap: 20px;
     }
 
     #dcAiFlowCanvas {
@@ -359,95 +362,214 @@
       z-index: 0;
     }
 
-    .dc-ai-spacer {
-      display: none !important;
+    @keyframes dcFloatEditorial {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-6px); }
     }
 
-    .dc-ai-single-dock {
+    @keyframes dcRuleSlideIn {
+      from { opacity: 0; transform: translateX(-10px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    @keyframes dcMicPulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(255, 204, 0, 0.55); }
+      50% { box-shadow: 0 0 0 10px rgba(255, 204, 0, 0); }
+    }
+
+    .dc-ai-side-col {
       position: relative;
-      z-index: 1;
-      max-width: 640px;
-      width: 100%;
-      margin: 0 auto;
-      background: rgba(0, 0, 0, 0.52);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
-      border: 1px solid rgba(255, 255, 255, 0.16);
-      border-radius: 16px;
-      padding: 8px 10px;
-      transition: background-color 0.25s ease, border-color 0.25s ease;
-    }
-
-    .dc-ai-single-dock:focus-within {
-      background: rgba(0, 0, 0, 0.82);
-      border-color: rgba(56, 189, 248, 0.5);
-    }
-
-    .dc-ai-chat-log {
-      max-height: 110px;
-      overflow-y: auto;
+      z-index: 2;
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      justify-content: center;
+      max-height: 100%;
+      animation: dcFloatEditorial 6.5s ease-in-out infinite;
+    }
+
+    .dc-ai-side-col.right-col {
+      animation-delay: -3.2s;
+    }
+
+    .dc-natgeo-kicker {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-family: 'Space Grotesk', sans-serif !important;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: #ffcc00;
       margin-bottom: 8px;
-      padding-right: 4px;
     }
 
-    .dc-ai-chat-log:empty {
-      display: none;
-      margin-bottom: 0;
+    .dc-natgeo-bar {
+      width: 3px;
+      height: 14px;
+      background: #ffcc00;
+      display: inline-block;
+      flex-shrink: 0;
     }
 
-    .dc-ai-msg-admin {
-      align-self: flex-end;
-      max-width: 82%;
-      background: rgba(217, 70, 239, 0.24);
-      border: 1px solid rgba(217, 70, 239, 0.42);
-      color: #ffffff;
-      padding: 6px 11px;
-      border-radius: 12px 12px 3px 12px;
-      font-size: 12px;
-      font-weight: 400;
-      line-height: 1.4;
-    }
-
-    .dc-ai-msg-bot {
-      align-self: flex-start;
-      max-width: 92%;
-      background: rgba(9, 13, 28, 0.85);
-      border: 1px solid rgba(34, 211, 238, 0.35);
-      color: #e2e8f0;
-      padding: 7px 12px;
-      border-radius: 12px 12px 12px 3px;
-      font-size: 12px;
-      font-weight: 400;
-      line-height: 1.45;
-      white-space: pre-line;
-    }
-
-    #dcAiCoachInput {
-      background: rgba(255, 255, 255, 0.07) !important;
+    .dc-natgeo-title {
+      font-family: 'Cinzel', Georgia, serif !important;
+      font-size: 18px !important;
+      font-weight: 700 !important;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
       color: #ffffff !important;
-      border: 1px solid rgba(255, 255, 255, 0.16) !important;
-      border-radius: 999px !important;
-      padding: 7px 14px !important;
-      font-size: 12.5px !important;
+      line-height: 1.25;
+      margin: 0 0 14px 0;
+      text-shadow: 0 2px 18px rgba(0, 0, 0, 0.9);
     }
 
-    #dcAiCoachInput::placeholder {
-      color: rgba(226, 232, 240, 0.65);
+    .dc-ai-memory-stream {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      max-height: 290px;
+      overflow-y: auto;
+      padding-right: 6px;
+      border-left: 1px solid rgba(255, 204, 0, 0.35);
+      padding-left: 14px;
     }
 
-    #dcAiCoachSendBtn {
-      background: linear-gradient(90deg, #e879f9 0%, #3b82f6 52%, #22d3ee 100%) !important;
-      color: #ffffff !important;
+    .dc-ai-memory-stream::-webkit-scrollbar {
+      width: 3px;
+    }
+    .dc-ai-memory-stream::-webkit-scrollbar-thumb {
+      background: rgba(255, 204, 0, 0.45);
+      border-radius: 99px;
+    }
+
+    .dc-ai-rule-item {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 8px;
+      font-family: 'Space Grotesk', 'Inter', sans-serif;
+      font-size: 12.5px;
+      font-weight: 400;
+      line-height: 1.48;
+      color: rgba(248, 250, 252, 0.92);
+      text-shadow: 0 2px 12px rgba(0, 0, 0, 0.95);
+      animation: dcRuleSlideIn 0.35s ease both;
+    }
+
+    .dc-ai-rule-del {
+      background: transparent !important;
       border: none !important;
-      border-radius: 999px !important;
-      padding: 0 18px !important;
-      height: 32px !important;
-      font-size: 12px !important;
-      font-weight: 500 !important;
+      color: rgba(255, 255, 255, 0.35) !important;
+      font-size: 14px;
+      line-height: 1;
       cursor: pointer;
+      padding: 0 2px;
+      transition: color 0.2s ease;
+    }
+
+    .dc-ai-rule-del:hover {
+      color: #ffcc00 !important;
+    }
+
+    .dc-ai-editorial-input {
+      width: 100%;
+      background: transparent !important;
+      border: none !important;
+      border-bottom: 1px solid rgba(255, 204, 0, 0.45) !important;
+      border-radius: 0 !important;
+      color: #ffffff !important;
+      font-family: 'Space Grotesk', 'Inter', sans-serif !important;
+      font-size: 13px !important;
+      line-height: 1.5;
+      padding: 8px 2px !important;
+      resize: none;
+      outline: none;
+      text-shadow: 0 2px 12px rgba(0, 0, 0, 0.9);
+      transition: border-color 0.25s ease;
+    }
+
+    .dc-ai-editorial-input:focus {
+      border-bottom-color: #ffcc00 !important;
+    }
+
+    .dc-ai-editorial-input::placeholder {
+      color: rgba(226, 232, 240, 0.48);
+    }
+
+    .dc-ai-action-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .dc-ai-save-editorial-btn {
+      background: #ffcc00 !important;
+      color: #09090b !important;
+      border: none !important;
+      border-radius: 4px !important;
+      padding: 8px 16px !important;
+      font-family: 'Space Grotesk', sans-serif !important;
+      font-size: 11px !important;
+      font-weight: 600 !important;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: transform 0.2s ease, background-color 0.2s ease;
+    }
+
+    .dc-ai-save-editorial-btn:hover {
+      background: #fde047 !important;
+      transform: translateY(-1px);
+    }
+
+    .dc-ai-mic-btn {
+      width: 34px;
+      height: 34px;
+      border-radius: 50% !important;
+      border: 1px solid rgba(255, 204, 0, 0.55) !important;
+      background: rgba(0, 0, 0, 0.55) !important;
+      color: #ffcc00 !important;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      flex-shrink: 0;
+    }
+
+    .dc-ai-mic-btn:hover {
+      background: rgba(255, 204, 0, 0.16) !important;
+      transform: scale(1.06);
+    }
+
+    .dc-ai-mic-btn.is-listening {
+      background: #ffcc00 !important;
+      color: #09090b !important;
+      animation: dcMicPulse 1.3s infinite;
+    }
+
+    .dc-ai-live-feedback {
+      margin-top: 10px;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 11px;
+      letter-spacing: 0.04em;
+      color: #38bdf8;
+      min-height: 16px;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.95);
+    }
+
+    @media (max-width: 960px) {
+      #darecoreAiKnowledgeAdmin {
+        grid-template-columns: 1fr;
+        height: auto;
+        max-height: none;
+        padding: 22px 18px !important;
+      }
+      .dc-ai-center-void {
+        min-height: 280px;
+      }
     }
 
     #dc-user-email-bar { display: none !important; }
@@ -709,19 +831,32 @@
           <div id="darecoreAiKnowledgeAdmin">
             <canvas id="dcAiFlowCanvas"></canvas>
 
-            <!-- Espacio central libre para que luzca completa la esfera de flujo animada -->
-            <div class="dc-ai-spacer"></div>
+            <!-- COLUMNA IZQUIERDA: Base de conocimiento actual en qué se basa DareCore Intelligence -->
+            <div class="dc-ai-side-col left-col">
+              <div class="dc-natgeo-kicker"><span class="dc-natgeo-bar"></span>CORE KNOWLEDGE</div>
+              <h2 class="dc-natgeo-title">En qué se basa DareCore IA</h2>
+              <div id="dcAiMemoryStream" class="dc-ai-memory-stream"></div>
+            </div>
 
-            <!-- Único lugar de interacción con la memoria de DareCore Intelligence -->
-            <div class="dc-ai-single-dock">
-              <div id="dcAiCoachLog" class="dc-ai-chat-log">
-                
-              </div>
+            <!-- CENTRO: Espacio libre para la esfera cósmica en movimiento -->
+            <div class="dc-ai-center-void" aria-hidden="true"></div>
 
-              <div style="display:flex;gap:8px;align-items:center;">
-                <input type="text" id="dcAiCoachInput" placeholder="Pregunta en qué me baso o escribe qué agregar a la memoria..." />
-                <button type="button" id="dcAiCoachSendBtn">Enviar</button>
+            <!-- COLUMNA DERECHA: Escritura directa o dictado por micrófono -->
+            <div class="dc-ai-side-col right-col">
+              <div class="dc-natgeo-kicker"><span class="dc-natgeo-bar"></span>NEURAL INPUT</div>
+              <h2 class="dc-natgeo-title">Entrenar Memoria</h2>
+              <textarea id="dcAiCoachInput" class="dc-ai-editorial-input" rows="3" placeholder="Escribe o dicta una regla para que DareCore Intelligence se base en ella..."></textarea>
+              <div class="dc-ai-action-row">
+                <button type="button" id="dcAiCoachSendBtn" class="dc-ai-save-editorial-btn">Integrar</button>
+                <button type="button" id="dcAiMicBtn" class="dc-ai-mic-btn" title="Dictar por micrófono" aria-label="Dictar por micrófono">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path>
+                    <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                    <line x1="12" y1="19" x2="12" y2="22"></line>
+                  </svg>
+                </button>
               </div>
+              <div id="dcAiLiveFeedback" class="dc-ai-live-feedback"></div>
             </div>
           </div>
         </section>
@@ -938,66 +1073,136 @@
         return "";
       }
 
+      function parseRulesList(rawText) {
+        return String(rawText || "")
+          .split(/\r?\n/)
+          .map((line) => line.replace(/^[\-\*\•\d\.\)\s]+/, "").trim())
+          .filter(Boolean);
+      }
+
+      function renderEditorialMemoryStream() {
+        const stream = document.getElementById("dcAiMemoryStream");
+        if (!stream) return;
+        const rules = parseRulesList(localStorage.getItem(KB_KEY) || "");
+        if (!rules.length) {
+          stream.innerHTML = `<div class="dc-ai-rule-item" style="color:rgba(226,232,240,0.55);font-style:italic;">Aún sin directrices registradas. Escribe o dicta una regla a la derecha para activar la base de conocimiento.</div>`;
+          return;
+        }
+        stream.innerHTML = rules
+          .map(
+            (rule, idx) => `<div class="dc-ai-rule-item" style="animation-delay:${idx * 0.05}s;">
+              <span>${rule.replace(/</g, "<").replace(/>/g, ">")}</span>
+              <button type="button" class="dc-ai-rule-del" data-del-idx="${idx}" title="Eliminar directriz">×</button>
+            </div>`
+          )
+          .join("");
+      }
+
       function initAiCoach() {
         const input = document.getElementById("dcAiCoachInput");
         const sendBtn = document.getElementById("dcAiCoachSendBtn");
-        const log = document.getElementById("dcAiCoachLog");
-        if (!input || !sendBtn || !log) return;
+        const micBtn = document.getElementById("dcAiMicBtn");
+        const feedback = document.getElementById("dcAiLiveFeedback");
+        const stream = document.getElementById("dcAiMemoryStream");
+        if (!input || !sendBtn) return;
 
-        function appendMsg(text, isAdmin) {
-          const div = document.createElement("div");
-          div.className = isAdmin ? "dc-ai-msg-admin" : "dc-ai-msg-bot";
-          div.textContent = text;
-          log.appendChild(div);
-          log.scrollTop = log.scrollHeight;
+        renderEditorialMemoryStream();
+
+        function setFeedback(msg, isWarn) {
+          if (!feedback) return;
+          feedback.style.color = isWarn ? "#ffcc00" : "#38bdf8";
+          feedback.textContent = msg;
         }
 
-        function handleCoachSubmit() {
-          const text = (input.value || "").trim();
-          if (!text) return;
-          appendMsg(text, true);
-          input.value = "";
-
-          const currentKb = (localStorage.getItem(KB_KEY) || "").trim();
-          const rule = extractRuleToAdd(text);
-
-          if (rule) {
-            const alreadyExists = currentKb.toLowerCase().includes(rule.toLowerCase());
-            const updatedKb = alreadyExists
-              ? currentKb
-              : (currentKb ? currentKb + "\n- " + rule : "- " + rule);
-            persistAiKnowledgeText(updatedKb);
-            appendMsg(
-              alreadyExists
-                ? `Ya tenía registrada esa regla en mi memoria: "${rule}".`
-                : `Agregado a mi memoria: "${rule}".`
-            );
-            return;
-          }
-
-          if (/bas[ao]|fuente|memoria|qu[eé] sabes|respondes/i.test(text)) {
-            if (!currentKb) {
-              appendMsg("Mi memoria está vacía actualmente. Escribe por ejemplo: 'Agrega: no hacemos reembolsos'.");
-            } else {
-              appendMsg(`Me baso en esta memoria:\n\n${currentKb}`);
-            }
-            return;
-          }
-
-          if (!currentKb) {
-            appendMsg("Aún no tengo reglas guardadas sobre eso. Escribe: 'Agrega: ...' para guardarlo.");
+        function addDirectiveToMemory(rawInput) {
+          const cleanInput = String(rawInput || "").trim();
+          if (!cleanInput) return;
+          const extracted = extractRuleToAdd(cleanInput) || cleanInput;
+          const rules = parseRulesList(localStorage.getItem(KB_KEY) || "");
+          const exists = rules.some((r) => r.toLowerCase() === extracted.toLowerCase());
+          if (!exists) {
+            rules.push(extracted);
+            const serialized = rules.map((r) => "- " + r).join("\n");
+            persistAiKnowledgeText(serialized);
+            renderEditorialMemoryStream();
+            setFeedback("Directriz integrada a DareCore Intelligence.", false);
           } else {
-            appendMsg(`Memoria actual:\n${currentKb}`);
+            setFeedback("Esta directriz ya forma parte de la memoria.", true);
           }
+          input.value = "";
         }
 
-        sendBtn.onclick = handleCoachSubmit;
+        if (stream) {
+          stream.addEventListener("click", (e) => {
+            const delBtn = e.target.closest("[data-del-idx]");
+            if (!delBtn) return;
+            const idx = Number(delBtn.getAttribute("data-del-idx"));
+            const rules = parseRulesList(localStorage.getItem(KB_KEY) || "");
+            if (!Number.isNaN(idx) && idx >= 0 && idx < rules.length) {
+              rules.splice(idx, 1);
+              const serialized = rules.map((r) => "- " + r).join("\n");
+              persistAiKnowledgeText(serialized);
+              renderEditorialMemoryStream();
+              setFeedback("Directriz eliminada de la memoria.", true);
+            }
+          });
+        }
+
+        sendBtn.onclick = () => addDirectiveToMemory(input.value);
         input.onkeydown = (e) => {
-          if (e.key === "Enter") {
+          if (e.key === "Enter" && !e.shiftKey) {
             e.preventDefault();
-            handleCoachSubmit();
+            addDirectiveToMemory(input.value);
           }
         };
+
+        // Dictado por voz con Web Speech API (Micrófono)
+        if (micBtn) {
+          const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+          if (!SpeechRecognition) {
+            micBtn.onclick = () => setFeedback("Tu navegador no soporta dictado por voz; escribe la regla.", true);
+          } else {
+            const recognition = new SpeechRecognition();
+            recognition.lang = "es-MX";
+            recognition.interimResults = true;
+            recognition.continuous = false;
+            let isListening = false;
+
+            recognition.onstart = () => {
+              isListening = true;
+              micBtn.classList.add("is-listening");
+              setFeedback("Escuchando... dicta la directriz ahora.", true);
+            };
+
+            recognition.onresult = (event) => {
+              let transcript = "";
+              for (let i = event.resultIndex; i < event.results.length; i++) {
+                transcript += event.results[i][0].transcript;
+              }
+              input.value = transcript.trim();
+              if (event.results[event.results.length - 1].isFinal && input.value) {
+                addDirectiveToMemory(input.value);
+              }
+            };
+
+            recognition.onerror = () => {
+              setFeedback("No se pudo captar audio. Verifica el permiso del micrófono.", true);
+            };
+
+            recognition.onend = () => {
+              isListening = false;
+              micBtn.classList.remove("is-listening");
+            };
+
+            micBtn.onclick = () => {
+              if (isListening) {
+                recognition.stop();
+              } else {
+                try { recognition.start(); } catch (_) {}
+              }
+            };
+          }
+        }
       }
 
       window.addEventListener("DOMContentLoaded", () => {
@@ -1035,7 +1240,7 @@
           const kbBox = document.getElementById("darecoreAiKnowledgeAdmin");
           if (kbBox) {
             kbBox.classList.remove("hidden");
-            kbBox.style.display = "flex";
+            kbBox.style.display = "grid";
           }
           window.dispatchEvent(new Event("resize"));
         }
