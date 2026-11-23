@@ -2989,8 +2989,7 @@
     (function () {
       function clearSessionKeys() {
         try {
-          const keys = Object.keys(sessionStorage);
-          keys.forEach(function (k) {
+          Object.keys(sessionStorage).forEach(function (k) {
             if (/auth|admin|login|user|session|darecore/i.test(k)) {
               sessionStorage.removeItem(k);
             }
@@ -2998,8 +2997,7 @@
         } catch (_) {}
 
         try {
-          const lkeys = Object.keys(localStorage);
-          lkeys.forEach(function (k) {
+          Object.keys(localStorage).forEach(function (k) {
             if (/auth|admin|login|session|darecore_admin/i.test(k)) {
               localStorage.removeItem(k);
             }
@@ -3018,7 +3016,6 @@
 
         document.body.classList.remove("dc-logged-in");
 
-        // Ocultar dashboard y secciones internas
         const dash = document.getElementById("dashboardSection");
         if (dash) {
           dash.classList.add("hidden");
@@ -3030,7 +3027,6 @@
           frame.style.setProperty("display", "none", "important");
         }
 
-        // Mostrar contenedor y tarjeta de login
         const stage = document.querySelector(".dc-login-stage-exact");
         const card = document.querySelector(".dc-login-card-exact");
         const loginSec = document.getElementById("loginSection");
@@ -3060,7 +3056,6 @@
           loginSec.style.setProperty("opacity", "1", "important");
         }
 
-        // Limpiar campos si se desea reingresar limpio
         const userInput = document.querySelector('input[type="text"], input[type="email"]');
         const passInput = document.querySelector('input[type="password"]');
         if (passInput) passInput.value = "";
@@ -3069,30 +3064,49 @@
           userInput.focus();
         }
 
-        // Usar scrollTo nativo para subir al inicio al cerrar sesión
         if (typeof window.scrollTo === "function") {
           window.scrollTo(0, 0);
         }
       }
 
-      function bindLogoutButtons() {
-        const candidates = Array.from(document.querySelectorAll("button, a"));
-        candidates.forEach(function (btn) {
-          const label = (btn.textContent || "").trim().toLowerCase();
-          if (label === "cerrar sesión" || label === "cerrar sesion" || btn.id === "dcLogoutBtn" || btn.id === "logoutBtn") {
-            if (!btn.dataset.dcLogoutBound) {
-              btn.dataset.dcLogoutBound = "1";
-              btn.addEventListener("click", function (e) {
-                e.preventDefault();
-                e.stopPropagation();
-                showLoginScreenCleanly();
-              }, true);
-            }
+      function ensureLogoutButton() {
+        let logoutBtn = document.getElementById("dcLogoutBtn") || document.getElementById("logoutBtn");
+
+        if (!logoutBtn) {
+          const pillsContainer =
+            document.querySelector(".dc-topbar-pills") ||
+            Array.from(document.querySelectorAll("button, a")).find(function (el) {
+              return /tienda/i.test((el.textContent || "").trim());
+            })?.parentElement;
+
+          if (!pillsContainer) return;
+
+          const referenceBtn = pillsContainer.querySelector("button, a");
+          logoutBtn = document.createElement("button");
+          logoutBtn.type = "button";
+          logoutBtn.id = "dcLogoutBtn";
+          logoutBtn.textContent = "Cerrar Sesión";
+          if (referenceBtn && referenceBtn.className) {
+            logoutBtn.className = referenceBtn.className.replace(/\bis-active\b|\bactive\b/g, "").trim();
           }
-        });
+          pillsContainer.appendChild(logoutBtn);
+        }
+
+        logoutBtn.style.display = "inline-flex";
+        logoutBtn.style.alignItems = "center";
+        logoutBtn.style.visibility = "visible";
+        logoutBtn.style.opacity = "1";
+
+        if (!logoutBtn.dataset.dcLogoutBound) {
+          logoutBtn.dataset.dcLogoutBound = "1";
+          logoutBtn.addEventListener("click", function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            showLoginScreenCleanly();
+          }, true);
+        }
       }
 
-      // Delegación global por si el botón se renderiza tarde
       document.addEventListener("click", function (e) {
         const target = e.target && e.target.closest ? e.target.closest("button, a") : null;
         if (!target) return;
@@ -3105,9 +3119,9 @@
       }, true);
 
       document.addEventListener("DOMContentLoaded", function () {
-        bindLogoutButtons();
-        setTimeout(bindLogoutButtons, 300);
-        setTimeout(bindLogoutButtons, 1000);
+        ensureLogoutButton();
+        setTimeout(ensureLogoutButton, 250);
+        setTimeout(ensureLogoutButton, 800);
       });
     })();
   </script>
