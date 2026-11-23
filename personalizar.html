@@ -292,6 +292,14 @@
       if (typeof e.stopImmediatePropagation === "function") {
         e.stopImmediatePropagation();
       }
+      window._darecoreWaBlockedUntil = Date.now() + 1500;
+      window._darecoreWaLock = true;
+      window._darecoreSubmittingMockup = true;
+      setTimeout(function () {
+        window._darecoreWaLock = false;
+        window._darecoreSubmittingMockup = false;
+      }, 1500);
+
       if (input) {
         input.style.borderColor = "#dc2626";
         input.style.boxShadow = "0 0 0 3px rgba(220, 38, 38, 0.22)";
@@ -302,11 +310,23 @@
       }
       return false;
     }
+    window._darecoreWaBlockedUntil = 0;
     if (input) {
       input.style.borderColor = "";
       input.style.boxShadow = "";
     }
   }, true);
+
+  const origOpenWa = window.openWhatsAppWithMessage;
+  if (typeof origOpenWa === "function") {
+    window.openWhatsAppWithMessage = function () {
+      const { digits } = getPhoneDigits();
+      if (digits.length < 10 || (window._darecoreWaBlockedUntil && Date.now() < window._darecoreWaBlockedUntil)) {
+        return;
+      }
+      return origOpenWa.apply(this, arguments);
+    };
+  }
 })();
 </script>
 </body>
