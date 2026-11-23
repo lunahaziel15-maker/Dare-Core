@@ -736,22 +736,26 @@
       display: grid;
     }
 
-    /* ELIMINAR HUECO BLANCO SUPERIOR */
+    /* ELIMINAR HUECO BLANCO SUPERIOR DE FORMA DIRECTA */
     html, body {
+      margin: 0 !important;
+      padding: 0 !important;
+      min-height: 0 !important;
+    }
+
+    body > div:first-child,
+    body > main:first-child,
+    body > section:first-child {
       margin-top: 0 !important;
       padding-top: 0 !important;
-      overflow-anchor: none !important;
     }
 
-    .dc-shell-outer {
-      margin-top: 0 !important;
-      padding-top: 8px !important;
-    }
-
+    .dc-shell-outer,
     .dc-dashboard-frame,
-    .dc-main-pane {
+    .dc-main-pane,
+    #dashboardSection {
       margin-top: 0 !important;
-      padding-top: 14px !important;
+      padding-top: 0 !important;
     }
 
     </style>
@@ -2481,22 +2485,26 @@
       display: grid;
     }
 
-    /* ELIMINAR HUECO BLANCO SUPERIOR */
+    /* ELIMINAR HUECO BLANCO SUPERIOR DE FORMA DIRECTA */
     html, body {
+      margin: 0 !important;
+      padding: 0 !important;
+      min-height: 0 !important;
+    }
+
+    body > div:first-child,
+    body > main:first-child,
+    body > section:first-child {
       margin-top: 0 !important;
       padding-top: 0 !important;
-      overflow-anchor: none !important;
     }
 
-    .dc-shell-outer {
-      margin-top: 0 !important;
-      padding-top: 8px !important;
-    }
-
+    .dc-shell-outer,
     .dc-dashboard-frame,
-    .dc-main-pane {
+    .dc-main-pane,
+    #dashboardSection {
       margin-top: 0 !important;
-      padding-top: 14px !important;
+      padding-top: 0 !important;
     }
 
     </style>
@@ -2888,6 +2896,50 @@
       document.addEventListener("DOMContentLoaded", function () {
         collapseEmptyTopBlocks();
         setTimeout(collapseEmptyTopBlocks, 300);
+      });
+    })();
+  </script>
+<script id="dcKillWhiteGapScript">
+    (function () {
+      function removeTopWhiteGap() {
+        // Quitar márgenes/rellenos grandes arriba de los primeros hijos directos de body o del dashboard
+        const targets = [
+          document.body,
+          ...Array.from(document.body ? document.body.children : []),
+          document.querySelector(".dc-shell-outer"),
+          document.querySelector(".dc-dashboard-frame"),
+          document.querySelector(".dc-main-pane"),
+          document.getElementById("dashboardSection")
+        ].filter(Boolean);
+
+        targets.forEach(function (el) {
+          if (el.tagName === "SCRIPT" || el.tagName === "STYLE") return;
+          const cs = window.getComputedStyle(el);
+          if (parseFloat(cs.marginTop) > 16) {
+            el.style.marginTop = "0px";
+          }
+          if (parseFloat(cs.paddingTop) > 24 && el !== document.body) {
+            el.style.paddingTop = "8px";
+          }
+          // Si un elemento visible antes del contenido principal no tiene contenido real pero ocupa altura, colapsarlo
+          const rect = el.getBoundingClientRect();
+          const hasContent =
+            (el.innerText || "").trim().length > 0 ||
+            el.querySelector("img, canvas, svg, video, input, select, textarea, button, table, form");
+          if (!hasContent && rect.height > 20 && rect.top < 350) {
+            el.style.minHeight = "0px";
+            el.style.height = "0px";
+            el.style.padding = "0px";
+            el.style.margin = "0px";
+            el.style.overflow = "hidden";
+          }
+        });
+      }
+
+      document.addEventListener("DOMContentLoaded", function () {
+        removeTopWhiteGap();
+        setTimeout(removeTopWhiteGap, 300);
+        setTimeout(removeTopWhiteGap, 900);
       });
     })();
   </script>
