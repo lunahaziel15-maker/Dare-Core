@@ -943,17 +943,24 @@ No uses emojis ni asteriscos dobles (**). Escribe solo texto plano limpio.`;
 
   // Intercambiar botón de Detener y Micrófono en el chat de IA
   function swapMicAndStopButtons() {
-    const buttons = Array.from(document.querySelectorAll("button"));
-    const stopBtn = buttons.find(b => /detener|stop/i.test((b.id + " " + b.className + " " + (b.title || "") + " " + (b.getAttribute("aria-label") || ""))) || (b.querySelector("rect") && !b.querySelector("path[d*='M12 14']")));
-    const micBtn = buttons.find(b => /mic|microfono|voice|grabar/i.test((b.id + " " + b.className + " " + (b.title || "") + " " + (b.getAttribute("aria-label") || ""))));
-    if (stopBtn && micBtn && stopBtn.parentElement === micBtn.parentElement) {
-      const parent = stopBtn.parentElement;
-      const children = Array.from(parent.children);
-      if (children.indexOf(stopBtn) < children.indexOf(micBtn)) {
-        parent.insertBefore(micBtn, stopBtn);
-      }
+  const sb = Array.from(document.querySelectorAll("button")).find(b => /^enviar$/i.test((b.textContent || "").trim()));
+  if (!sb || !sb.parentElement) return;
+  const bar = sb.parentElement;
+  const bs = Array.from(bar.querySelectorAll("button")).filter(b => b !== sb);
+  if (bs.length < 2) return;
+  let st = bs.find(b => {
+    const bg = getComputedStyle(b).backgroundColor || "";
+    const m = (b.id + " " + b.className + " " + (b.title || "") + " " + (b.getAttribute("aria-label") || "")).toLowerCase();
+    return /stop|detener|cancel/.test(m) || /rgb\(\s*255\s*,\s*(5[0-9]|6[0-9]|7[0-9]|8[0-9])\s*,/.test(bg) || !!b.querySelector("rect");
+  });
+  let mc = bs.find(b => b !== st);
+  if (st && mc) {
+    const ch = Array.from(bar.children);
+    if (ch.indexOf(st) < ch.indexOf(mc)) {
+      bar.insertBefore(mc, st);
     }
   }
+}
 
   // Sincronizar conocimiento desde Firestore / Realtime Database / localStorage ("Modificar IA" en Admin)
   window.__darecoreAdminKnowledge = localStorage.getItem(ADMIN_AI_KEY) || "";
