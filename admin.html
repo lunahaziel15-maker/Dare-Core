@@ -2987,29 +2987,13 @@
   </script>
 <script id="dcLogoutButtonScript">
     (function () {
-      function showTopLogoutButton() {
-        const topBtn = document.getElementById("topbarLogoutBtn") || document.getElementById("dcLogoutBtn");
-        if (topBtn) {
-          topBtn.classList.remove("hidden");
-          topBtn.hidden = false;
-          topBtn.style.setProperty("display", "inline-flex", "important");
-          topBtn.style.setProperty("visibility", "visible", "important");
-          topBtn.style.setProperty("opacity", "1", "important");
-        }
-      }
+      const FLAGS = ["darecore_admin_verified", "dc_admin_auth", "darecore_admin_auth", "adminAuth", "isAdminLoggedIn"];
 
-      function performFullLogout() {
-        try {
-          sessionStorage.clear();
-        } catch (_) {}
-
-        try {
-          Object.keys(localStorage).forEach(function (k) {
-            if (/auth|admin|login|session|darecore|flag/i.test(k)) {
-              localStorage.removeItem(k);
-            }
-          });
-        } catch (_) {}
+      function forceShowLoginNow() {
+        FLAGS.forEach(function (k) {
+          try { sessionStorage.removeItem(k); } catch (_) {}
+          try { localStorage.removeItem(k); } catch (_) {}
+        });
 
         try {
           if (window.firebase && typeof window.firebase.auth === "function" && window.firebase.apps && window.firebase.apps.length) {
@@ -3019,16 +3003,16 @@
 
         document.body.classList.remove("dc-logged-in");
 
-        const dash = document.getElementById("dashboardSection");
-        if (dash) {
-          dash.classList.add("hidden");
-          dash.hidden = true;
-          dash.style.setProperty("display", "none", "important");
+        const dashSec = document.getElementById("dashboardSection");
+        if (dashSec) {
+          dashSec.classList.add("hidden");
+          dashSec.hidden = true;
+          dashSec.style.setProperty("display", "none", "important");
         }
 
-        const loginSec = document.getElementById("loginSection");
         const stage = document.querySelector(".dc-login-stage-exact");
         const card = document.querySelector(".dc-login-card-exact");
+        const loginSec = document.getElementById("loginSection");
 
         if (stage) {
           stage.classList.remove("is-auth-done", "hidden");
@@ -3058,7 +3042,7 @@
           loginSec.style.setProperty("opacity", "1", "important");
         }
 
-        const passInput = document.querySelector('input[type="password"]');
+        const passInput = document.getElementById("adminPass") || document.querySelector('input[type="password"]');
         if (passInput) passInput.value = "";
 
         document.documentElement.scrollTop = 0;
@@ -3066,28 +3050,16 @@
       }
 
       document.addEventListener("click", function (e) {
-        const btn = e.target && e.target.closest ? e.target.closest("#topbarLogoutBtn, #dcLogoutBtn, #logoutBtn, button, a") : null;
+        const btn = e.target && e.target.closest ? e.target.closest("#logoutBtn, #topbarLogoutBtn, button, a") : null;
         if (!btn) return;
-        const txt = (btn.textContent || "").trim().toLowerCase();
-        if (btn.id === "topbarLogoutBtn" || btn.id === "dcLogoutBtn" || btn.id === "logoutBtn" || txt === "cerrar sesión" || txt === "cerrar sesion") {
+        const label = (btn.textContent || "").trim().toLowerCase();
+        if (btn.id === "logoutBtn" || btn.id === "topbarLogoutBtn" || label === "cerrar sesión" || label === "cerrar sesion") {
           e.preventDefault();
           e.stopPropagation();
-          performFullLogout();
+          if (typeof e.stopImmediatePropagation === "function") e.stopImmediatePropagation();
+          forceShowLoginNow();
         }
       }, true);
-
-      function startWatcher() {
-        showTopLogoutButton();
-        setTimeout(showTopLogoutButton, 250);
-        setTimeout(showTopLogoutButton, 800);
-        setTimeout(showTopLogoutButton, 1600);
-      }
-
-      if (document.readyState === "loading") {
-        document.addEventListener("DOMContentLoaded", startWatcher);
-      } else {
-        startWatcher();
-      }
     })();
   </script>
 </body>
