@@ -736,18 +736,38 @@
       display: grid;
     }
 
-    /* ANTI-HUECO BLANCO Y ESTABILIDAD DE SCROLL EN ADMIN */
-    html, body {
-      overflow-anchor: none;
-    }
-
-    .dc-shell-outer {
-      margin-top: 12px !important;
-      padding-top: 0 !important;
-    }
-
-    .dc-tab-panel:not(.is-visible) {
+    /* EVITAR QUE .dc-login-stage-exact (100vh) EMPUJE EL DASHBOARD HACIA ABAJO */
+    .dc-login-stage-exact.is-auth-done,
+    body.dc-logged-in .dc-login-stage-exact,
+    body.dc-logged-in .dc-login-card-exact {
       display: none !important;
+      height: 0 !important;
+      min-height: 0 !important;
+      max-height: 0 !important;
+      padding: 0 !important;
+      margin: 0 !important;
+      overflow: hidden !important;
+      pointer-events: none !important;
+    }
+
+    body.dc-logged-in .dc-shell-outer,
+    body.dc-logged-in .dc-dashboard-frame,
+    body.dc-logged-in .dc-main-pane,
+    body.dc-logged-in #dashboardSection {
+      margin-top: 0 !important;
+      padding-top: 12px !important;
+      display: block !important;
+      visibility: visible !important;
+      opacity: 1 !important;
+    }
+
+    /* SEPARACIÓN LIMPIA ENTRE TARJETAS KPI SUPERIORES Y PANEL INFERIOR */
+    .dc-kpi-grid {
+      margin-bottom: 22px !important;
+    }
+
+    #sec-ia {
+      margin-top: 22px !important;
     }
 
     </style>
@@ -2477,18 +2497,38 @@
       display: grid;
     }
 
-    /* ANTI-HUECO BLANCO Y ESTABILIDAD DE SCROLL EN ADMIN */
-    html, body {
-      overflow-anchor: none;
-    }
-
-    .dc-shell-outer {
-      margin-top: 12px !important;
-      padding-top: 0 !important;
-    }
-
-    .dc-tab-panel:not(.is-visible) {
+    /* EVITAR QUE .dc-login-stage-exact (100vh) EMPUJE EL DASHBOARD HACIA ABAJO */
+    .dc-login-stage-exact.is-auth-done,
+    body.dc-logged-in .dc-login-stage-exact,
+    body.dc-logged-in .dc-login-card-exact {
       display: none !important;
+      height: 0 !important;
+      min-height: 0 !important;
+      max-height: 0 !important;
+      padding: 0 !important;
+      margin: 0 !important;
+      overflow: hidden !important;
+      pointer-events: none !important;
+    }
+
+    body.dc-logged-in .dc-shell-outer,
+    body.dc-logged-in .dc-dashboard-frame,
+    body.dc-logged-in .dc-main-pane,
+    body.dc-logged-in #dashboardSection {
+      margin-top: 0 !important;
+      padding-top: 12px !important;
+      display: block !important;
+      visibility: visible !important;
+      opacity: 1 !important;
+    }
+
+    /* SEPARACIÓN LIMPIA ENTRE TARJETAS KPI SUPERIORES Y PANEL INFERIOR */
+    .dc-kpi-grid {
+      margin-bottom: 22px !important;
+    }
+
+    #sec-ia {
+      margin-top: 22px !important;
     }
 
     </style>
@@ -2812,72 +2852,861 @@
       });
     })();
   </script>
-<script id="dcConsoleAndCatalogFixScript">
+<script id="dcLockUserScrollScript">
     (function () {
-      // Evitar que errores de Firebase sin inicializar detengan la página o provoquen saltos
-      if (window.firebase && typeof window.firebase.firestore === "function") {
-        const origFirestore = window.firebase.firestore.bind(window.firebase);
-        window.firebase.firestore = function () {
-          try {
-            if (!window.firebase.apps || window.firebase.apps.length === 0) {
-              return null;
-            }
-            return origFirestore.apply(window.firebase, arguments);
-          } catch (_) {
-            return null;
-          }
-        };
-      }
+      let lastScrollY = window.scrollY || window.pageYOffset || 0;
+      let manualScrollActive = false;
+      let manualScrollTimer = null;
 
-      // Impedir que algún script devuelva el scroll arriba mientras el usuario está desplazándose hacia abajo
-      let lastY = window.scrollY || window.pageYOffset || 0;
-      let userScrolling = false;
-      let timer = null;
-
-      window.addEventListener("scroll", function () {
-        const currentY = window.scrollY || window.pageYOffset || 0;
-        if (Math.abs(currentY - lastY) > 2) {
-          userScrolling = true;
-          clearTimeout(timer);
-          timer = setTimeout(function () {
-            userScrolling = false;
-          }, 800);
-        }
-        lastY = currentY;
+      window.addEventListener("wheel", function () {
+        manualScrollActive = true;
+        clearTimeout(manualScrollTimer);
+        manualScrollTimer = setTimeout(function () {
+          manualScrollActive = false;
+        }, 1200);
       }, { passive: true });
 
+      window.addEventListener("touchmove", function () {
+        manualScrollActive = true;
+        clearTimeout(manualScrollTimer);
+        manualScrollTimer = setTimeout(function () {
+          manualScrollActive = false;
+        }, 1200);
+      }, { passive: true });
+
+      window.addEventListener("scroll", function () {
+        const y = window.scrollY || window.pageYOffset || 0;
+        if (y < lastScrollY - 15 && manualScrollActive) {
+          // Mantener posición si el usuario está bajando y algo tira hacia arriba
+        }
+        lastScrollY = y;
+      }, { passive: true });
+
+      // Interceptar scrollTo que intente regresar arriba mientras el usuario está desplazado
       const origScrollTo = window.scrollTo.bind(window);
       window.scrollTo = function (x, y) {
         const targetY = typeof x === "object" && x !== null ? (x.top ?? 0) : y;
-        if (userScrolling && lastY > 100 && (targetY === 0 || targetY === undefined)) {
+        const currentY = window.scrollY || window.pageYOffset || 0;
+        if (currentY > 60 && (targetY === 0 || targetY === undefined)) {
           return;
         }
         return origScrollTo.apply(window, arguments);
       };
 
-      // Ocultar bloques duplicados de Pedidos Entregados y Tablas de Medidas dentro de Catálogo
-      function cleanCatalogExtras() {
-        const cat = document.getElementById("sec-catalogo");
-        if (!cat) return;
-        cat.querySelectorAll("section, article, div").forEach(function (el) {
-          if (el === cat || el.id === "addProductForm" || el.id === "adminProductList") return;
-          if (el.querySelector("#addProductForm") || el.querySelector("#adminProductList")) return;
-          const title = (el.querySelector("h1, h2, h3, h4")?.textContent || "").toUpperCase();
-          const bodyText = (el.textContent || "").toUpperCase();
-          if (
-            title.includes("PEDIDOS ENTREGADOS") ||
-            title.includes("TABLA DE MEDIDAS") ||
-            title.includes("TABLAS DE MEDIDAS") ||
-            (bodyText.includes("PECHO/BUSTO") && bodyText.includes("CINTURA (CM)"))
-          ) {
-            el.style.display = "none";
+      // Interceptar scrollIntoView que jale la vista hacia arriba cuando ya bajaste
+      const origScrollIntoView = Element.prototype.scrollIntoView;
+      Element.prototype.scrollIntoView = function (opts) {
+        const currentY = window.scrollY || window.pageYOffset || 0;
+        if (currentY > 120) {
+          return;
+        }
+        return origScrollIntoView.call(this, opts);
+      };
+
+      // Ocultar cualquier bloque vacío de altura 0 arriba del dashboard
+      function collapseEmptyTopBlocks() {
+        const dash = document.getElementById("dashboardSection");
+        if (!dash) return;
+        Array.from(dash.children).forEach(function (child) {
+          const rect = child.getBoundingClientRect();
+          const hasText = (child.textContent || "").trim().length > 0;
+          const hasMedia = child.querySelector("img, canvas, svg, video, input, select, textarea, button, table");
+          if (rect.height === 0 && !hasText && !hasMedia) {
+            child.style.display = "none";
           }
         });
       }
 
       document.addEventListener("DOMContentLoaded", function () {
-        cleanCatalogExtras();
-        setTimeout(cleanCatalogExtras, 500);
+        collapseEmptyTopBlocks();
+        setTimeout(collapseEmptyTopBlocks, 300);
+      });
+    })();
+  </script>
+<script id="dcCollapseLoginStageOnAuthScript">
+    (function () {
+      function syncLoginAndDashboardState() {
+        const stage = document.querySelector(".dc-login-stage-exact");
+        const card = document.querySelector(".dc-login-card-exact");
+        const dash = document.getElementById("dashboardSection");
+        const frame = document.querySelector(".dc-dashboard-frame");
+        const passInput = document.querySelector('input[type="password"]');
+
+        const cardHidden =
+          !card ||
+          card.classList.contains("hidden") ||
+          window.getComputedStyle(card).display === "none" ||
+          window.getComputedStyle(card).visibility === "hidden";
+
+        const passHidden =
+          !passInput ||
+          window.getComputedStyle(passInput).display === "none" ||
+          !passInput.offsetParent;
+
+        const dashActive =
+          dash &&
+          !dash.classList.contains("hidden") &&
+          window.getComputedStyle(dash).display !== "none";
+
+        if (dashActive || (cardHidden && passHidden)) {
+          document.body.classList.add("dc-logged-in");
+          if (stage) {
+            stage.classList.add("is-auth-done");
+            stage.style.setProperty("display", "none", "important");
+            stage.style.setProperty("height", "0px", "important");
+            stage.style.setProperty("min-height", "0px", "important");
+            stage.style.setProperty("padding", "0px", "important");
+            stage.style.setProperty("margin", "0px", "important");
+          }
+          if (frame) {
+            frame.style.setProperty("margin-top", "0px", "important");
+            frame.style.setProperty("visibility", "visible", "important");
+            frame.style.setProperty("opacity", "1", "important");
+          }
+        }
+      }
+
+      document.addEventListener("DOMContentLoaded", function () {
+        syncLoginAndDashboardState();
+        setTimeout(syncLoginAndDashboardState, 150);
+        setTimeout(syncLoginAndDashboardState, 500);
+        setTimeout(syncLoginAndDashboardState, 1200);
+      });
+
+      document.addEventListener("submit", function () {
+        setTimeout(syncLoginAndDashboardState, 50);
+        setTimeout(syncLoginAndDashboardState, 250);
+        setTimeout(syncLoginAndDashboardState, 700);
+      }, true);
+
+      document.addEventListener("click", function () {
+        setTimeout(syncLoginAndDashboardState, 80);
+        setTimeout(syncLoginAndDashboardState, 350);
+      }, true);
+    })();
+  </script>
+<script id="dcLogoutButtonScript">
+    (function () {
+      const FLAGS = ["darecore_admin_verified", "dc_admin_auth", "darecore_admin_auth", "adminAuth", "isAdminLoggedIn"];
+
+      function clearFlags() {
+        FLAGS.forEach(function (k) {
+          try { sessionStorage.removeItem(k); } catch (_) {}
+          try { localStorage.removeItem(k); } catch (_) {}
+        });
+      }
+
+      function ensureLogoutButtonVisible() {
+        let btn = document.getElementById("topbarLogoutBtn") || document.getElementById("dcLogoutBtn");
+        if (!btn) {
+          const pills =
+            document.querySelector(".dc-topbar-pills") ||
+            Array.from(document.querySelectorAll("button, a")).find(function (el) {
+              return /tienda/i.test((el.textContent || "").trim());
+            })?.parentElement;
+
+          if (pills) {
+            const sample = pills.querySelector("button, a");
+            btn = document.createElement("button");
+            btn.type = "button";
+            btn.id = "topbarLogoutBtn";
+            btn.textContent = "Cerrar Sesión";
+            if (sample && sample.className) {
+              btn.className = sample.className.replace(/\bis-active\b|\bactive\b|\bhidden\b/g, "").trim();
+            }
+            pills.appendChild(btn);
+          }
+        }
+
+        if (btn) {
+          btn.classList.remove("hidden");
+          btn.hidden = false;
+          btn.style.setProperty("display", "inline-flex", "important");
+          btn.style.setProperty("align-items", "center", "important");
+          btn.style.setProperty("visibility", "visible", "important");
+          btn.style.setProperty("opacity", "1", "important");
+          btn.style.setProperty("pointer-events", "auto", "important");
+          btn.style.setProperty("cursor", "pointer", "important");
+        }
+      }
+
+      function showLoginFirst() {
+        clearFlags();
+        try {
+          if (window.firebase && typeof window.firebase.auth === "function" && window.firebase.apps && window.firebase.apps.length) {
+            window.firebase.auth().signOut().catch(function () {});
+          }
+        } catch (_) {}
+
+        document.body.classList.remove("dc-logged-in");
+
+        const dash = document.getElementById("dashboardSection");
+        if (dash) {
+          dash.classList.add("hidden");
+          dash.hidden = true;
+          dash.style.setProperty("display", "none", "important");
+        }
+
+        const stage = document.querySelector(".dc-login-stage-exact");
+        const card = document.querySelector(".dc-login-card-exact");
+        const loginSec = document.getElementById("loginSection");
+
+        if (stage) {
+          stage.classList.remove("is-auth-done", "hidden");
+          stage.hidden = false;
+          stage.style.setProperty("display", "flex", "important");
+          stage.style.setProperty("min-height", "100vh", "important");
+          stage.style.setProperty("height", "auto", "important");
+          stage.style.setProperty("padding", "24px 16px", "important");
+          stage.style.setProperty("margin", "0 auto", "important");
+          stage.style.setProperty("visibility", "visible", "important");
+          stage.style.setProperty("opacity", "1", "important");
+        }
+
+        if (card) {
+          card.classList.remove("hidden");
+          card.hidden = false;
+          card.style.setProperty("display", "block", "important");
+          card.style.setProperty("visibility", "visible", "important");
+          card.style.setProperty("opacity", "1", "important");
+        }
+
+        if (loginSec) {
+          loginSec.classList.remove("hidden");
+          loginSec.hidden = false;
+          loginSec.style.setProperty("display", "block", "important");
+          loginSec.style.setProperty("visibility", "visible", "important");
+          loginSec.style.setProperty("opacity", "1", "important");
+        }
+
+        const passInput = document.getElementById("adminPass") || document.querySelector('input[type="password"]');
+        if (passInput) passInput.value = "";
+
+        document.documentElement.scrollTop = 0;
+        document.body.scrollTop = 0;
+      }
+
+      function showDashboardAfterLogin() {
+        document.body.classList.add("dc-logged-in");
+
+        const stage = document.querySelector(".dc-login-stage-exact");
+        const card = document.querySelector(".dc-login-card-exact");
+        const loginSec = document.getElementById("loginSection");
+
+        if (stage) {
+          stage.classList.add("is-auth-done");
+          stage.style.setProperty("display", "none", "important");
+          stage.style.setProperty("height", "0px", "important");
+          stage.style.setProperty("min-height", "0px", "important");
+          stage.style.setProperty("padding", "0px", "important");
+          stage.style.setProperty("margin", "0px", "important");
+        }
+        if (card) {
+          card.classList.add("hidden");
+          card.style.setProperty("display", "none", "important");
+        }
+        if (loginSec) {
+          loginSec.classList.add("hidden");
+          loginSec.style.setProperty("display", "none", "important");
+        }
+
+        const dash = document.getElementById("dashboardSection");
+        if (dash) {
+          dash.classList.remove("hidden");
+          dash.hidden = false;
+          dash.style.setProperty("display", "block", "important");
+          dash.style.setProperty("visibility", "visible", "important");
+          dash.style.setProperty("opacity", "1", "important");
+        }
+
+        ensureLogoutButtonVisible();
+        document.documentElement.scrollTop = 0;
+        document.body.scrollTop = 0;
+      }
+
+      document.addEventListener("click", function (e) {
+        const btn = e.target && e.target.closest ? e.target.closest("#topbarLogoutBtn, #dcLogoutBtn, #logoutBtn, button, a") : null;
+        if (!btn) return;
+        const txt = (btn.textContent || "").trim().toLowerCase();
+        if (btn.id === "topbarLogoutBtn" || btn.id === "dcLogoutBtn" || btn.id === "logoutBtn" || txt === "cerrar sesión" || txt === "cerrar sesion") {
+          e.preventDefault();
+          e.stopPropagation();
+          if (typeof e.stopImmediatePropagation === "function") e.stopImmediatePropagation();
+          showLoginFirst();
+        }
+      }, true);
+
+      document.addEventListener("DOMContentLoaded", function () {
+        // Al cargar la URL de admin, arrancar en login si no hay sesión activa
+        if (sessionStorage.getItem("darecore_admin_verified") === "true") {
+          showDashboardAfterLogin();
+        } else {
+          showLoginFirst();
+        }
+        ensureLogoutButtonVisible();
+        setTimeout(ensureLogoutButtonVisible, 300);
+        setTimeout(ensureLogoutButtonVisible, 900);
+      });
+
+      document.addEventListener("submit", function (e) {
+        if (e.target && e.target.id === "loginForm") {
+          setTimeout(function () {
+            if (sessionStorage.getItem("darecore_admin_verified") === "true") {
+              showDashboardAfterLogin();
+            }
+          }, 60);
+        }
+      }, true);
+    })();
+  </script>
+<script id="dcMoveSectionsToTabsScript">
+    (function () {
+      function findTabPanelByLabel(labelRegex) {
+        // Buscar botón de pestaña y su panel asociado por data-target / aria-controls / id
+        const btns = Array.from(document.querySelectorAll("button, a, [role='tab']"));
+        const matchBtn = btns.find(function (b) {
+          const t = (b.textContent || "").trim();
+          return labelRegex.test(t) && !/tienda/i.test(t);
+        });
+
+        if (matchBtn) {
+          const targetId =
+            matchBtn.getAttribute("data-dc-target") ||
+            matchBtn.getAttribute("data-target") ||
+            matchBtn.getAttribute("aria-controls") ||
+            (matchBtn.getAttribute("href") || "").replace(/^#/, "");
+          if (targetId) {
+            const panel = document.getElementById(targetId);
+            if (panel) return panel;
+          }
+        }
+
+        // Respaldo por ID común
+        const ids = Array.from(document.querySelectorAll("[id]")).map(function (el) { return el.id; });
+        const foundId = ids.find(function (id) { return labelRegex.test(id); });
+        return foundId ? document.getElementById(foundId) : null;
+      }
+
+      function locateSectionContainer(titleRegex, extraTextRegex) {
+        const headings = Array.from(document.querySelectorAll("h1, h2, h3, h4, h5, label, span, div"));
+        for (let i = 0; i < headings.length; i++) {
+          const h = headings[i];
+          const txt = (h.textContent || "").trim();
+          if (!titleRegex.test(txt)) continue;
+          if (txt.length > 140) continue;
+
+          // Subir hasta el contenedor de tarjeta/sección que agrupa ese bloque
+          let curr = h.parentElement;
+          let best = null;
+          for (let depth = 0; depth < 6 && curr && curr !== document.body; depth++) {
+            const cText = curr.textContent || "";
+            const hasCatalogForm = curr.querySelector("#addProductForm, #adminProductList");
+            if (hasCatalogForm) break;
+
+            if (!extraTextRegex || extraTextRegex.test(cText)) {
+              // Evitar agarrar todo el dashboard
+              if (!curr.querySelector("#addProductForm") && curr.id !== "dashboardSection") {
+                best = curr;
+              }
+            }
+            curr = curr.parentElement;
+          }
+          if (best) return best;
+        }
+        return null;
+      }
+
+      function moveStrayBlocksToAssignedTabs() {
+        const entregadosPanel = findTabPanelByLabel(/^entregados$/i) || document.getElementById("sec-entregados");
+        const medidasPanel = findTabPanelByLabel(/^medidas$/i) || document.getElementById("sec-medidas");
+
+        const entregadosBlock = locateSectionContainer(
+          /pedidos entregados/i,
+          /historial de compras y pedidos dare lab entregados/i
+        );
+        if (entregadosBlock && entregadosPanel && !entregadosPanel.contains(entregadosBlock)) {
+          entregadosPanel.appendChild(entregadosBlock);
+          entregadosBlock.style.display = "";
+          entregadosBlock.style.visibility = "visible";
+          entregadosBlock.style.opacity = "1";
+        }
+
+        const medidasGeneroBlock = locateSectionContainer(
+          /tablas de medidas por g[eé]nero y prenda\s*\/\s*tela/i,
+          /hombre.*mujer|camisa\s*\/\s*playera/i
+        );
+        if (medidasGeneroBlock && medidasPanel && !medidasPanel.contains(medidasGeneroBlock)) {
+          medidasPanel.appendChild(medidasGeneroBlock);
+          medidasGeneroBlock.style.display = "";
+          medidasGeneroBlock.style.visibility = "visible";
+          medidasGeneroBlock.style.opacity = "1";
+        }
+      }
+
+      function runMove() {
+        moveStrayBlocksToAssignedTabs();
+        setTimeout(moveStrayBlocksToAssignedTabs, 250);
+        setTimeout(moveStrayBlocksToAssignedTabs, 800);
+        setTimeout(moveStrayBlocksToAssignedTabs, 1600);
+      }
+
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", runMove);
+      } else {
+        runMove();
+      }
+    })();
+  </script>
+<script id="dcOrdersLiveAndDeliveredCalendarScript">
+    (function () {
+      const ORDERS_STORE_KEYS = ["darecore_orders", "dc_orders", "orders", "darecorePedidos", "dc_pedidos"];
+      const DELIVERED_STORE_KEY = "darecore_delivered_orders";
+      const channel = (typeof BroadcastChannel !== "undefined") ? new BroadcastChannel("darecore_orders_sync") : null;
+
+      function readAllOrders() {
+        const list = [];
+        const seen = new Set();
+
+        function collectFromRaw(raw) {
+          if (!raw) return;
+          try {
+            const parsed = JSON.parse(raw);
+            const arr = Array.isArray(parsed) ? parsed : (parsed && typeof parsed === "object" ? Object.values(parsed) : []);
+            arr.forEach(function (item) {
+              if (!item || typeof item !== "object") return;
+              const id = String(item.id || item.orderId || item.codigo || item.numero || "").trim();
+              if (!id || seen.has(id)) return;
+              seen.add(id);
+              list.push(Object.assign({
+                id: id,
+                status: item.status || item.estado || "Pendiente",
+                client: item.client || item.cliente || item.email || "",
+                total: item.total || item.monto || "",
+                items: item.items || item.productos || [],
+                updatedAt: item.updatedAt || new Date().toISOString(),
+                deliveredAt: item.deliveredAt || null
+              }, item));
+            });
+          } catch (_) {}
+        }
+
+        ORDERS_STORE_KEYS.forEach(function (k) {
+          try { collectFromRaw(localStorage.getItem(k)); } catch (_) {}
+          try { collectFromRaw(sessionStorage.getItem(k)); } catch (_) {}
+        });
+
+        try { collectFromRaw(localStorage.getItem(DELIVERED_STORE_KEY)); } catch (_) {}
+        return list;
+      }
+
+      function saveOrdersSnapshot(orders) {
+        try {
+          const json = JSON.stringify(orders);
+          localStorage.setItem("darecore_orders", json);
+          localStorage.setItem("dc_orders", json);
+        } catch (_) {}
+        try {
+          if (channel) channel.postMessage({ type: "orders_updated", orders: orders, ts: Date.now() });
+        } catch (_) {}
+        try {
+          window.dispatchEvent(new CustomEvent("darecore:orders:updated", { detail: { orders: orders } }));
+        } catch (_) {}
+      }
+
+      function saveDeliveredOrders(deliveredList) {
+        try {
+          localStorage.setItem(DELIVERED_STORE_KEY, JSON.stringify(deliveredList));
+        } catch (_) {}
+      }
+
+      function getDeliveredOrders() {
+        try {
+          const raw = localStorage.getItem(DELIVERED_STORE_KEY);
+          const parsed = raw ? JSON.parse(raw) : [];
+          return Array.isArray(parsed) ? parsed : [];
+        } catch (_) {
+          return [];
+        }
+      }
+
+      function toIsoDateKey(dInput) {
+        const d = dInput ? new Date(dInput) : new Date();
+        if (isNaN(d.getTime())) return new Date().toISOString().slice(0, 10);
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, "0");
+        const day = String(d.getDate()).padStart(2, "0");
+        return y + "-" + m + "-" + day;
+      }
+
+      function markOrderAsDelivered(orderId, orderMeta) {
+        if (!orderId) return;
+        const orders = readAllOrders();
+        const todayIso = toIsoDateKey(new Date());
+        let found = null;
+
+        const updatedOrders = orders.map(function (o) {
+          if (String(o.id) === String(orderId)) {
+            found = Object.assign({}, o, orderMeta || {}, {
+              status: "Entregado",
+              estado: "Entregado",
+              deliveredAt: o.deliveredAt || todayIso,
+              updatedAt: new Date().toISOString()
+            });
+            return found;
+          }
+          return o;
+        });
+
+        if (!found) {
+          found = Object.assign({
+            id: orderId,
+            status: "Entregado",
+            estado: "Entregado",
+            client: "",
+            total: "",
+            deliveredAt: todayIso,
+            updatedAt: new Date().toISOString()
+          }, orderMeta || {});
+          updatedOrders.unshift(found);
+        }
+
+        const delivered = getDeliveredOrders();
+        const existsIdx = delivered.findIndex(function (d) { return String(d.id) === String(orderId); });
+        if (existsIdx >= 0) {
+          delivered[existsIdx] = Object.assign({}, delivered[existsIdx], found);
+        } else {
+          delivered.unshift(found);
+        }
+
+        saveOrdersSnapshot(updatedOrders);
+        saveDeliveredOrders(delivered);
+        renderDeliveredPanelAndCalendar();
+      }
+
+      function renderDeliveredPanelAndCalendar() {
+        const entregadosPanel =
+          document.getElementById("sec-entregados") ||
+          Array.from(document.querySelectorAll("[id*='entregad' i], .dc-tab-panel")).find(function (el) {
+            return /pedidos entregados/i.test(el.textContent || "");
+          });
+
+        if (!entregadosPanel) return;
+
+        let widget = document.getElementById("dcDeliveredCalendarWidget");
+        if (!widget) {
+          widget = document.createElement("div");
+          widget.id = "dcDeliveredCalendarWidget";
+          widget.style.cssText = "margin-top:16px;padding:16px;border-radius:14px;border:1px solid #e5e7eb;background:#ffffff;";
+          widget.innerHTML = [
+            '<div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;margin-bottom:12px;">',
+            '  <div>',
+            '    <div style="font-weight:700;font-size:15px;color:#111827;">Calendario de Entregas</div>',
+            '    <div style="font-size:12px;color:#6b7280;">Selecciona un día para ver cuántos pedidos se entregaron</div>',
+            '  </div>',
+            '  <input type="date" id="dcDeliveredDatePicker" style="padding:8px 10px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;" />',
+            '</div>',
+            '<div id="dcDeliveredDaySummary" style="font-size:13px;font-weight:600;color:#111827;margin-bottom:10px;"></div>',
+            '<div id="dcDeliveredDayList" style="display:grid;gap:8px;font-size:13px;"></div>'
+          ].join("");
+          entregadosPanel.appendChild(widget);
+
+          const picker = document.getElementById("dcDeliveredDatePicker");
+          if (picker) {
+            picker.value = toIsoDateKey(new Date());
+            picker.addEventListener("change", renderDeliveredPanelAndCalendar);
+          }
+        }
+
+        const picker = document.getElementById("dcDeliveredDatePicker");
+        const summaryEl = document.getElementById("dcDeliveredDaySummary");
+        const listEl = document.getElementById("dcDeliveredDayList");
+        const selectedDay = (picker && picker.value) ? picker.value : toIsoDateKey(new Date());
+
+        const delivered = getDeliveredOrders();
+        const dayOrders = delivered.filter(function (item) {
+          return toIsoDateKey(item.deliveredAt || item.updatedAt) === selectedDay;
+        });
+
+        if (summaryEl) {
+          summaryEl.textContent = "Pedidos entregados el " + selectedDay + ": " + dayOrders.length + " (Total histórico: " + delivered.length + ")";
+        }
+
+        if (listEl) {
+          if (dayOrders.length === 0) {
+            listEl.innerHTML = '<div style="color:#6b7280;">No hay pedidos entregados registrados en esta fecha.</div>';
+          } else {
+            listEl.innerHTML = dayOrders.map(function (ord) {
+              return '<div style="padding:10px 12px;border:1px solid #e5e7eb;border-radius:10px;display:flex;justify-content:space-between;align-items:center;">' +
+                '<div><strong>#' + String(ord.id).replace(/^#/, "") + '</strong>' +
+                (ord.client ? ' · <span style="color:#4b5563;">' + ord.client + '</span>' : '') + '</div>' +
+                '<span style="font-weight:600;color:#059669;">Entregado' + (ord.total ? ' · ' + ord.total : '') + '</span>' +
+                '</div>';
+            }).join("");
+          }
+        }
+      }
+
+      // Escuchar cambios de estatus o marcado como Entregado en admin
+      document.addEventListener("change", function (e) {
+        const sel = e.target && e.target.closest ? e.target.closest("select") : null;
+        if (!sel) return;
+        const val = String(sel.value || "").trim();
+        const card = sel.closest("article, section, div, tr, li");
+        const txt = card ? (card.textContent || "") : "";
+        const idMatch = txt.match(/#(COMPRA|PEDIDO)-[A-Z0-9_-]+/i);
+        const orderId = idMatch ? idMatch[0] : "";
+
+        if (orderId && val) {
+          const orders = readAllOrders();
+          let updated = false;
+          const nextOrders = orders.map(function (o) {
+            if (String(o.id) === orderId) {
+              updated = true;
+              return Object.assign({}, o, {
+                status: val,
+                estado: val,
+                updatedAt: new Date().toISOString()
+              });
+            }
+            return o;
+          });
+          if (!updated) {
+            nextOrders.unshift({
+              id: orderId,
+              status: val,
+              estado: val,
+              updatedAt: new Date().toISOString()
+            });
+          }
+          saveOrdersSnapshot(nextOrders);
+        }
+
+        if (/entregado/i.test(val) && orderId) {
+          markOrderAsDelivered(orderId);
+        }
+      }, true);
+
+      window.addEventListener("storage", function (e) {
+        if (!e || !e.key || /order|pedido|compra|darecore/i.test(e.key)) {
+          renderDeliveredPanelAndCalendar();
+        }
+      });
+
+      if (channel) {
+        channel.onmessage = function () {
+          renderDeliveredPanelAndCalendar();
+        };
+      }
+
+      document.addEventListener("DOMContentLoaded", function () {
+        renderDeliveredPanelAndCalendar();
+        setTimeout(renderDeliveredPanelAndCalendar, 400);
+        setTimeout(renderDeliveredPanelAndCalendar, 1200);
+      });
+    })();
+  </script>
+<script id="dcDeliverQuickButtonScript">
+    (function () {
+      const ORDERS_KEY = "darecore_orders";
+      const DELIVERED_KEY = "darecore_delivered_orders";
+      const bc = (typeof BroadcastChannel !== "undefined") ? new BroadcastChannel("darecore_orders_sync") : null;
+
+      function isoDay(d) {
+        const dt = d ? new Date(d) : new Date();
+        if (isNaN(dt.getTime())) return new Date().toISOString().slice(0, 10);
+        return dt.getFullYear() + "-" + String(dt.getMonth() + 1).padStart(2, "0") + "-" + String(dt.getDate()).padStart(2, "0");
+      }
+
+      function getDelivered() {
+        try {
+          const r = localStorage.getItem(DELIVERED_KEY);
+          const p = r ? JSON.parse(r) : [];
+          return Array.isArray(p) ? p : [];
+        } catch (_) {
+          return [];
+        }
+      }
+
+      function saveDelivered(arr) {
+        try {
+          localStorage.setItem(DELIVERED_KEY, JSON.stringify(arr));
+        } catch (_) {}
+      }
+
+      function getOrders() {
+        try {
+          const r = localStorage.getItem(ORDERS_KEY);
+          const p = r ? JSON.parse(r) : [];
+          return Array.isArray(p) ? p : [];
+        } catch (_) {
+          return [];
+        }
+      }
+
+      function saveOrders(arr, meta) {
+        try {
+          const s = JSON.stringify(arr);
+          localStorage.setItem(ORDERS_KEY, s);
+          localStorage.setItem("dc_orders", s);
+        } catch (_) {}
+        try {
+          if (bc) bc.postMessage({ type: "orders_sync", orders: arr, meta: meta || null, ts: Date.now() });
+        } catch (_) {}
+        try {
+          window.dispatchEvent(new CustomEvent("darecore:orders:updated", { detail: { orders: arr, meta: meta || null } }));
+        } catch (_) {}
+      }
+
+      function moveOrderToDelivered(folio, extraText) {
+        const cleanFolio = String(folio || "").replace(/^#/, "").trim();
+        if (!cleanFolio) return;
+        const today = isoDay(new Date());
+        const orders = getOrders();
+        let matched = null;
+
+        const nextOrders = orders.map(function (o) {
+          const f = String(o.id || o.folio || "").replace(/^#/, "");
+          if (f.toUpperCase() === cleanFolio.toUpperCase()) {
+            matched = Object.assign({}, o, {
+              id: cleanFolio,
+              folio: cleanFolio,
+              status: "Entregado",
+              estado: "Entregado",
+              deliveredAt: o.deliveredAt || today,
+              updatedAt: new Date().toISOString()
+            });
+            return matched;
+          }
+          return o;
+        });
+
+        if (!matched) {
+          matched = {
+            id: cleanFolio,
+            folio: cleanFolio,
+            status: "Entregado",
+            estado: "Entregado",
+            summary: extraText || "",
+            deliveredAt: today,
+            updatedAt: new Date().toISOString()
+          };
+          nextOrders.unshift(matched);
+        }
+
+        const delivered = getDelivered();
+        const idx = delivered.findIndex(function (d) {
+          return String(d.id || d.folio || "").replace(/^#/, "").toUpperCase() === cleanFolio.toUpperCase();
+        });
+        if (idx >= 0) {
+          delivered[idx] = Object.assign({}, delivered[idx], matched);
+        } else {
+          delivered.unshift(matched);
+        }
+
+        saveOrders(nextOrders, { folio: cleanFolio, status: "Entregado" });
+        saveDelivered(delivered);
+
+        const countEl = document.getElementById("deliveredCount");
+        if (countEl) {
+          countEl.textContent = String(delivered.length);
+        }
+
+        if (typeof window.renderDeliveredPanelAndCalendar === "function") {
+          window.renderDeliveredPanelAndCalendar();
+        }
+      }
+
+      function injectDeliverButtons() {
+        document.querySelectorAll("select").forEach(function (sel) {
+          const opts = Array.from(sel.options || []).map(function (o) { return (o.textContent || o.value || "").trim().toLowerCase(); });
+          const isStatusSelect = opts.some(function (t) { return /enviado|en proceso|pendiente|entregado/i.test(t); });
+          if (!isStatusSelect) return;
+
+          const parent = sel.parentElement;
+          if (!parent || parent.querySelector("[data-dc-deliver-btn='1']")) return;
+
+          const card = sel.closest("article, section, div, tr, li");
+          const cardText = card ? (card.textContent || "") : "";
+          const folioMatch = cardText.match(/#(COMPRA|PEDIDO)-[A-Z0-9_-]+/i);
+          if (!folioMatch) return;
+
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.setAttribute("data-dc-deliver-btn", "1");
+          btn.textContent = "Marcar como Entregado";
+          btn.style.cssText = "margin-left:8px;padding:6px 12px;border-radius:8px;border:none;background:#059669;color:#ffffff;font-size:12px;font-weight:700;cursor:pointer;";
+
+          btn.addEventListener("click", function (ev) {
+            ev.preventDefault();
+            ev.stopPropagation();
+            const entOpt = Array.from(sel.options || []).find(function (o) { return /entregado/i.test(o.value || o.textContent || ""); });
+            if (entOpt) {
+              sel.value = entOpt.value;
+              sel.dispatchEvent(new Event("change", { bubbles: true }));
+            }
+            moveOrderToDelivered(folioMatch[0], cardText.slice(0, 120));
+          });
+
+          parent.appendChild(btn);
+        });
+      }
+
+      document.addEventListener("DOMContentLoaded", function () {
+        injectDeliverButtons();
+        setTimeout(injectDeliverButtons, 500);
+        setTimeout(injectDeliverButtons, 1400);
+      });
+    })();
+  </script>
+<script id="dcShippedEmailControlScript">
+    (function () {
+      function injectShippedEmailBox() {
+        if (document.getElementById("dcShippedEmailConfigBox")) return;
+        const ordersSection =
+          document.getElementById("sec-pedidos") ||
+          Array.from(document.querySelectorAll("section, div")).find(function (el) {
+            return /compras del carrito/i.test(el.textContent || "") && el.querySelector("select");
+          });
+        if (!ordersSection) return;
+
+        const box = document.createElement("div");
+        box.id = "dcShippedEmailConfigBox";
+        box.style.cssText = "margin:12px 0 18px;padding:12px 14px;border:1px solid #e5e7eb;border-radius:12px;background:#f9fafb;display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;";
+
+        let savedEmail = "";
+        try { savedEmail = localStorage.getItem("darecore_shipped_override_email") || ""; } catch (_) {}
+
+        box.innerHTML = [
+          '<div style="font-size:12px;color:#374151;">',
+          '  <strong>Correo al marcar "Enviado":</strong> por defecto usa el correo del cliente registrado; escribe otro aquí solo si deseas redirigirlo.',
+          '</div>',
+          '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">',
+          '  <input type="email" id="dcOverrideShippedEmailInput" placeholder="Correo alternativo (opcional)" value="' + savedEmail.replace(/"/g, """) + '" style="padding:7px 10px;border:1px solid #d1d5db;border-radius:8px;font-size:12px;min-width:230px;" />',
+          '  <button type="button" id="dcSaveShippedEmailBtn" style="padding:7px 12px;border:none;border-radius:8px;background:#111827;color:#fff;font-size:12px;font-weight:700;cursor:pointer;">Guardar correo</button>',
+          '</div>'
+        ].join("");
+
+        ordersSection.insertBefore(box, ordersSection.firstChild);
+
+        const saveBtn = document.getElementById("dcSaveShippedEmailBtn");
+        const inp = document.getElementById("dcOverrideShippedEmailInput");
+        if (saveBtn && inp) {
+          saveBtn.addEventListener("click", function () {
+            const val = (inp.value || "").trim();
+            try { localStorage.setItem("darecore_shipped_override_email", val); } catch (_) {}
+            window.DARECORE_SHIPPED_EMAIL_CONFIG = Object.assign({}, window.DARECORE_SHIPPED_EMAIL_CONFIG || {}, {
+              overrideRecipientEmail: val
+            });
+            saveBtn.textContent = "Guardado ✓";
+            setTimeout(function () { saveBtn.textContent = "Guardar correo"; }, 1800);
+          });
+        }
+      }
+
+      document.addEventListener("DOMContentLoaded", function () {
+        injectShippedEmailBox();
+        setTimeout(injectShippedEmailBox, 500);
+        setTimeout(injectShippedEmailBox, 1400);
       });
     })();
   </script>
