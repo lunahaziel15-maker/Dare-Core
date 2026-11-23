@@ -1195,3 +1195,53 @@
     sendPackageShippedNotification(details);
   }, true);
 })();
+/* DARECORE SINGLE SHIPPED EMAIL LOCK */
+(function () {
+  if (window.__dcSingleShippedEmailLockInstalled) return;
+  window.__dcSingleShippedEmailLockInstalled = true;
+
+  window.DARECORE_SHIPPED_EMAIL_CONFIG = Object.assign({}, window.DARECORE_SHIPPED_EMAIL_CONFIG || {}, {
+    senderEmail: "darecore313@gmail.com",
+    replyTo: "darecore313@gmail.com",
+    from_email: "darecore313@gmail.com"
+  });
+
+  const sentKeys = new Set();
+
+  // Bloquear envíos duplicados rápidos para el mismo folio/correo en menos de 8 segundos
+  function shouldAllowSingleEmail(key) {
+    const now = Date.now();
+    const prevTs = sentKeys.get(key) || 0;
+    if (now - prevTs < 8000) {
+      return false;
+    }
+    sentKeys.set(key, now);
+    return true;
+  }
+
+  if (typeof window.emailjs === "object" && window.emailjs && typeof window.emailjs.send === "function" && !window.emailjs.__dcSingleWrapped) {
+    const origEmailJsSend = window.emailjs.send.bind(window.emailjs);
+    window.emailjs.send = function (serviceId, templateId, templateParams, publicKey) {
+      const params = Object.assign({}, templateParams || {}, {
+        from_email: paramsFromOrDefault(templateParams),
+        sender_email: "darecore313@gmail.com",
+        reply_to: "darecore313@gmail.com"
+      });
+      const lockKey = [
+        String(params.folio || params.order_id || "").trim(),
+        String(params.to_email || params.email || "").trim().toLowerCase(),
+        String(params.status || "").trim().toLowerCase()
+      ].join("|");
+
+      if (lockKey && lockKey !== "||" && !shouldAllowSingleEmail(lockKey)) {
+        return Promise.resolve({ status: 200, text: "DEDUPED_SINGLE_EMAIL" });
+      }
+      return origEmailJsSend(serviceId, templateId, params, publicKey);
+    };
+    window.emailjs.__dcSingleWrapped = true;
+  }
+
+  function paramsFromOrDefault(p) {
+    return (p && p.from_email) ? p.from_email : "darecore313@gmail.com";
+  }
+})();
